@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Fleet Clock — Armada Tournament Timer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root{
+    --void:#0D1321;
+    --panel:#1B2436;
+    --panel-raised:#212C42;
+    --hairline:#3A4A63;
+    --amber:#E8A33D;
+    --amber-dim:#5A4426;
+    --cyan:#5FD4D0;
+    --cyan-dim:#204848;
+    --red:#E5484D;
+    --red-dim:#4A2124;
+    --text:#EDEFF4;
+    --text-dim:#8C96AB;
+  }
+
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--void);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+    padding:24px 12px;
+  }
+  .device{
+    width:100%;
+    max-width:420px;
+    min-height:760px;
+    background:var(--panel);
+    border-radius:28px;
+    border:1px solid var(--hairline);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    box-shadow:0 30px 60px rgba(0,0,0,0.5);
+  }
+  .mono{ font-family:'JetBrains Mono',monospace; font-variant-numeric:tabular-nums; }
+
+  /* ---------- SETUP SCREEN ---------- */
+  .setup{ padding:40px 28px; display:flex; flex-direction:column; height:100%; }
+  .setup h1{ font-size:22px; font-weight:700; margin:0 0 4px; letter-spacing:-0.01em; }
+  .setup .sub{ color:var(--text-dim); font-size:14px; margin:0 0 36px; line-height:1.5; }
+  .field{ margin-bottom:20px; }
+  .field label{ display:block; font-size:13px; color:var(--text-dim); margin-bottom:8px; }
+  .field input{
+    width:100%; background:var(--void); border:1px solid var(--hairline); border-radius:10px;
+    padding:14px; color:var(--text); font-size:16px; font-family:'Inter',sans-serif;
+  }
+  .field input:focus{ outline:none; border-color:var(--amber); }
+  .duration-row{ display:flex; gap:10px; }
+  .duration-row .field{ flex:1; }
+  .duration-row input{ font-family:'JetBrains Mono',monospace; text-align:center; }
+  .spacer{ flex:1; }
+  .btn{
+    border:none; border-radius:12px; padding:16px; font-size:16px; font-weight:600;
+    font-family:'Inter',sans-serif; cursor:pointer; text-align:center;
+  }
+  .btn-primary{ background:var(--amber); color:#241804; }
+  .btn-primary:active{ background:#d1922f; }
+  .btn-ghost{ background:transparent; border:1px solid var(--hairline); color:var(--text); }
+  .btn-ghost:active{ background:var(--panel-raised); }
+  .btn-danger{ background:var(--red); color:#2a0a0c; }
+
+  /* ---------- LIVE GAME SCREEN ---------- */
+  .live{ display:flex; flex-direction:column; height:100%; }
+  .strip{
+    padding:18px 20px 16px; border-bottom:1px solid var(--hairline);
+    display:flex; align-items:baseline; justify-content:space-between;
+  }
+  .strip .game-clock{ font-size:28px; font-weight:700; }
+  .strip .game-clock.overtime{ color:var(--red); }
+  .strip .meta{ text-align:right; }
+  .strip .round-label{ font-size:13px; color:var(--text-dim); }
+  .strip .phase-label{ font-size:15px; font-weight:600; margin-top:2px; }
+  .overtime-banner{
+    background:var(--red-dim); color:var(--red); font-size:12px; font-weight:600;
+    text-align:center; padding:6px; letter-spacing:0.02em;
+  }
+
+  .stage{ flex:1; padding:24px 20px; display:flex; flex-direction:column; }
+
+  /* shared phase (command/status) */
+  .shared-phase{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+  .shared-phase .phase-name{ font-size:16px; color:var(--text-dim); margin-bottom:14px; }
+  .shared-phase .phase-clock{ font-size:56px; font-weight:700; margin-bottom:8px; }
+  .shared-phase .phase-hint{ font-size:13px; color:var(--text-dim); max-width:260px; line-height:1.5; }
+
+  /* ship/squadron split */
+  .split{ flex:1; display:flex; flex-direction:column; gap:14px; }
+  .player-panel{
+    flex:1; border-radius:16px; border:1px solid var(--hairline); background:var(--panel-raised);
+    padding:20px; display:flex; flex-direction:column; justify-content:space-between;
+    transition:background 0.2s, border-color 0.2s;
+  }
+  .player-panel.active-amber{ background:var(--amber-dim); border-color:var(--amber); }
+  .player-panel.active-cyan{ background:var(--cyan-dim); border-color:var(--cyan); }
+  .player-panel .p-name{ font-size:15px; font-weight:600; }
+  .player-panel .p-status{ font-size:12px; color:var(--text-dim); margin-top:2px; }
+  .player-panel .p-clock{ font-size:40px; font-weight:700; margin:14px 0; }
+  .player-panel .p-controls{ display:flex; gap:8px; }
+  .player-panel .p-controls .btn{ flex:1; padding:12px; font-size:14px; }
+  .btn-turn-amber{ background:var(--amber); color:#241804; }
+  .btn-turn-cyan{ background:var(--cyan); color:#062626; }
+  .btn-pass{ background:transparent; border:1px solid var(--hairline); color:var(--text-dim); }
+
+  .controls-bar{
+    padding:16px 20px 22px; border-top:1px solid var(--hairline);
+    display:flex; gap:10px;
+  }
+  .controls-bar .btn{ flex:1; }
+  .icon-btn{
+    width:52px; flex:none; display:flex; align-items:center; justify-content:center;
+    background:transparent; border:1px solid var(--hairline); border-radius:12px; color:var(--text-dim);
+  }
+
+  /* ---------- STATS SCREEN ---------- */
+  .stats{ padding:28px 22px 22px; overflow-y:auto; height:100%; }
+  .stats h2{ font-size:20px; font-weight:700; margin:0 0 2px; }
+  .stats .final-time{ color:var(--text-dim); font-size:13px; margin-bottom:24px; }
+  .stat-block{ margin-bottom:26px; }
+  .stat-block h3{ font-size:12px; color:var(--text-dim); font-weight:600; margin:0 0 10px; }
+  .player-stat-row{
+    display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--hairline);
+  }
+  .player-stat-row:last-child{ border-bottom:none; }
+  .dot{ width:10px; height:10px; border-radius:50%; flex:none; }
+  .dot.amber{ background:var(--amber); } .dot.cyan{ background:var(--cyan); }
+  .player-stat-row .name{ flex:1; font-size:14px; font-weight:600; }
+  .player-stat-row .num{ font-size:15px; }
+  .bar-row{ margin-bottom:12px; }
+  .bar-row .bar-label{ display:flex; justify-content:space-between; font-size:12px; color:var(--text-dim); margin-bottom:5px; }
+  .bar-track{ height:8px; border-radius:4px; background:var(--void); overflow:hidden; display:flex; }
+  .bar-fill.amber{ background:var(--amber); }
+  .bar-fill.cyan{ background:var(--cyan); }
+  .phase-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .phase-cell{ background:var(--panel-raised); border-radius:10px; padding:12px; }
+  .phase-cell .pc-label{ font-size:11px; color:var(--text-dim); margin-bottom:4px; }
+  .phase-cell .pc-val{ font-size:16px; font-weight:700; }
+
+  .hidden{ display:none !important; }
+</style>
+</head>
+<body>
+
+<div class="device">
+
+  <!-- SETUP -->
+  <div id="screen-setup" class="setup">
+    <h1>Fleet Clock</h1>
+    <p class="sub">Tournament game timer for Star Wars: Armada. Tracks the round clock, phases, and each commander's turn time.</p>
+
+    <div class="field">
+      <label>Commander 1</label>
+      <input id="p1name" type="text" placeholder="e.g. Sato" value="Rebel Fleet">
+    </div>
+    <div class="field">
+      <label>Commander 2</label>
+      <input id="p2name" type="text" placeholder="e.g. Ozzel" value="Imperial Fleet">
+    </div>
+    <div class="field">
+      <label>Round limit</label>
+      <input id="roundLimit" type="text" inputmode="numeric" value="6">
+    </div>
+    <div class="field">
+      <label>Game clock (target duration)</label>
+      <div class="duration-row">
+        <div class="field"><input id="durH" type="text" inputmode="numeric" value="2"></div>
+        <div class="field"><input id="durM" type="text" inputmode="numeric" value="15"></div>
+      </div>
+      <div style="display:flex; gap:10px; font-size:11px; color:var(--text-dim); margin-top:-14px;">
+        <div style="flex:1; text-align:center;">hours</div>
+        <div style="flex:1; text-align:center;">minutes</div>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+    <button class="btn btn-primary" onclick="startGame()">Start game</button>
+  </div>
+
+  <!-- LIVE GAME -->
+  <div id="screen-live" class="live hidden">
+    <div id="overtimeBanner" class="overtime-banner hidden">GAME CLOCK EXPIRED — IN OVERTIME</div>
+    <div class="strip">
+      <div id="gameClock" class="game-clock mono">2:15:00</div>
+      <div class="meta">
+        <div id="roundLabelTop" class="round-label">Round 1 of 6</div>
+        <div id="phaseLabelTop" class="phase-label">Command Phase</div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <!-- shared phase view -->
+      <div id="sharedPhaseView" class="shared-phase hidden">
+        <div id="sharedPhaseName" class="phase-name">Command Phase</div>
+        <div id="sharedPhaseClock" class="phase-clock mono">00:00</div>
+        <div class="phase-hint">Simultaneous phase — not attributed to a single commander.</div>
+      </div>
+
+      <!-- ship/squadron split view -->
+      <div id="splitView" class="split hidden">
+        <div id="panel1" class="player-panel">
+          <div>
+            <div id="p1nameLive" class="p-name">Rebel Fleet</div>
+            <div id="p1status" class="p-status">Idle</div>
+          </div>
+          <div id="p1clock" class="p-clock mono">00:00</div>
+          <div class="p-controls">
+            <button class="btn btn-turn-amber" onclick="tapMyTurn(0)">My Turn</button>
+            <button class="btn btn-pass" onclick="tapPass(0)">Pass</button>
+          </div>
+        </div>
+        <div id="panel2" class="player-panel">
+          <div>
+            <div id="p2nameLive" class="p-name">Imperial Fleet</div>
+            <div id="p2status" class="p-status">Idle</div>
+          </div>
+          <div id="p2clock" class="p-clock mono">00:00</div>
+          <div class="p-controls">
+            <button class="btn btn-turn-cyan" onclick="tapMyTurn(1)">My Turn</button>
+            <button class="btn btn-pass" onclick="tapPass(1)">Pass</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls-bar">
+      <button class="icon-btn" onclick="undo()" title="Undo last action">↶</button>
+      <button id="advanceBtn" class="btn btn-primary" onclick="advancePhase()">End Command Phase</button>
+    </div>
+  </div>
+
+  <!-- END GAME CONFIRM (simple inline in live screen controls swap) -->
+
+  <!-- STATS -->
+  <div id="screen-stats" class="stats hidden">
+    <h2>Game complete</h2>
+    <div id="finalTime" class="final-time">Total time: 2:31:04 · 6 rounds</div>
+
+    <div class="stat-block">
+      <h3>TOTAL TIME ON CLOCK</h3>
+      <div id="totalRows"></div>
+    </div>
+
+    <div class="stat-block">
+      <h3>AVERAGE PER ACTIVATION</h3>
+      <div id="avgRows"></div>
+    </div>
+
+    <div class="stat-block">
+      <h3>TIME BY PHASE</h3>
+      <div class="phase-grid" id="phaseGrid"></div>
+    </div>
+
+    <div class="stat-block">
+      <h3>SHARE OF TURN TIME PER ROUND</h3>
+      <div id="roundBars"></div>
+    </div>
+
+    <button class="btn btn-ghost" onclick="location.reload()">New game</button>
+  </div>
+
+</div>
+
+<script>
+/* ---------------- STATE: flat event log is the source of truth ---------------- */
+let players = ["Rebel Fleet","Imperial Fleet"];
+let roundLimit = 6;
+let targetDurationSec = 8100;
+let gameStartTs = null;
+let events = []; // {type, player(0/1 or null), phase, round, ts}
+let tickHandle = null;
+
+const PHASE_SEQUENCE = ["command","ship","squadron","status"];
+const PHASE_LABELS = {command:"Command Phase", ship:"Ship Phase", squadron:"Squadron Phase", status:"Status Phase"};
+const PLAYER_TIMED_PHASES = ["ship","squadron"];
+
+function now(){ return Date.now(); }
+
+function fmt(sec, forceHours){
+  sec = Math.max(0, Math.round(sec));
+  const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = sec%60;
+  if(h>0 || forceHours) return h+":"+String(m).padStart(2,'0')+":"+String(s).padStart(2,'0');
+  return String(m).padStart(2,'0')+":"+String(s).padStart(2,'0');
+}
+
+/* ---------------- SETUP ---------------- */
+function startGame(){
+  players = [
+    document.getElementById('p1name').value.trim() || "Commander 1",
+    document.getElementById('p2name').value.trim() || "Commander 2"
+  ];
+  roundLimit = parseInt(document.getElementById('roundLimit').value) || 6;
+  const h = parseInt(document.getElementById('durH').value) || 0;
+  const m = parseInt(document.getElementById('durM').value) || 0;
+  targetDurationSec = h*3600 + m*60;
+
+  document.getElementById('p1nameLive').textContent = players[0];
+  document.getElementById('p2nameLive').textContent = players[1];
+
+  gameStartTs = now();
+  events = [{type:'game_start', ts:gameStartTs, round:1, phase:'command'}];
+  events.push({type:'phase_start', phase:'command', round:1, ts:gameStartTs});
+
+  show('screen-live');
+  tickHandle = setInterval(render, 250);
+  render();
+}
+
+/* ---------------- derive current state from log ---------------- */
+function currentPhaseEvent(){
+  for(let i=events.length-1;i>=0;i--){ if(events[i].type==='phase_start') return events[i]; }
+  return null;
+}
+function isPhaseOpen(){
+  const ps = currentPhaseEvent();
+  if(!ps) return false;
+  for(let i=events.length-1;i>=0;i--){
+    if(events[i]===ps) return true;
+    if(events[i].type==='phase_end') return false;
+  }
+  return true;
+}
+function activeTurn(){
+  // scan backward for last turn_start not yet closed, within the currently open phase
+  const ps = currentPhaseEvent();
+  for(let i=events.length-1;i>=0;i--){
+    const e = events[i];
+    if(e===ps) break;
+    if(e.type==='turn_end') return null;
+    if(e.type==='turn_start') return e;
+  }
+  return null;
+}
+function isGameEnded(){ return events.some(e=>e.type==='game_end'); }
+
+/* ---------------- actions ---------------- */
+function tapMyTurn(playerIdx){
+  if(isGameEnded()) return;
+  const t = now();
+  const at = activeTurn();
+  const ps = currentPhaseEvent();
+  if(at) events.push({type:'turn_end', player:at.player, phase:ps.phase, round:ps.round, ts:t});
+  if(at && at.player===playerIdx) { render(); return; } // tapping own active turn again = just close it
+  events.push({type:'turn_start', player:playerIdx, phase:ps.phase, round:ps.round, ts:t});
+  render();
+}
+function tapPass(playerIdx){
+  if(isGameEnded()) return;
+  const t = now();
+  const at = activeTurn();
+  const ps = currentPhaseEvent();
+  if(at && at.player===playerIdx) events.push({type:'turn_end', player:at.player, phase:ps.phase, round:ps.round, ts:t});
+  events.push({type:'pass', player:playerIdx, phase:ps.phase, round:ps.round, ts:t});
+  render();
+}
+function undo(){
+  if(events.length<=1) return; // keep game_start
+  events.pop();
+  // also don't allow undoing past the very first phase_start
+  if(events[events.length-1].type==='game_start') events.push({type:'phase_start', phase:'command', round:1, ts:gameStartTs});
+  render();
+}
+function advancePhase(){
+  const t = now();
+  const ps = currentPhaseEvent();
+  const at = activeTurn();
+  if(at) events.push({type:'turn_end', player:at.player, phase:ps.phase, round:ps.round, ts:t});
+  events.push({type:'phase_end', phase:ps.phase, round:ps.round, ts:t});
+
+  const idx = PHASE_SEQUENCE.indexOf(ps.phase);
+  if(idx < PHASE_SEQUENCE.length-1){
+    const nextPhase = PHASE_SEQUENCE[idx+1];
+    events.push({type:'phase_start', phase:nextPhase, round:ps.round, ts:t});
+  } else {
+    if(ps.round < roundLimit){
+      events.push({type:'round_end', round:ps.round, ts:t});
+      events.push({type:'phase_start', phase:'command', round:ps.round+1, ts:t});
+    } else {
+      events.push({type:'round_end', round:ps.round, ts:t});
+      endGame();
+      return;
+    }
+  }
+  render();
+}
+function endGame(){
+  events.push({type:'game_end', ts:now()});
+  clearInterval(tickHandle);
+  renderStats();
+  show('screen-stats');
+}
+
+/* ---------------- render loop ---------------- */
+function show(id){
+  ['screen-setup','screen-live','screen-stats'].forEach(s=>{
+    document.getElementById(s).classList.toggle('hidden', s!==id);
+  });
+}
+
+function render(){
+  const t = now();
+  const elapsed = (t - gameStartTs)/1000;
+  const remaining = targetDurationSec - elapsed;
+  const gc = document.getElementById('gameClock');
+  const banner = document.getElementById('overtimeBanner');
+  if(remaining <= 0){
+    gc.textContent = "+"+fmt(-remaining, true);
+    gc.classList.add('overtime');
+    banner.classList.remove('hidden');
+  } else {
+    gc.textContent = fmt(remaining, true);
+    gc.classList.remove('overtime');
+    banner.classList.add('hidden');
+  }
+
+  const ps = currentPhaseEvent();
+  document.getElementById('roundLabelTop').textContent = "Round "+ps.round+" of "+roundLimit;
+  document.getElementById('phaseLabelTop').textContent = PHASE_LABELS[ps.phase];
+
+  const shared = PLAYER_TIMED_PHASES.indexOf(ps.phase)===-1;
+  document.getElementById('sharedPhaseView').classList.toggle('hidden', !shared);
+  document.getElementById('splitView').classList.toggle('hidden', shared);
+
+  if(shared){
+    document.getElementById('sharedPhaseName').textContent = PHASE_LABELS[ps.phase];
+    document.getElementById('sharedPhaseClock').textContent = fmt((t-ps.ts)/1000);
+  } else {
+    const at = activeTurn();
+    [0,1].forEach(pi=>{
+      const panel = document.getElementById('panel'+(pi+1));
+      const statusEl = document.getElementById('p'+(pi+1)+'status');
+      const clockEl = document.getElementById('p'+(pi+1)+'clock');
+      const isActive = at && at.player===pi;
+      panel.classList.toggle('active-amber', isActive && pi===0);
+      panel.classList.toggle('active-cyan', isActive && pi===1);
+      if(isActive){
+        statusEl.textContent = "Active — activation in progress";
+        clockEl.textContent = fmt((t-at.ts)/1000);
+      } else {
+        const passes = events.filter(e=>e.type==='pass' && e.player===pi && e.round===ps.round && e.phase===ps.phase).length;
+        statusEl.textContent = passes>0 ? "Passed" : "Idle";
+        clockEl.textContent = "00:00";
+      }
+    });
+  }
+
+  const advanceBtn = document.getElementById('advanceBtn');
+  const idx = PHASE_SEQUENCE.indexOf(ps.phase);
+  const isLast = idx===PHASE_SEQUENCE.length-1 && ps.round===roundLimit;
+  advanceBtn.textContent = isLast ? "End Game" : "End "+PHASE_LABELS[ps.phase];
+}
+
+/* ---------------- stats derivation ---------------- */
+function renderStats(){
+  const totalElapsed = (events[events.length-1].ts - gameStartTs)/1000;
+  document.getElementById('finalTime').textContent =
+    "Total time: "+fmt(totalElapsed, true)+" · "+roundLimit+" rounds";
+
+  // pair up turn_start/turn_end per player
+  const durations = {0:[], 1:[]};
+  const phaseTotals = {command:0, ship:0, squadron:0, status:0};
+  const roundPlayerTotals = {}; // round -> {0:sec,1:sec}
+  let openStart = null;
+  events.forEach(e=>{
+    if(e.type==='turn_start'){ openStart = e; }
+    else if(e.type==='turn_end' && openStart){
+      const d = (e.ts - openStart.ts)/1000;
+      durations[openStart.player].push(d);
+      phaseTotals[openStart.phase] += d;
+      roundPlayerTotals[openStart.round] = roundPlayerTotals[openStart.round] || {0:0,1:0};
+      roundPlayerTotals[openStart.round][openStart.player] += d;
+      openStart = null;
+    }
+  });
+  // command/status phase totals (shared, not per player)
+  let openPhase = null;
+  events.forEach(e=>{
+    if(e.type==='phase_start' && PLAYER_TIMED_PHASES.indexOf(e.phase)===-1){ openPhase = e; }
+    else if(e.type==='phase_end' && openPhase){
+      phaseTotals[openPhase.phase] += (e.ts-openPhase.ts)/1000;
+      openPhase = null;
+    }
+  });
+
+  const totalP0 = durations[0].reduce((a,b)=>a+b,0);
+  const totalP1 = durations[1].reduce((a,b)=>a+b,0);
+  const avgP0 = durations[0].length ? totalP0/durations[0].length : 0;
+  const avgP1 = durations[1].length ? totalP1/durations[1].length : 0;
+
+  document.getElementById('totalRows').innerHTML = `
+    <div class="player-stat-row"><span class="dot amber"></span><span class="name">${players[0]}</span><span class="num mono">${fmt(totalP0)}</span></div>
+    <div class="player-stat-row"><span class="dot cyan"></span><span class="name">${players[1]}</span><span class="num mono">${fmt(totalP1)}</span></div>
+  `;
+  document.getElementById('avgRows').innerHTML = `
+    <div class="player-stat-row"><span class="dot amber"></span><span class="name">${players[0]} (${durations[0].length} activations)</span><span class="num mono">${fmt(avgP0)}</span></div>
+    <div class="player-stat-row"><span class="dot cyan"></span><span class="name">${players[1]} (${durations[1].length} activations)</span><span class="num mono">${fmt(avgP1)}</span></div>
+  `;
+
+  document.getElementById('phaseGrid').innerHTML = PHASE_SEQUENCE.map(p=>`
+    <div class="phase-cell">
+      <div class="pc-label">${PHASE_LABELS[p]}</div>
+      <div class="pc-val mono">${fmt(phaseTotals[p])}</div>
+    </div>
+  `).join('');
+
+  const roundBarsHtml = Object.keys(roundPlayerTotals).sort((a,b)=>a-b).map(r=>{
+    const rp = roundPlayerTotals[r];
+    const total = rp[0]+rp[1] || 1;
+    const pct0 = (rp[0]/total*100).toFixed(0);
+    const pct1 = (rp[1]/total*100).toFixed(0);
+    return `
+      <div class="bar-row">
+        <div class="bar-label"><span>Round ${r}</span><span>${fmt(rp[0]+rp[1])} on clock</span></div>
+        <div class="bar-track">
+          <div class="bar-fill amber" style="width:${pct0}%"></div>
+          <div class="bar-fill cyan" style="width:${pct1}%"></div>
+        </div>
+      </div>`;
+  }).join('');
+  document.getElementById('roundBars').innerHTML = roundBarsHtml || '<div style="color:var(--text-dim); font-size:13px;">No timed activations recorded.</div>';
+}
+</script>
+</body>
+</html>
