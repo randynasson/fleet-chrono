@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0d1321;
+  --foreground: #edeff4;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-void: #0d1321;
+  --color-panel: #1b2436;
+  --color-panel-raised: #212c42;
+  --color-hairline: #3a4a63;
+  --color-amber: #e8a33d;
+  --color-amber-dim: #5a4426;
+  --color-cyan: #5fd4d0;
+  --color-cyan-dim: #204848;
+  --color-red: #e5484d;
+  --color-red-dim: #4a2124;
+  --color-text: #edeff4;
+  --color-text-dim: #8c96ab;
+
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), sans-serif;
+}
+
+@layer components {
+  .input {
+    @apply w-full rounded-[10px] border border-hairline bg-void p-3.5 font-sans text-base text-text outline-none;
+  }
+  .input:focus {
+    @apply border-amber;
+  }
+}
