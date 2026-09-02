@@ -363,7 +363,7 @@
     <div class="lobby-status waiting"><span class="spinner"></span> Waiting for host to start&hellip;</div>
 
     <div class="spacer"></div>
-    <button class="btn btn-ghost" onclick="show('screen-landing')">&larr; Leave</button>
+    <button class="btn btn-ghost" onclick="leaveJoinConfirm()">&larr; Leave</button>
   </div>
 
   <!-- LIVE GAME -->
@@ -575,6 +575,8 @@ function effectiveNow(){
 
 /* ---------------- SETUP ---------------- */
 function startGame(){
+  isMultiDevice = false;
+  myPlayerSlot = null;
   roundLimit = parseInt(document.getElementById('roundLimit').value) || 6;
   const h = parseInt(document.getElementById('durH').value) || 0;
   const m = parseInt(document.getElementById('durM').value) || 0;
@@ -640,35 +642,53 @@ function canPass(ps, player){
 function canUndo(){
   // Always keep game_start + the first phase_start; undo is single-step
   // (armed once per action) and reverts the *entire* last action, however
-  // many events it pushed — see markAction() below.
+  // many events it pushed — see markAction() below. Not available at all in
+  // multi-device mode yet — see pushEvent()'s note.
+  if(isMultiDevice) return false;
   return !lastActionWasUndo && lastPushCount>0 && (events.length-lastPushCount)>=2;
 }
 
 /* ---------------- actions ----------------
-   Every action funnels its event(s) through markAction() so undo() can
-   always pop exactly what the last action pushed, not just one raw event. */
-function markAction(startLen){
-  lastPushCount = events.length - startLen;
-  lastActionWasUndo = false;
-  persistState();
+   Every action funnels its event(s) through pushEvent(), so there is exactly
+   one thing that varies between single-device and multi-device: where an
+   event actually lands. In single-device mode pushEvent() mutates `events`
+   directly, same as always. In multi-device mode it writes through the
+   append_event RPC and does NOT touch `events` locally — the realtime
+   subscription is the only thing that ever mutates `events` in that mode,
+   so both devices are always rendering the same confirmed log, never a
+   local guess. markAction() takes an explicit count (how many events this
+   action just pushed) rather than inferring it from array-length, since in
+   multi-device mode the array hasn't changed yet when markAction() runs. */
+async function pushEvent(eventObj){
+  if(isMultiDevice){
+    const { error } = await sb.rpc('append_event', { p_game_id: currentGameCode, p_event: eventObj });
+    if(error) console.error('append_event failed', error);
+  } else {
+    events.push(eventObj);
+  }
 }
-function tapDone(playerIdx){
+function markAction(count){
+  lastPushCount = count;
+  lastActionWasUndo = false;
+  if(!isMultiDevice) persistState();
+}
+async function tapDone(playerIdx){
   if(isGameEnded() || isPaused() || isBetweenRounds()) return;
+  if(isMultiDevice && playerIdx!==myPlayerSlot) return;
   const ps = currentPhaseEvent();
   if(currentActivePlayer(ps)!==playerIdx) return;
-  const startLen = events.length;
-  events.push({type:'activation', phase:ps.phase, round:ps.round, player:playerIdx, outcome:'done', ts:effectiveNow()});
-  markAction(startLen);
-  render();
+  await pushEvent({type:'activation', phase:ps.phase, round:ps.round, player:playerIdx, outcome:'done', ts:effectiveNow()});
+  markAction(1);
+  if(!isMultiDevice) render();
 }
-function tapPass(playerIdx){
+async function tapPass(playerIdx){
   if(isGameEnded() || isPaused() || isBetweenRounds()) return;
+  if(isMultiDevice && playerIdx!==myPlayerSlot) return;
   const ps = currentPhaseEvent();
   if(currentActivePlayer(ps)!==playerIdx || !canPass(ps, playerIdx)) return;
-  const startLen = events.length;
-  events.push({type:'activation', phase:ps.phase, round:ps.round, player:playerIdx, outcome:'pass', ts:effectiveNow()});
-  markAction(startLen);
-  render();
+  await pushEvent({type:'activation', phase:ps.phase, round:ps.round, player:playerIdx, outcome:'pass', ts:effectiveNow()});
+  markAction(1);
+  if(!isMultiDevice) render();
 }
 // The Pass/Done button becomes "Undo" immediately after it's tapped, and
 // reverts to Pass/Done the instant anything else happens (single-step only —
@@ -689,93 +709,99 @@ function undo(){
   persistState();
   render();
 }
-function pauseGame(){
+async function pauseGame(){
   if(isGameEnded() || isPaused()) return;
-  const startLen = events.length;
-  events.push({type:'pause', ts:Date.now()});
-  markAction(startLen);
-  render();
+  await pushEvent({type:'pause', ts:Date.now()});
+  markAction(1);
+  if(!isMultiDevice) render();
 }
-function resumeGame(){
+async function resumeGame(){
   if(!isPaused()) return;
-  const startLen = events.length;
-  events.push({type:'resume', ts:Date.now()});
-  markAction(startLen);
-  render();
+  await pushEvent({type:'resume', ts:Date.now()});
+  markAction(1);
+  if(!isMultiDevice) render();
 }
 function togglePause(){
   if(isGameEnded()) return;
   isPaused() ? resumeGame() : pauseGame();
 }
-function advancePhase(){
+async function advancePhase(){
   if(isPaused() || isBetweenRounds()) return;
-  const startLen = events.length;
   const t = effectiveNow();
   const ps = currentPhaseEvent();
+  let count = 0;
 
   // Auto-close whichever activation is still in progress so its time is
   // attributed correctly and never leaks across the phase boundary.
   if(PLAYER_TIMED_PHASES.indexOf(ps.phase)!==-1){
     const activePlayer = currentActivePlayer(ps);
-    events.push({type:'activation', phase:ps.phase, round:ps.round, player:activePlayer, outcome:'done', ts:t});
+    await pushEvent({type:'activation', phase:ps.phase, round:ps.round, player:activePlayer, outcome:'done', ts:t});
+    count++;
   }
-  events.push({type:'phase_end', phase:ps.phase, round:ps.round, ts:t});
+  await pushEvent({type:'phase_end', phase:ps.phase, round:ps.round, ts:t});
+  count++;
 
   const pregameIdx = PREGAME_SEQUENCE.indexOf(ps.phase);
   if(pregameIdx!==-1){
     // One-time setup: Place Obstacles -> Deploy Fleets -> Round 1 Command Phase.
     const nextPhase = pregameIdx < PREGAME_SEQUENCE.length-1 ? PREGAME_SEQUENCE[pregameIdx+1] : 'command';
     const nextRound = pregameIdx < PREGAME_SEQUENCE.length-1 ? 0 : 1;
-    events.push({type:'phase_start', phase:nextPhase, round:nextRound, ts:t});
-    markAction(startLen);
-    render();
+    await pushEvent({type:'phase_start', phase:nextPhase, round:nextRound, ts:t});
+    count++;
+    markAction(count);
+    if(!isMultiDevice) render();
     return;
   }
 
   const idx = PHASE_SEQUENCE.indexOf(ps.phase);
   if(idx < PHASE_SEQUENCE.length-1){
     const nextPhase = PHASE_SEQUENCE[idx+1];
-    events.push({type:'phase_start', phase:nextPhase, round:ps.round, ts:t});
-    markAction(startLen);
-    render();
+    await pushEvent({type:'phase_start', phase:nextPhase, round:ps.round, ts:t});
+    count++;
+    markAction(count);
+    if(!isMultiDevice) render();
   } else if(ps.round < roundLimit){
     // Round over, but not the last one: stop at round_end and let the
     // players choose to continue or end the game here — never auto-advance
     // into a new round.
-    events.push({type:'round_end', round:ps.round, ts:t});
-    markAction(startLen);
-    render();
+    await pushEvent({type:'round_end', round:ps.round, ts:t});
+    count++;
+    markAction(count);
+    if(!isMultiDevice) render();
   } else {
-    events.push({type:'round_end', round:ps.round, ts:t});
-    events.push({type:'game_end', ts:t});
-    markAction(startLen);
-    endGame();
+    await pushEvent({type:'round_end', round:ps.round, ts:t});
+    count++;
+    await pushEvent({type:'game_end', ts:t});
+    count++;
+    markAction(count);
+    if(!isMultiDevice) endGame();
   }
 }
 // Only reachable between rounds (isBetweenRounds()) — the round-limit case
 // already ends the game automatically in advancePhase() above.
-function beginNextRound(){
+async function beginNextRound(){
   if(!isBetweenRounds()) return;
-  const startLen = events.length;
   const finishedRound = events[events.length-1].round;
-  events.push({type:'phase_start', phase:'command', round:finishedRound+1, ts:effectiveNow()});
-  markAction(startLen);
-  render();
+  await pushEvent({type:'phase_start', phase:'command', round:finishedRound+1, ts:effectiveNow()});
+  markAction(1);
+  if(!isMultiDevice) render();
 }
-function endGameNow(){
+async function endGameNow(){
   if(!isBetweenRounds()) return;
-  const startLen = events.length;
-  events.push({type:'game_end', ts:effectiveNow()});
-  markAction(startLen);
-  endGame();
+  await pushEvent({type:'game_end', ts:effectiveNow()});
+  markAction(1);
+  if(!isMultiDevice) endGame();
 }
 function endGame(){
   clearInterval(tickHandle);
+  if(eventsChannel){ sb.removeChannel(eventsChannel); eventsChannel = null; }
   renderStats();
   show('screen-stats');
 }
 function newGame(){
   clearInterval(tickHandle);
+  isMultiDevice = false;
+  myPlayerSlot = null;
   events = [];
   gameStartTs = null;
   lastActionWasUndo = false;
@@ -884,6 +910,7 @@ function render(){
   const pauseBtn = document.getElementById('pauseBtn');
   pauseBtn.textContent = paused ? '▶' : '⏸';
   pauseBtn.title = paused ? 'Resume' : 'Pause';
+  document.getElementById('undoBtn').classList.toggle('hidden', isMultiDevice);
   document.getElementById('undoBtn').disabled = !canUndo();
 
   const betweenRounds = isBetweenRounds();
@@ -951,11 +978,12 @@ function renderSplitView(ps, t, paused){
 
     const isActive = pi===activePlayer;
     const isJustActed = pi===justActedPlayer;
+    const isMine = !isMultiDevice || pi===myPlayerSlot;
 
     panel.classList.toggle('active-amber', isActive && pi===0);
     panel.classList.toggle('active-cyan', isActive && pi===1);
     clockWrap.classList.toggle('hidden', !isActive);
-    controls.classList.toggle('hidden', !isActive && !isJustActed);
+    controls.classList.toggle('hidden', !((isActive && isMine) || isJustActed));
 
     if(isActive){
       statusEl.textContent = paused ? "Paused" : "Active — activation in progress";
@@ -1169,6 +1197,8 @@ function renderStats(){
 
 /* ---------------- single-device entry (from landing) ---------------- */
 function enterSingleDevice(){
+  isMultiDevice = false;
+  myPlayerSlot = null;
   const data = loadPersistedState();
   const resumePrompt = document.getElementById('resumePrompt');
   const setupForm = document.getElementById('setupForm');
@@ -1232,6 +1262,13 @@ const deviceId = getDeviceId();
 let creatorSlot = 0;
 let currentGameCode = null;
 let lobbyChannel = null;
+let isMultiDevice = false;
+let myPlayerSlot = null;
+let eventsChannel = null;
+let eventsBySeq = new Map(); // seq -> event; rebuilt into `events` on every incoming row so out-of-order delivery (subscribe-then-fetch overlap) can never corrupt ordering
+let multiDeviceReady = false; // true once the initial event-log fetch has landed; suppresses render() during backfill
+let gameStartChannel = null;
+let joinStartHandled = false;
 
 function selectCreatorSlot(slot){
   creatorSlot = slot;
@@ -1308,8 +1345,74 @@ function subscribeToPlayers(code, onOtherJoined){
     .subscribe();
 }
 
-function startFromLobby(){
-  alert('Live gameplay sync isn\'t built yet — this is where the synced game will begin.');
+// applyIncomingEvent() is the *only* thing that ever mutates `events` in
+// multi-device mode. Incoming rows are keyed by seq into a Map and `events`
+// is rebuilt sorted on every arrival, rather than pushed directly — the
+// subscribe-then-fetch pattern means a realtime row can legitimately arrive
+// before the backfill fetch resolves, and a naive append would corrupt
+// ordering (or a "seq <= lastSeq" skip would wrongly drop it).
+function applyIncomingEvent(seq, event){
+  eventsBySeq.set(seq, event);
+  const seqs = Array.from(eventsBySeq.keys()).sort((a,b)=>a-b);
+  events = seqs.map(s=>eventsBySeq.get(s));
+  if(!multiDeviceReady) return; // still backfilling; enterMultiDeviceGame() will render once ready
+  if(event.type==='game_end'){ endGame(); return; }
+  render();
+}
+function subscribeToGameEvents(code){
+  if(eventsChannel){ sb.removeChannel(eventsChannel); eventsChannel = null; }
+  eventsChannel = sb.channel('game-events-' + code)
+    .on('postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'game_events', filter: 'game_id=eq.' + code },
+      function(payload){ applyIncomingEvent(payload.new.seq, payload.new.event); })
+    .subscribe();
+}
+async function enterMultiDeviceGame(slot){
+  isMultiDevice = true;
+  myPlayerSlot = slot;
+  eventsBySeq = new Map();
+  events = [];
+  multiDeviceReady = false;
+  lastActionWasUndo = false;
+  lastPushCount = 0;
+  warningSoundPlayed = false;
+  overtimeSoundPlayed = false;
+  try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ audioCtx = null; }
+
+  subscribeToGameEvents(currentGameCode); // subscribe first so nothing appended during the fetch below is missed
+
+  const { data, error } = await sb.from('game_events').select('seq,event')
+    .eq('game_id', currentGameCode).order('seq', { ascending: true });
+  if(!error && data){
+    data.forEach(row => eventsBySeq.set(row.seq, row.event));
+    const seqs = Array.from(eventsBySeq.keys()).sort((a,b)=>a-b);
+    events = seqs.map(s=>eventsBySeq.get(s));
+  }
+
+  const startEvt = events.find(e=>e.type==='game_start');
+  gameStartTs = startEvt ? startEvt.ts : Date.now();
+  if(startEvt){
+    roundLimit = startEvt.roundLimit;
+    targetDurationSec = startEvt.targetDurationSec;
+  }
+
+  multiDeviceReady = true;
+  show('screen-live');
+  tickHandle = setInterval(render, 250);
+  render();
+}
+
+async function startFromLobby(){
+  const btn = document.getElementById('lobbyStartBtn');
+  btn.disabled = true;
+  const { error } = await sb.rpc('start_game', { p_game_id: currentGameCode });
+  if(error){
+    btn.disabled = false;
+    alert('Could not start the game. Check your connection and try again.');
+    return;
+  }
+  if(lobbyChannel){ sb.removeChannel(lobbyChannel); lobbyChannel = null; }
+  await enterMultiDeviceGame(creatorSlot);
 }
 
 function leaveLobby(){
@@ -1363,6 +1466,35 @@ async function enterJoinConfirm(code, slot, status){
     ' · Target: ' + fmt(meta.targetDurationSec || 0, true);
 
   show('screen-join-confirm');
+
+  // Subscribe first, then check started_at directly — covers both "the
+  // creator taps Start while I'm waiting" (caught live) and "I refreshed
+  // after the game already started" (caught by the direct check).
+  joinStartHandled = false;
+  subscribeToGameStart(code, slot);
+  const { data: gameRow } = await sb.from('games').select('started_at').eq('id', code).single();
+  if(gameRow && gameRow.started_at) await handleGameStarted(slot);
+}
+function subscribeToGameStart(code, slot){
+  if(gameStartChannel){ sb.removeChannel(gameStartChannel); gameStartChannel = null; }
+  gameStartChannel = sb.channel('game-start-' + code)
+    .on('postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'games', filter: 'id=eq.' + code },
+      function(payload){
+        if(payload.new.started_at) handleGameStarted(slot);
+      })
+    .subscribe();
+}
+async function handleGameStarted(slot){
+  if(joinStartHandled) return;
+  joinStartHandled = true;
+  if(gameStartChannel){ sb.removeChannel(gameStartChannel); gameStartChannel = null; }
+  await enterMultiDeviceGame(slot);
+}
+function leaveJoinConfirm(){
+  if(gameStartChannel){ sb.removeChannel(gameStartChannel); gameStartChannel = null; }
+  currentGameCode = null;
+  show('screen-landing');
 }
 
 show('screen-landing');

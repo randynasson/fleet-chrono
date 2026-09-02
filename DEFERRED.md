@@ -30,3 +30,9 @@ Ideas, needs, and open questions we've noted but decided not to pursue immediate
   needed later, it'd be to summaries/logs after the fact, not a live game view. Related to (but
   distinct from) the local-storage resume feature added for single-device — that's client-only;
   this is "can I rejoin a server-tracked game I was already part of."
+- Undo in multi-device games: not built in the initial gameplay-sync pass (2026-09-02) — the Undo
+  button is hidden entirely for multi-device games. Single-device undo just splices the local
+  `events` array, which has no server-side equivalent yet; supporting it would need a
+  `retract_last_event`-style DELETE RPC plus a realtime DELETE handler on the client (with
+  `REPLICA IDENTITY FULL` on `game_events` so the delete payload carries the row being removed) —
+  judged to be its own sub-feature, not a drop-in addition to the sync work.
