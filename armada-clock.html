@@ -52,6 +52,30 @@
   /* ---------- SETUP SCREEN ---------- */
   .setup{ padding:40px 28px; display:flex; flex-direction:column; height:100%; }
   .setup-form, .resume-prompt{ display:flex; flex-direction:column; flex:1; }
+  .landing-options{ display:flex; flex-direction:column; gap:10px; }
+  .slot-picker{ display:flex; gap:8px; }
+  .slot-btn{
+    flex:1; padding:12px; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer;
+    background:transparent; border:1px solid var(--hairline); color:var(--text-dim); font-family:'Inter',sans-serif;
+  }
+  .slot-btn.active{ background:var(--amber-dim); border-color:var(--amber); color:var(--amber); }
+  .code-card{ background:var(--panel-raised); border-radius:14px; padding:20px; text-align:center; margin-bottom:16px; }
+  .join-code{ font-size:26px; font-weight:700; letter-spacing:0.12em; }
+  .join-link{ font-size:12px; color:var(--text-dim); margin-top:8px; word-break:break-all; }
+  .lobby-status{ display:flex; align-items:center; gap:8px; font-size:13px; margin-bottom:8px; }
+  .lobby-status.waiting{ color:var(--amber); }
+  .lobby-status.ready{ color:var(--cyan); }
+  .spinner{
+    width:12px; height:12px; border-radius:50%; border:2px solid currentColor; border-top-color:transparent;
+    display:inline-block; animation:spin 0.8s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .field-error{ font-size:12px; color:var(--red); margin:-10px 0 16px; }
+  .code-input{
+    width:100%; background:var(--void); border:1px solid var(--hairline); border-radius:10px;
+    padding:14px; color:var(--text); font-size:20px; font-family:'JetBrains Mono',monospace;
+    text-align:center; letter-spacing:0.15em; text-transform:uppercase;
+  }
   .setup h1{ font-size:22px; font-weight:700; margin:0 0 4px; letter-spacing:-0.01em; }
   .setup .sub{ color:var(--text-dim); font-size:14px; margin:0 0 36px; line-height:1.5; }
   .field{ margin-bottom:20px; }
@@ -217,8 +241,20 @@
 
 <div class="device">
 
-  <!-- SETUP -->
-  <div id="screen-setup" class="setup">
+  <!-- LANDING -->
+  <div id="screen-landing" class="setup">
+    <h1>Fleet Chrono</h1>
+    <p class="sub">How are you tracking this game?</p>
+    <div class="spacer"></div>
+    <div class="landing-options">
+      <button class="btn btn-primary" onclick="enterSingleDevice()">Use on this device</button>
+      <button class="btn btn-ghost" onclick="show('screen-multi-setup')">Start a multi-device game</button>
+      <button class="btn btn-ghost" onclick="show('screen-join')">Join a game</button>
+    </div>
+  </div>
+
+  <!-- SETUP (single device) -->
+  <div id="screen-setup" class="setup hidden">
     <h1>Fleet Chrono</h1>
 
     <div id="resumePrompt" class="resume-prompt hidden">
@@ -249,7 +285,85 @@
 
       <div class="spacer"></div>
       <button class="btn btn-primary" onclick="startGame()">Start game</button>
+      <button class="btn btn-ghost" style="margin-top:10px;" onclick="show('screen-landing')">&larr; Back</button>
     </div>
+  </div>
+
+  <!-- MULTI-DEVICE: CREATE -->
+  <div id="screen-multi-setup" class="setup hidden">
+    <h1>Fleet Chrono</h1>
+    <p class="sub">Multi-device &middot; step 1 of 2</p>
+
+    <div class="field">
+      <label>You are</label>
+      <div class="slot-picker">
+        <button id="slotBtn0" class="slot-btn active" onclick="selectCreatorSlot(0)">First Player</button>
+        <button id="slotBtn1" class="slot-btn" onclick="selectCreatorSlot(1)">Second Player</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Round limit</label>
+      <input id="multiRoundLimit" type="text" inputmode="numeric" value="6">
+    </div>
+    <div class="field">
+      <label>Game clock (target duration)</label>
+      <div class="duration-row">
+        <div class="field"><input id="multiDurH" type="text" inputmode="numeric" value="2"></div>
+        <div class="field"><input id="multiDurM" type="text" inputmode="numeric" value="15"></div>
+      </div>
+      <div style="display:flex; gap:10px; font-size:11px; color:var(--text-dim); margin-top:-14px;">
+        <div style="flex:1; text-align:center;">hours</div>
+        <div style="flex:1; text-align:center;">minutes</div>
+      </div>
+    </div>
+    <div id="multiSetupError" class="field-error hidden"></div>
+
+    <div class="spacer"></div>
+    <button id="createGameBtn" class="btn btn-primary" onclick="createMultiGame()">Create game</button>
+    <button class="btn btn-ghost" style="margin-top:10px;" onclick="show('screen-landing')">&larr; Back</button>
+  </div>
+
+  <!-- MULTI-DEVICE: LOBBY (creator waits) -->
+  <div id="screen-lobby" class="setup hidden">
+    <p class="sub">Multi-device &middot; step 2 of 2</p>
+    <div class="code-card">
+      <div id="lobbyCode" class="join-code mono">------</div>
+      <div id="lobbyLink" class="join-link"></div>
+    </div>
+    <div id="lobbyStatus" class="lobby-status waiting"><span class="spinner"></span> Waiting&hellip;</div>
+
+    <div class="spacer"></div>
+    <button id="lobbyStartBtn" class="btn btn-primary" onclick="startFromLobby()" disabled>Start game</button>
+    <button class="btn btn-ghost" style="margin-top:10px;" onclick="leaveLobby()">Cancel</button>
+  </div>
+
+  <!-- MULTI-DEVICE: JOIN -->
+  <div id="screen-join" class="setup hidden">
+    <h1>Fleet Chrono</h1>
+    <p class="sub">Enter the code the other player shared with you.</p>
+    <div class="field">
+      <label>Game code</label>
+      <input id="joinCodeInput" class="code-input" placeholder="e.g. AB3K9X" maxlength="6"
+        oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter') attemptJoin()">
+    </div>
+    <div id="joinError" class="field-error hidden"></div>
+
+    <div class="spacer"></div>
+    <button id="joinBtn" class="btn btn-primary" onclick="attemptJoin()">Join game</button>
+    <button class="btn btn-ghost" style="margin-top:10px;" onclick="show('screen-landing')">&larr; Back</button>
+  </div>
+
+  <!-- MULTI-DEVICE: JOIN CONFIRM (joiner waits) -->
+  <div id="screen-join-confirm" class="setup hidden">
+    <p class="sub" id="joinConfirmTitle">Joining game</p>
+    <div class="code-card">
+      <div id="joinConfirmRole" style="font-size:15px; font-weight:600;"></div>
+      <div id="joinConfirmDetails" style="font-size:12px; color:var(--text-dim); margin-top:8px;"></div>
+    </div>
+    <div class="lobby-status waiting"><span class="spinner"></span> Waiting for host to start&hellip;</div>
+
+    <div class="spacer"></div>
+    <button class="btn btn-ghost" onclick="show('screen-landing')">&larr; Leave</button>
   </div>
 
   <!-- LIVE GAME -->
@@ -372,6 +486,7 @@
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 /* ---------------- STATE: flat event log is the source of truth ----------------
    Two timestamp regimes coexist in the log:
@@ -706,7 +821,8 @@ function discardSavedGame(){
 
 /* ---------------- render loop ---------------- */
 function show(id){
-  ['screen-setup','screen-live','screen-stats','screen-activity'].forEach(s=>{
+  ['screen-landing','screen-setup','screen-multi-setup','screen-lobby','screen-join','screen-join-confirm',
+   'screen-live','screen-stats','screen-activity'].forEach(s=>{
     document.getElementById(s).classList.toggle('hidden', s!==id);
   });
 }
@@ -1051,14 +1167,15 @@ function renderStats(){
   }).join('') || '<div style="color:var(--text-dim); font-size:13px;">No activations recorded.</div>';
 }
 
-/* ---------------- resume-on-load ---------------- */
-(function initResumePrompt(){
+/* ---------------- single-device entry (from landing) ---------------- */
+function enterSingleDevice(){
   const data = loadPersistedState();
   const resumePrompt = document.getElementById('resumePrompt');
   const setupForm = document.getElementById('setupForm');
   if(!data){
     resumePrompt.classList.add('hidden');
     setupForm.classList.remove('hidden');
+    show('screen-setup');
     return;
   }
   const ended = data.events.some(e=>e.type==='game_end');
@@ -1074,7 +1191,181 @@ function renderStats(){
   document.getElementById('resumeBtn').textContent = ended ? 'View Results' : 'Resume Game';
   resumePrompt.classList.remove('hidden');
   setupForm.classList.add('hidden');
-})();
+  show('screen-setup');
+}
+
+/* ---------------- multi-device (Supabase) ----------------
+   This talks to a real backend (see supabase/migrations/0001_init.sql), but
+   only for game creation, joining, and presence — NOT gameplay sync yet.
+   The URL and publishable key below are meant to be public: they're
+   protected by Row Level Security on the server, not by secrecy. */
+const SUPABASE_URL = 'https://muamgwoxkbghpkoeqshv.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_XtwsTiX8Sg9QOL3V6JX7Tw_MZP1gNKw';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+function generateId(){
+  if(window.crypto && typeof crypto.randomUUID==='function'){
+    try{ return crypto.randomUUID(); }catch(e){}
+  }
+  // crypto.randomUUID() requires a secure context and isn't universally
+  // available; this is just a device identifier, not a security boundary,
+  // so a Math.random()-based fallback is fine.
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c){
+    const r = Math.random()*16|0, v = c==='x' ? r : (r&0x3|0x8);
+    return v.toString(16);
+  });
+}
+function getDeviceId(){
+  try{
+    let id = localStorage.getItem('fleetChronoDeviceId');
+    if(!id){
+      id = generateId();
+      localStorage.setItem('fleetChronoDeviceId', id);
+    }
+    return id;
+  }catch(e){
+    return generateId(); // no persistence available; still usable for this tab's session
+  }
+}
+const deviceId = getDeviceId();
+
+let creatorSlot = 0;
+let currentGameCode = null;
+let lobbyChannel = null;
+
+function selectCreatorSlot(slot){
+  creatorSlot = slot;
+  document.getElementById('slotBtn0').classList.toggle('active', slot===0);
+  document.getElementById('slotBtn1').classList.toggle('active', slot===1);
+}
+
+function showFieldError(id, message){
+  const el = document.getElementById(id);
+  el.textContent = message;
+  el.classList.remove('hidden');
+}
+function hideFieldError(id){
+  document.getElementById(id).classList.add('hidden');
+}
+
+async function createMultiGame(){
+  hideFieldError('multiSetupError');
+  const roundLimitVal = parseInt(document.getElementById('multiRoundLimit').value) || 6;
+  const h = parseInt(document.getElementById('multiDurH').value) || 0;
+  const m = parseInt(document.getElementById('multiDurM').value) || 0;
+  const targetSec = h*3600 + m*60;
+
+  const btn = document.getElementById('createGameBtn');
+  btn.disabled = true;
+  btn.textContent = 'Creating…';
+  const { data, error } = await sb.rpc('create_game', {
+    p_round_limit: roundLimitVal,
+    p_target_duration_sec: targetSec,
+    p_creator_slot: creatorSlot,
+    p_device_id: deviceId
+  });
+  btn.disabled = false;
+  btn.textContent = 'Create game';
+
+  if(error || !data || !data[0]){
+    showFieldError('multiSetupError', 'Could not create the game. Check your connection and try again.');
+    return;
+  }
+  currentGameCode = data[0].game_id;
+  enterLobby(creatorSlot);
+}
+
+function enterLobby(mySlot){
+  const otherSlot = mySlot===0 ? 1 : 0;
+  const otherLabel = otherSlot===0 ? 'First Player' : 'Second Player';
+
+  document.getElementById('lobbyCode').textContent = currentGameCode;
+  document.getElementById('lobbyLink').textContent =
+    location.href.replace(/[?#].*$/, '') + '?join=' + currentGameCode;
+
+  const statusEl = document.getElementById('lobbyStatus');
+  statusEl.className = 'lobby-status waiting';
+  statusEl.innerHTML = '<span class="spinner"></span> Waiting for ' + otherLabel + '…';
+  document.getElementById('lobbyStartBtn').disabled = true;
+
+  show('screen-lobby');
+
+  subscribeToPlayers(currentGameCode, function(){
+    statusEl.className = 'lobby-status ready';
+    statusEl.textContent = otherLabel + ' joined';
+    document.getElementById('lobbyStartBtn').disabled = false;
+  });
+}
+
+function subscribeToPlayers(code, onOtherJoined){
+  if(lobbyChannel){ sb.removeChannel(lobbyChannel); lobbyChannel = null; }
+  lobbyChannel = sb.channel('game-players-' + code)
+    .on('postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'game_players', filter: 'game_id=eq.' + code },
+      function(payload){
+        if(payload.new.device_id !== deviceId) onOtherJoined();
+      })
+    .subscribe();
+}
+
+function startFromLobby(){
+  alert('Live gameplay sync isn\'t built yet — this is where the synced game will begin.');
+}
+
+function leaveLobby(){
+  if(lobbyChannel){ sb.removeChannel(lobbyChannel); lobbyChannel = null; }
+  currentGameCode = null;
+  show('screen-landing');
+}
+
+async function attemptJoin(){
+  hideFieldError('joinError');
+  const raw = document.getElementById('joinCodeInput').value.trim().toUpperCase();
+  if(!raw){
+    showFieldError('joinError', 'Enter a code first.');
+    return;
+  }
+
+  const btn = document.getElementById('joinBtn');
+  btn.disabled = true;
+  btn.textContent = 'Joining…';
+  const { data, error } = await sb.rpc('join_game', { p_game_id: raw, p_device_id: deviceId });
+  btn.disabled = false;
+  btn.textContent = 'Join game';
+
+  if(error || !data || !data[0]){
+    showFieldError('joinError', 'Could not reach the game. Check your connection and try again.');
+    return;
+  }
+  const result = data[0];
+  if(result.status==='not_found'){
+    showFieldError('joinError', "That code doesn't match a game.");
+    return;
+  }
+  if(result.status==='full'){
+    showFieldError('joinError', 'This game already has two players.');
+    return;
+  }
+  currentGameCode = raw;
+  await enterJoinConfirm(raw, result.slot, result.status);
+}
+
+async function enterJoinConfirm(code, slot, status){
+  const { data } = await sb.from('game_events').select('event').eq('game_id', code).eq('seq', 0).single();
+  const meta = data ? data.event : {};
+  const myLabel = slot===0 ? 'First Player' : 'Second Player';
+
+  document.getElementById('joinConfirmTitle').textContent =
+    status==='reconnected' ? ('Reconnected to game ' + code) : ('Joining game ' + code);
+  document.getElementById('joinConfirmRole').textContent = 'You are ' + myLabel;
+  document.getElementById('joinConfirmDetails').textContent =
+    'Round limit: ' + (meta.roundLimit!=null ? meta.roundLimit : '?') +
+    ' · Target: ' + fmt(meta.targetDurationSec || 0, true);
+
+  show('screen-join-confirm');
+}
+
+show('screen-landing');
 </script>
 </body>
 </html>
