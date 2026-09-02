@@ -89,14 +89,16 @@
     background:var(--red-dim); color:var(--red); font-size:12px; font-weight:600;
     text-align:center; padding:6px; letter-spacing:0.02em;
   }
+  .paused-banner{
+    background:var(--amber-dim); color:var(--amber); font-size:12px; font-weight:600;
+    text-align:center; padding:6px; letter-spacing:0.02em;
+  }
 
   .stage{ flex:1; padding:24px 20px; display:flex; flex-direction:column; }
 
   /* shared phase (command/status) */
   .shared-phase{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
-  .shared-phase .phase-name{ font-size:16px; color:var(--text-dim); margin-bottom:14px; }
   .shared-phase .phase-clock{ font-size:56px; font-weight:700; margin-bottom:8px; }
-  .shared-phase .phase-hint{ font-size:13px; color:var(--text-dim); max-width:260px; line-height:1.5; }
 
   /* ship/squadron split */
   .split{ flex:1; display:flex; flex-direction:column; gap:14px; }
@@ -125,11 +127,14 @@
     width:52px; flex:none; display:flex; align-items:center; justify-content:center;
     background:transparent; border:1px solid var(--hairline); border-radius:12px; color:var(--text-dim);
   }
+  .btn:disabled, .icon-btn:disabled{ opacity:0.4; cursor:not-allowed; }
 
   /* ---------- STATS SCREEN ---------- */
   .stats{ padding:28px 22px 22px; overflow-y:auto; height:100%; }
-  .stats h2{ font-size:20px; font-weight:700; margin:0 0 2px; }
-  .stats .final-time{ color:var(--text-dim); font-size:13px; margin-bottom:24px; }
+  .stats-header{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:24px; }
+  .stats-header h2{ font-size:20px; font-weight:700; margin:0 0 2px; }
+  .btn-small{ padding:10px 14px; font-size:13px; flex:none; }
+  .stats .final-time{ color:var(--text-dim); font-size:13px; }
   .stat-block{ margin-bottom:26px; }
   .stat-block h3{ font-size:12px; color:var(--text-dim); font-weight:600; margin:0 0 10px; }
   .player-stat-row{
@@ -138,17 +143,40 @@
   .player-stat-row:last-child{ border-bottom:none; }
   .dot{ width:10px; height:10px; border-radius:50%; flex:none; }
   .dot.amber{ background:var(--amber); } .dot.cyan{ background:var(--cyan); }
-  .player-stat-row .name{ flex:1; font-size:14px; font-weight:600; }
+  .player-stat-row .stat-row-body{ flex:1; }
+  .player-stat-row .name{ font-size:14px; font-weight:600; }
+  .player-stat-row .sub{ font-size:11px; color:var(--text-dim); margin-top:2px; }
   .player-stat-row .num{ font-size:15px; }
+  .link-btn{
+    display:block; margin-top:10px; background:none; border:none; padding:0;
+    color:var(--amber); font-size:13px; font-weight:600; cursor:pointer; font-family:'Inter',sans-serif;
+  }
   .bar-row{ margin-bottom:12px; }
   .bar-row .bar-label{ display:flex; justify-content:space-between; font-size:12px; color:var(--text-dim); margin-bottom:5px; }
   .bar-track{ height:8px; border-radius:4px; background:var(--void); overflow:hidden; display:flex; }
   .bar-fill.amber{ background:var(--amber); }
   .bar-fill.cyan{ background:var(--cyan); }
+  .round-split-text{ font-size:11px; color:var(--text-dim); margin-top:6px; margin-bottom:14px; }
+  .round-split-text .amber-text{ color:var(--amber); }
+  .round-split-text .cyan-text{ color:var(--cyan); }
   .phase-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
   .phase-cell{ background:var(--panel-raised); border-radius:10px; padding:12px; }
   .phase-cell .pc-label{ font-size:11px; color:var(--text-dim); margin-bottom:4px; }
   .phase-cell .pc-val{ font-size:16px; font-weight:700; }
+
+  /* ---------- ACTIVITY LOG ---------- */
+  .activity-round{ margin-bottom:22px; }
+  .activity-round h4{ font-size:13px; font-weight:700; margin:0; }
+  .activity-phase-label{ font-size:11px; color:var(--text-dim); font-weight:600; margin:12px 0 4px; text-transform:uppercase; letter-spacing:0.03em; }
+  .activity-row{ display:flex; align-items:center; padding:8px 0; border-bottom:1px solid var(--hairline); font-size:13px; }
+  .activity-row:last-child{ border-bottom:none; }
+  .activity-row .dot{ margin-right:8px; }
+  .activity-row .a-name{ flex:1; }
+  .activity-row .a-outcome{ color:var(--text-dim); margin-right:10px; font-size:12px; }
+  .activity-shared-row{
+    display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--hairline);
+    font-size:13px; color:var(--text-dim);
+  }
 
   .hidden{ display:none !important; }
 </style>
@@ -160,16 +188,8 @@
   <!-- SETUP -->
   <div id="screen-setup" class="setup">
     <h1>Fleet Clock</h1>
-    <p class="sub">Tournament game timer for Star Wars: Armada. Tracks the round clock, phases, and each commander's turn time.</p>
+    <p class="sub">Tournament game timer for Star Wars: Armada. Tracks the round clock, phases, and each player's turn time.</p>
 
-    <div class="field">
-      <label>Commander 1</label>
-      <input id="p1name" type="text" placeholder="e.g. Sato" value="Rebel Fleet">
-    </div>
-    <div class="field">
-      <label>Commander 2</label>
-      <input id="p2name" type="text" placeholder="e.g. Ozzel" value="Imperial Fleet">
-    </div>
     <div class="field">
       <label>Round limit</label>
       <input id="roundLimit" type="text" inputmode="numeric" value="6">
@@ -193,6 +213,7 @@
   <!-- LIVE GAME -->
   <div id="screen-live" class="live hidden">
     <div id="overtimeBanner" class="overtime-banner hidden">GAME CLOCK EXPIRED — IN OVERTIME</div>
+    <div id="pausedBanner" class="paused-banner hidden">GAME PAUSED</div>
     <div class="strip">
       <div id="gameClock" class="game-clock mono">2:15:00</div>
       <div class="meta">
@@ -204,41 +225,44 @@
     <div class="stage">
       <!-- shared phase view -->
       <div id="sharedPhaseView" class="shared-phase hidden">
-        <div id="sharedPhaseName" class="phase-name">Command Phase</div>
         <div id="sharedPhaseClock" class="phase-clock mono">00:00</div>
-        <div class="phase-hint">Simultaneous phase — not attributed to a single commander.</div>
       </div>
 
       <!-- ship/squadron split view -->
       <div id="splitView" class="split hidden">
         <div id="panel1" class="player-panel">
           <div>
-            <div id="p1nameLive" class="p-name">Rebel Fleet</div>
+            <div id="p1nameLive" class="p-name">First Player</div>
             <div id="p1status" class="p-status">Idle</div>
           </div>
-          <div id="p1clock" class="p-clock mono">00:00</div>
-          <div class="p-controls">
-            <button class="btn btn-turn-amber" onclick="tapMyTurn(0)">My Turn</button>
-            <button class="btn btn-pass" onclick="tapPass(0)">Pass</button>
+          <div id="p1clockWrap" class="hidden">
+            <div id="p1clock" class="p-clock mono">00:00</div>
+          </div>
+          <div id="p1controls" class="p-controls hidden">
+            <button id="p1passBtn" class="btn btn-pass" onclick="tapPass(0)">Pass</button>
+            <button id="p1doneBtn" class="btn btn-turn-amber" onclick="handleDoneOrUndo(0)">Done</button>
           </div>
         </div>
         <div id="panel2" class="player-panel">
           <div>
-            <div id="p2nameLive" class="p-name">Imperial Fleet</div>
+            <div id="p2nameLive" class="p-name">Second Player</div>
             <div id="p2status" class="p-status">Idle</div>
           </div>
-          <div id="p2clock" class="p-clock mono">00:00</div>
-          <div class="p-controls">
-            <button class="btn btn-turn-cyan" onclick="tapMyTurn(1)">My Turn</button>
-            <button class="btn btn-pass" onclick="tapPass(1)">Pass</button>
+          <div id="p2clockWrap" class="hidden">
+            <div id="p2clock" class="p-clock mono">00:00</div>
+          </div>
+          <div id="p2controls" class="p-controls hidden">
+            <button id="p2passBtn" class="btn btn-pass" onclick="tapPass(1)">Pass</button>
+            <button id="p2doneBtn" class="btn btn-turn-cyan" onclick="handleDoneOrUndo(1)">Done</button>
           </div>
         </div>
       </div>
     </div>
 
     <div class="controls-bar">
-      <button class="icon-btn" onclick="undo()" title="Undo last action">↶</button>
-      <button id="advanceBtn" class="btn btn-primary" onclick="advancePhase()">End Command Phase</button>
+      <button id="undoBtn" class="icon-btn" onclick="undo()" title="Undo last action">↶</button>
+      <button id="pauseBtn" class="icon-btn" onclick="togglePause()" title="Pause">⏸</button>
+      <button id="advanceBtn" class="btn btn-primary" onclick="advancePhase()">Begin Ship Phase</button>
     </div>
   </div>
 
@@ -246,17 +270,24 @@
 
   <!-- STATS -->
   <div id="screen-stats" class="stats hidden">
-    <h2>Game complete</h2>
-    <div id="finalTime" class="final-time">Total time: 2:31:04 · 6 rounds</div>
+    <div class="stats-header">
+      <div>
+        <h2>Game complete</h2>
+        <div id="finalTime" class="final-time"></div>
+      </div>
+      <button class="btn btn-ghost btn-small" onclick="newGame()">New game</button>
+    </div>
 
     <div class="stat-block">
       <h3>TOTAL TIME ON CLOCK</h3>
       <div id="totalRows"></div>
+      <div id="totalBar" class="bar-track" style="margin-top:10px;"></div>
     </div>
 
     <div class="stat-block">
       <h3>AVERAGE PER ACTIVATION</h3>
       <div id="avgRows"></div>
+      <button class="link-btn" onclick="show('screen-activity')">View all activations →</button>
     </div>
 
     <div class="stat-block">
@@ -268,26 +299,39 @@
       <h3>SHARE OF TURN TIME PER ROUND</h3>
       <div id="roundBars"></div>
     </div>
+  </div>
 
-    <button class="btn btn-ghost" onclick="location.reload()">New game</button>
+  <!-- ACTIVITY LOG -->
+  <div id="screen-activity" class="stats hidden">
+    <div class="stats-header">
+      <h2>All Activations</h2>
+      <button class="btn btn-ghost btn-small" onclick="show('screen-stats')">Back</button>
+    </div>
+    <div id="activityLog"></div>
   </div>
 
 </div>
 
 <script>
-/* ---------------- STATE: flat event log is the source of truth ---------------- */
-let players = ["Rebel Fleet","Imperial Fleet"];
+/* ---------------- STATE: flat event log is the source of truth ----------------
+   Two timestamp regimes coexist in the log:
+   - pause/resume events carry REAL Date.now() timestamps (needed to measure
+     actual wall-clock paused duration).
+   - every other event carries an effectiveNow() timestamp (real time minus
+     total paused duration), so all the existing "duration = tsB - tsA" math
+     elsewhere never has to know pausing exists. */
+let players = ["First Player","Second Player"];
 let roundLimit = 6;
 let targetDurationSec = 8100;
 let gameStartTs = null;
-let events = []; // {type, player(0/1 or null), phase, round, ts}
+let events = []; // {type, player(0/1 or null), phase, round, ts, outcome}
 let tickHandle = null;
+let lastActionWasUndo = false; // undo is single-step: armed only until the next event
 
 const PHASE_SEQUENCE = ["command","ship","squadron","status"];
 const PHASE_LABELS = {command:"Command Phase", ship:"Ship Phase", squadron:"Squadron Phase", status:"Status Phase"};
 const PLAYER_TIMED_PHASES = ["ship","squadron"];
-
-function now(){ return Date.now(); }
+const FIRST_PLAYER = 0;
 
 function fmt(sec, forceHours){
   sec = Math.max(0, Math.round(sec));
@@ -296,23 +340,40 @@ function fmt(sec, forceHours){
   return String(m).padStart(2,'0')+":"+String(s).padStart(2,'0');
 }
 
+/* ---------------- pause-aware clock ---------------- */
+function isPaused(){
+  for(let i=events.length-1;i>=0;i--){
+    const e = events[i];
+    if(e.type==='resume') return false;
+    if(e.type==='pause') return true;
+  }
+  return false;
+}
+function totalPausedMs(uptoRealTs){
+  let total = 0, openPause = null;
+  for(const e of events){
+    if(e.type==='pause') openPause = e;
+    else if(e.type==='resume' && openPause){ total += e.ts - openPause.ts; openPause = null; }
+  }
+  if(openPause) total += uptoRealTs - openPause.ts;
+  return total;
+}
+function effectiveNow(){
+  const real = Date.now();
+  return real - totalPausedMs(real);
+}
+
 /* ---------------- SETUP ---------------- */
 function startGame(){
-  players = [
-    document.getElementById('p1name').value.trim() || "Commander 1",
-    document.getElementById('p2name').value.trim() || "Commander 2"
-  ];
   roundLimit = parseInt(document.getElementById('roundLimit').value) || 6;
   const h = parseInt(document.getElementById('durH').value) || 0;
   const m = parseInt(document.getElementById('durM').value) || 0;
   targetDurationSec = h*3600 + m*60;
 
-  document.getElementById('p1nameLive').textContent = players[0];
-  document.getElementById('p2nameLive').textContent = players[1];
-
-  gameStartTs = now();
+  gameStartTs = Date.now();
   events = [{type:'game_start', ts:gameStartTs, round:1, phase:'command'}];
   events.push({type:'phase_start', phase:'command', round:1, ts:gameStartTs});
+  lastActionWasUndo = false;
 
   show('screen-live');
   tickHandle = setInterval(render, 250);
@@ -324,60 +385,101 @@ function currentPhaseEvent(){
   for(let i=events.length-1;i>=0;i--){ if(events[i].type==='phase_start') return events[i]; }
   return null;
 }
-function isPhaseOpen(){
-  const ps = currentPhaseEvent();
-  if(!ps) return false;
-  for(let i=events.length-1;i>=0;i--){
-    if(events[i]===ps) return true;
-    if(events[i].type==='phase_end') return false;
-  }
-  return true;
-}
-function activeTurn(){
-  // scan backward for last turn_start not yet closed, within the currently open phase
-  const ps = currentPhaseEvent();
-  for(let i=events.length-1;i>=0;i--){
-    const e = events[i];
-    if(e===ps) break;
-    if(e.type==='turn_end') return null;
-    if(e.type==='turn_start') return e;
-  }
-  return null;
-}
 function isGameEnded(){ return events.some(e=>e.type==='game_end'); }
 
+// Activations are not stored as separate start/end events — each completed
+// activation (Done or Pass) is a single log entry, and the active player /
+// their activation's start time are always derived from the sequence so far
+// this phase. This is what makes single-step undo fully correct: popping
+// one event always fully reverts exactly one player action.
+function activationsInPhase(ps){
+  return events.slice(events.indexOf(ps)+1).filter(e=>e.type==='activation');
+}
+function currentActivePlayer(ps){
+  const acts = activationsInPhase(ps);
+  if(acts.length===0) return FIRST_PLAYER; // First Player's activation auto-starts
+  return acts[acts.length-1].player===0 ? 1 : 0;
+}
+function currentActivationStartTs(ps){
+  const acts = activationsInPhase(ps);
+  return acts.length ? acts[acts.length-1].ts : ps.ts;
+}
+function lastActivationForPlayer(ps, player){
+  const acts = activationsInPhase(ps);
+  for(let i=acts.length-1;i>=0;i--){ if(acts[i].player===player) return acts[i]; }
+  return null;
+}
+function canPass(ps, player){
+  if(ps.phase!=='ship') return false; // passing only exists in Ship Phase
+  const last = lastActivationForPlayer(ps, player);
+  if(!last) return player!==FIRST_PLAYER; // First Player can never pass their first activation
+  return last.outcome!=='pass'; // no two consecutive passes by the same player
+}
+function canUndo(){
+  return !lastActionWasUndo && events.length>2; // always keep game_start + first phase_start
+}
+
 /* ---------------- actions ---------------- */
-function tapMyTurn(playerIdx){
-  if(isGameEnded()) return;
-  const t = now();
-  const at = activeTurn();
+function tapDone(playerIdx){
+  if(isGameEnded() || isPaused()) return;
   const ps = currentPhaseEvent();
-  if(at) events.push({type:'turn_end', player:at.player, phase:ps.phase, round:ps.round, ts:t});
-  if(at && at.player===playerIdx) { render(); return; } // tapping own active turn again = just close it
-  events.push({type:'turn_start', player:playerIdx, phase:ps.phase, round:ps.round, ts:t});
+  if(currentActivePlayer(ps)!==playerIdx) return;
+  events.push({type:'activation', phase:ps.phase, round:ps.round, player:playerIdx, outcome:'done', ts:effectiveNow()});
+  lastActionWasUndo = false;
   render();
 }
 function tapPass(playerIdx){
-  if(isGameEnded()) return;
-  const t = now();
-  const at = activeTurn();
+  if(isGameEnded() || isPaused()) return;
   const ps = currentPhaseEvent();
-  if(at && at.player===playerIdx) events.push({type:'turn_end', player:at.player, phase:ps.phase, round:ps.round, ts:t});
-  events.push({type:'pass', player:playerIdx, phase:ps.phase, round:ps.round, ts:t});
+  if(currentActivePlayer(ps)!==playerIdx || !canPass(ps, playerIdx)) return;
+  events.push({type:'activation', phase:ps.phase, round:ps.round, player:playerIdx, outcome:'pass', ts:effectiveNow()});
+  lastActionWasUndo = false;
   render();
+}
+// The Pass/Done button becomes "Undo" immediately after it's tapped, and
+// reverts to Pass/Done the instant anything else happens (single-step only —
+// this is a quick mis-tap correction, not a history walkback).
+function handleDoneOrUndo(playerIdx){
+  const last = events[events.length-1];
+  if(last && last.type==='activation' && last.player===playerIdx && canUndo()){
+    undo();
+  } else {
+    tapDone(playerIdx);
+  }
 }
 function undo(){
-  if(events.length<=1) return; // keep game_start
+  if(!canUndo()) return;
   events.pop();
-  // also don't allow undoing past the very first phase_start
-  if(events[events.length-1].type==='game_start') events.push({type:'phase_start', phase:'command', round:1, ts:gameStartTs});
+  lastActionWasUndo = true;
   render();
 }
+function pauseGame(){
+  if(isGameEnded() || isPaused()) return;
+  events.push({type:'pause', ts:Date.now()});
+  lastActionWasUndo = false;
+  render();
+}
+function resumeGame(){
+  if(!isPaused()) return;
+  events.push({type:'resume', ts:Date.now()});
+  lastActionWasUndo = false;
+  render();
+}
+function togglePause(){
+  if(isGameEnded()) return;
+  isPaused() ? resumeGame() : pauseGame();
+}
 function advancePhase(){
-  const t = now();
+  if(isPaused()) return;
+  const t = effectiveNow();
   const ps = currentPhaseEvent();
-  const at = activeTurn();
-  if(at) events.push({type:'turn_end', player:at.player, phase:ps.phase, round:ps.round, ts:t});
+
+  // Auto-close whichever activation is still in progress so its time is
+  // attributed correctly and never leaks across the phase boundary.
+  if(PLAYER_TIMED_PHASES.indexOf(ps.phase)!==-1){
+    const activePlayer = currentActivePlayer(ps);
+    events.push({type:'activation', phase:ps.phase, round:ps.round, player:activePlayer, outcome:'done', ts:t});
+  }
   events.push({type:'phase_end', phase:ps.phase, round:ps.round, ts:t});
 
   const idx = PHASE_SEQUENCE.indexOf(ps.phase);
@@ -390,41 +492,57 @@ function advancePhase(){
       events.push({type:'phase_start', phase:'command', round:ps.round+1, ts:t});
     } else {
       events.push({type:'round_end', round:ps.round, ts:t});
+      lastActionWasUndo = false;
       endGame();
       return;
     }
   }
+  lastActionWasUndo = false;
   render();
 }
 function endGame(){
-  events.push({type:'game_end', ts:now()});
+  events.push({type:'game_end', ts:effectiveNow()});
   clearInterval(tickHandle);
   renderStats();
   show('screen-stats');
 }
+function newGame(){
+  clearInterval(tickHandle);
+  events = [];
+  gameStartTs = null;
+  lastActionWasUndo = false;
+  show('screen-setup');
+}
 
 /* ---------------- render loop ---------------- */
 function show(id){
-  ['screen-setup','screen-live','screen-stats'].forEach(s=>{
+  ['screen-setup','screen-live','screen-stats','screen-activity'].forEach(s=>{
     document.getElementById(s).classList.toggle('hidden', s!==id);
   });
 }
 
 function render(){
-  const t = now();
+  const t = effectiveNow();
+  const paused = isPaused();
+
   const elapsed = (t - gameStartTs)/1000;
   const remaining = targetDurationSec - elapsed;
   const gc = document.getElementById('gameClock');
-  const banner = document.getElementById('overtimeBanner');
+  const overtimeBanner = document.getElementById('overtimeBanner');
   if(remaining <= 0){
     gc.textContent = "+"+fmt(-remaining, true);
     gc.classList.add('overtime');
-    banner.classList.remove('hidden');
+    overtimeBanner.classList.remove('hidden');
   } else {
     gc.textContent = fmt(remaining, true);
     gc.classList.remove('overtime');
-    banner.classList.add('hidden');
+    overtimeBanner.classList.add('hidden');
   }
+
+  document.getElementById('pausedBanner').classList.toggle('hidden', !paused);
+  const pauseBtn = document.getElementById('pauseBtn');
+  pauseBtn.textContent = paused ? '▶' : '⏸';
+  pauseBtn.title = paused ? 'Resume' : 'Pause';
 
   const ps = currentPhaseEvent();
   document.getElementById('roundLabelTop').textContent = "Round "+ps.round+" of "+roundLimit;
@@ -435,79 +553,136 @@ function render(){
   document.getElementById('splitView').classList.toggle('hidden', shared);
 
   if(shared){
-    document.getElementById('sharedPhaseName').textContent = PHASE_LABELS[ps.phase];
     document.getElementById('sharedPhaseClock').textContent = fmt((t-ps.ts)/1000);
   } else {
-    const at = activeTurn();
-    [0,1].forEach(pi=>{
-      const panel = document.getElementById('panel'+(pi+1));
-      const statusEl = document.getElementById('p'+(pi+1)+'status');
-      const clockEl = document.getElementById('p'+(pi+1)+'clock');
-      const isActive = at && at.player===pi;
-      panel.classList.toggle('active-amber', isActive && pi===0);
-      panel.classList.toggle('active-cyan', isActive && pi===1);
-      if(isActive){
-        statusEl.textContent = "Active — activation in progress";
-        clockEl.textContent = fmt((t-at.ts)/1000);
-      } else {
-        const passes = events.filter(e=>e.type==='pass' && e.player===pi && e.round===ps.round && e.phase===ps.phase).length;
-        statusEl.textContent = passes>0 ? "Passed" : "Idle";
-        clockEl.textContent = "00:00";
-      }
-    });
+    renderSplitView(ps, t, paused);
   }
 
   const advanceBtn = document.getElementById('advanceBtn');
+  advanceBtn.disabled = paused;
   const idx = PHASE_SEQUENCE.indexOf(ps.phase);
   const isLast = idx===PHASE_SEQUENCE.length-1 && ps.round===roundLimit;
-  advanceBtn.textContent = isLast ? "End Game" : "End "+PHASE_LABELS[ps.phase];
+  if(isLast){
+    advanceBtn.textContent = "End Game";
+  } else {
+    const nextPhase = PHASE_SEQUENCE[(idx+1) % PHASE_SEQUENCE.length];
+    advanceBtn.textContent = "Begin "+PHASE_LABELS[nextPhase];
+  }
+
+  document.getElementById('undoBtn').disabled = !canUndo();
+}
+
+function renderSplitView(ps, t, paused){
+  const activePlayer = currentActivePlayer(ps);
+  const startTs = currentActivationStartTs(ps);
+  const lastEvent = events[events.length-1];
+  const justActedPlayer = (lastEvent && lastEvent.type==='activation' && canUndo()) ? lastEvent.player : null;
+
+  [0,1].forEach(pi=>{
+    const panel = document.getElementById('panel'+(pi+1));
+    const statusEl = document.getElementById('p'+(pi+1)+'status');
+    const clockEl = document.getElementById('p'+(pi+1)+'clock');
+    const clockWrap = document.getElementById('p'+(pi+1)+'clockWrap');
+    const controls = document.getElementById('p'+(pi+1)+'controls');
+    const passBtn = document.getElementById('p'+(pi+1)+'passBtn');
+    const doneBtn = document.getElementById('p'+(pi+1)+'doneBtn');
+
+    const isActive = pi===activePlayer;
+    const isJustActed = pi===justActedPlayer;
+
+    panel.classList.toggle('active-amber', isActive && pi===0);
+    panel.classList.toggle('active-cyan', isActive && pi===1);
+    clockWrap.classList.toggle('hidden', !isActive);
+    controls.classList.toggle('hidden', !isActive && !isJustActed);
+
+    if(isActive){
+      statusEl.textContent = paused ? "Paused" : "Active — activation in progress";
+      clockEl.textContent = fmt((t-startTs)/1000);
+      passBtn.classList.toggle('hidden', ps.phase!=='ship');
+      passBtn.disabled = paused || !canPass(ps, pi);
+      passBtn.textContent = "Pass";
+      doneBtn.disabled = paused;
+      doneBtn.textContent = "Done";
+    } else if(isJustActed){
+      statusEl.textContent = lastEvent.outcome==='pass' ? "Passed" : "Done";
+      passBtn.classList.add('hidden');
+      doneBtn.classList.remove('hidden');
+      doneBtn.disabled = false;
+      doneBtn.textContent = "Undo";
+    } else {
+      statusEl.textContent = "Idle";
+    }
+  });
 }
 
 /* ---------------- stats derivation ---------------- */
 function renderStats(){
   const totalElapsed = (events[events.length-1].ts - gameStartTs)/1000;
-  document.getElementById('finalTime').textContent =
-    "Total time: "+fmt(totalElapsed, true)+" · "+roundLimit+" rounds";
+  const diff = totalElapsed - targetDurationSec;
+  const diffLabel = diff > 0.5
+    ? `<span style="color:var(--red)">${fmt(diff)} over</span>`
+    : diff < -0.5
+      ? `${fmt(-diff)} under`
+      : `right on time`;
+  document.getElementById('finalTime').innerHTML =
+    `Target ${fmt(targetDurationSec, true)} · Actual ${fmt(totalElapsed, true)} (${diffLabel}) · ${roundLimit} rounds`;
 
-  // pair up turn_start/turn_end per player
-  const durations = {0:[], 1:[]};
+  // Walk the log in order, tracking the last phase/activation boundary so every
+  // activation's (and pass's) duration is derived as the gap since the previous
+  // one — this fully accounts for all elapsed time within a phase, in sequence.
+  // The same walk also builds the chronological activity log grouped by round.
+  const durations = {0:[], 1:[]}; // completed ("done") activations only, {sec, phase}
   const phaseTotals = {command:0, ship:0, squadron:0, status:0};
   const roundPlayerTotals = {}; // round -> {0:sec,1:sec}
-  let openStart = null;
+  const activityByRound = {}; // round -> ordered list of {kind, ...}
+  let boundaryTs = null;
   events.forEach(e=>{
-    if(e.type==='turn_start'){ openStart = e; }
-    else if(e.type==='turn_end' && openStart){
-      const d = (e.ts - openStart.ts)/1000;
-      durations[openStart.player].push(d);
-      phaseTotals[openStart.phase] += d;
-      roundPlayerTotals[openStart.round] = roundPlayerTotals[openStart.round] || {0:0,1:0};
-      roundPlayerTotals[openStart.round][openStart.player] += d;
-      openStart = null;
-    }
-  });
-  // command/status phase totals (shared, not per player)
-  let openPhase = null;
-  events.forEach(e=>{
-    if(e.type==='phase_start' && PLAYER_TIMED_PHASES.indexOf(e.phase)===-1){ openPhase = e; }
-    else if(e.type==='phase_end' && openPhase){
-      phaseTotals[openPhase.phase] += (e.ts-openPhase.ts)/1000;
-      openPhase = null;
+    if(e.type==='phase_start'){
+      boundaryTs = e.ts;
+      (activityByRound[e.round] = activityByRound[e.round] || []).push({kind:'phase-start', phase:e.phase});
+    } else if(e.type==='phase_end'){
+      const d = (e.ts-boundaryTs)/1000;
+      if(PLAYER_TIMED_PHASES.indexOf(e.phase)===-1){
+        phaseTotals[e.phase] += d;
+        activityByRound[e.round].push({kind:'shared', phase:e.phase, sec:d});
+      }
+      boundaryTs = e.ts;
+    } else if(e.type==='activation'){
+      const d = (e.ts-boundaryTs)/1000;
+      boundaryTs = e.ts;
+      phaseTotals[e.phase] += d;
+      if(e.outcome==='done') durations[e.player].push({sec:d, phase:e.phase});
+      roundPlayerTotals[e.round] = roundPlayerTotals[e.round] || {0:0,1:0};
+      roundPlayerTotals[e.round][e.player] += d;
+      activityByRound[e.round].push({kind:'activation', phase:e.phase, player:e.player, outcome:e.outcome, sec:d});
     }
   });
 
-  const totalP0 = durations[0].reduce((a,b)=>a+b,0);
-  const totalP1 = durations[1].reduce((a,b)=>a+b,0);
-  const avgP0 = durations[0].length ? totalP0/durations[0].length : 0;
-  const avgP1 = durations[1].length ? totalP1/durations[1].length : 0;
+  const totals = [0,1].map(p=>durations[p].reduce((a,b)=>a+b.sec,0));
+  const counts = [0,1].map(p=>durations[p].length);
+  const avgs = [0,1].map(p=>counts[p]?totals[p]/counts[p]:0);
+  const longest = [0,1].map(p=>durations[p].reduce((best,cur)=>(!best||cur.sec>best.sec)?cur:best, null));
 
-  document.getElementById('totalRows').innerHTML = `
-    <div class="player-stat-row"><span class="dot amber"></span><span class="name">${players[0]}</span><span class="num mono">${fmt(totalP0)}</span></div>
-    <div class="player-stat-row"><span class="dot cyan"></span><span class="name">${players[1]}</span><span class="num mono">${fmt(totalP1)}</span></div>
-  `;
-  document.getElementById('avgRows').innerHTML = `
-    <div class="player-stat-row"><span class="dot amber"></span><span class="name">${players[0]} (${durations[0].length} activations)</span><span class="num mono">${fmt(avgP0)}</span></div>
-    <div class="player-stat-row"><span class="dot cyan"></span><span class="name">${players[1]} (${durations[1].length} activations)</span><span class="num mono">${fmt(avgP1)}</span></div>
-  `;
+  document.getElementById('totalRows').innerHTML = [0,1].map(p=>`
+    <div class="player-stat-row">
+      <span class="dot ${p===0?'amber':'cyan'}"></span>
+      <span class="name">${players[p]}</span>
+      <span class="num mono">${fmt(totals[p])}</span>
+    </div>`).join('');
+  const totalSum = totals[0]+totals[1] || 1;
+  document.getElementById('totalBar').innerHTML =
+    `<div class="bar-fill amber" style="width:${(totals[0]/totalSum*100).toFixed(0)}%"></div>` +
+    `<div class="bar-fill cyan" style="width:${(totals[1]/totalSum*100).toFixed(0)}%"></div>`;
+
+  document.getElementById('avgRows').innerHTML = [0,1].map(p=>`
+    <div class="player-stat-row">
+      <span class="dot ${p===0?'amber':'cyan'}"></span>
+      <div class="stat-row-body">
+        <div class="name">${players[p]} (${counts[p]} activations)</div>
+        <div class="sub">${longest[p] ? `Longest: ${fmt(longest[p].sec)} (${PHASE_LABELS[longest[p].phase]})` : 'No activations'}</div>
+      </div>
+      <span class="num mono">${fmt(avgs[p])}</span>
+    </div>`).join('');
 
   document.getElementById('phaseGrid').innerHTML = PHASE_SEQUENCE.map(p=>`
     <div class="phase-cell">
@@ -528,9 +703,24 @@ function renderStats(){
           <div class="bar-fill amber" style="width:${pct0}%"></div>
           <div class="bar-fill cyan" style="width:${pct1}%"></div>
         </div>
+        <div class="round-split-text"><span class="amber-text">${players[0]}</span> ${fmt(rp[0])} · <span class="cyan-text">${players[1]}</span> ${fmt(rp[1])}</div>
       </div>`;
   }).join('');
   document.getElementById('roundBars').innerHTML = roundBarsHtml || '<div style="color:var(--text-dim); font-size:13px;">No timed activations recorded.</div>';
+
+  document.getElementById('activityLog').innerHTML = Object.keys(activityByRound).map(Number).sort((a,b)=>a-b).map(r=>{
+    const rows = activityByRound[r].map(it=>{
+      if(it.kind==='phase-start') return `<div class="activity-phase-label">${PHASE_LABELS[it.phase]}</div>`;
+      if(it.kind==='shared') return `<div class="activity-shared-row"><span>${PHASE_LABELS[it.phase]} (shared)</span><span class="mono">${fmt(it.sec)}</span></div>`;
+      return `<div class="activity-row">
+        <span class="dot ${it.player===0?'amber':'cyan'}"></span>
+        <span class="a-name">${players[it.player]}</span>
+        <span class="a-outcome">${it.outcome==='pass'?'Passed':'Done'}</span>
+        <span class="mono">${fmt(it.sec)}</span>
+      </div>`;
+    }).join('');
+    return `<div class="activity-round"><h4>Round ${r}</h4>${rows}</div>`;
+  }).join('') || '<div style="color:var(--text-dim); font-size:13px;">No activations recorded.</div>';
 }
 </script>
 </body>
