@@ -19,8 +19,14 @@ Ideas, needs, and open questions we've noted but decided not to pursue immediate
 - User accounts: associating a player's games/data with a persistent identity so they can see
   their pace/performance trends over time, across games. Much later problem — no auth, no
   accounts, no cross-game history exist yet.
-- Reconnect handling for multi-device games: once game state lives server-side, a device
-  refreshing, losing connection, or being closed mid-game shouldn't destroy the game for the
-  other player. Related to (but distinct from) the local-storage resume feature added for
-  single-device — that's client-only; this is "can I rejoin a server-tracked game I was already
-  part of."
+- Reconnect handling for multi-device games, bundled with third-join rejection (build together,
+  not separately — they're the same underlying mechanism telling apart "a returning player" from
+  "a new one," just triggering opposite outcomes): once game state lives server-side, a device
+  refreshing, losing connection, or being closed mid-game shouldn't destroy the game for the other
+  player, and should let the *same* player back into their own slot. A game has exactly two player
+  slots; once both are filled, a third join attempt against that code should be rejected with a
+  clear message ("This game already has two players"), not silently dropped into an undefined
+  state. No live-game spectator mode — considered and ruled out; if third-party access is ever
+  needed later, it'd be to summaries/logs after the fact, not a live game view. Related to (but
+  distinct from) the local-storage resume feature added for single-device — that's client-only;
+  this is "can I rejoin a server-tracked game I was already part of."
