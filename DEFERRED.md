@@ -19,17 +19,21 @@ Ideas, needs, and open questions we've noted but decided not to pursue immediate
 - User accounts: associating a player's games/data with a persistent identity so they can see
   their pace/performance trends over time, across games. Much later problem — no auth, no
   accounts, no cross-game history exist yet.
-- Reconnect handling for multi-device games, bundled with third-join rejection (build together,
-  not separately — they're the same underlying mechanism telling apart "a returning player" from
-  "a new one," just triggering opposite outcomes): once game state lives server-side, a device
-  refreshing, losing connection, or being closed mid-game shouldn't destroy the game for the other
-  player, and should let the *same* player back into their own slot. A game has exactly two player
-  slots; once both are filled, a third join attempt against that code should be rejected with a
-  clear message ("This game already has two players"), not silently dropped into an undefined
-  state. No live-game spectator mode — considered and ruled out; if third-party access is ever
-  needed later, it'd be to summaries/logs after the fact, not a live game view. Related to (but
-  distinct from) the local-storage resume feature added for single-device — that's client-only;
-  this is "can I rejoin a server-tracked game I was already part of."
+- ~~Reconnect handling for multi-device games, bundled with third-join rejection~~ — **built
+  2026-09-02.** Third-join rejection was already in place (`join_game` returns `'full'`, shown as
+  "This game already has two players"). Reconnect handling added: `{gameCode, isCreator}` persists
+  to localStorage (`fleetChronoMultiSession`, separate from the single-device save) the moment a
+  device enters a lobby or join-confirm screen; the landing screen offers a "Resume Game" prompt
+  when that's present, which reuses `join_game`'s existing `'reconnected'` status (it already
+  returns a recognized device's own slot) and drops the player back into whichever screen fits —
+  live game, lobby, or join-confirm — with a couple of one-time "did I miss something while I was
+  away" checks (an already-joined second player, an already-started game) since realtime only
+  pushes *new* changes, not ones that happened during the gap. Realtime channels also resync
+  automatically after a transient drop (wifi blip, phone sleep) — `makeReconnectHandler()` detects
+  a reconnect (not the initial connect) and re-pulls whatever that channel is responsible for.
+  Deliberately not built: a live "your opponent disconnected" indicator — recovery is silent on
+  both ends for now. No live-game spectator mode — considered and ruled out; if third-party access
+  is ever needed later, it'd be to summaries/logs after the fact, not a live game view.
 - Undo in multi-device games: not built in the initial gameplay-sync pass (2026-09-02) — the Undo
   button is hidden entirely for multi-device games. Single-device undo just splices the local
   `events` array, which has no server-side equivalent yet; supporting it would need a

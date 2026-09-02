@@ -244,12 +244,22 @@
   <!-- LANDING -->
   <div id="screen-landing" class="setup">
     <h1>Fleet Chrono</h1>
-    <p class="sub">How are you tracking this game?</p>
-    <div class="spacer"></div>
-    <div class="landing-options">
-      <button class="btn btn-primary" onclick="enterSingleDevice()">Use on this device</button>
-      <button class="btn btn-ghost" onclick="show('screen-multi-setup')">Start a multi-device game</button>
-      <button class="btn btn-ghost" onclick="show('screen-join')">Join a game</button>
+
+    <div id="multiResumePrompt" class="resume-prompt hidden">
+      <p class="sub" id="multiResumeSummary">A multi-device game was in progress.</p>
+      <div class="spacer"></div>
+      <button id="multiResumeBtn" class="btn btn-primary" onclick="resumeMultiSession()">Resume Game</button>
+      <button class="btn btn-ghost" style="margin-top:10px;" onclick="discardMultiSession()">Discard &amp; Start New</button>
+    </div>
+
+    <div id="landingOptions">
+      <p class="sub">How are you tracking this game?</p>
+      <div class="spacer"></div>
+      <div class="landing-options">
+        <button class="btn btn-primary" onclick="enterSingleDevice()">Use on this device</button>
+        <button class="btn btn-ghost" onclick="show('screen-multi-setup')">Start a multi-device game</button>
+        <button class="btn btn-ghost" onclick="show('screen-join')">Join a game</button>
+      </div>
     </div>
   </div>
 
@@ -795,6 +805,7 @@ async function endGameNow(){
 function endGame(){
   clearInterval(tickHandle);
   if(eventsChannel){ sb.removeChannel(eventsChannel); eventsChannel = null; }
+  if(isMultiDevice) clearMultiSession();
   renderStats();
   show('screen-stats');
 }
@@ -1270,6 +1281,107 @@ let multiDeviceReady = false; // true once the initial event-log fetch has lande
 let gameStartChannel = null;
 let joinStartHandled = false;
 
+/* ---------------- multi-device session persistence ----------------
+   Lets a device that refreshes, loses connection, or closes its tab
+   mid-game find its way back to its own slot instead of losing the game.
+   Separate from the single-device STORAGE_KEY: multi-device state itself
+   lives server-side, all this remembers is "which game, which role" so we
+   know where to reconnect to. join_game() already returns the caller's
+   existing slot for a device_id it recognizes ('reconnected'), so resuming
+   reuses that same RPC rather than needing anything new server-side. */
+const MULTI_STORAGE_KEY = 'fleetChronoMultiSession';
+function saveMultiSession(gameCode, isCreator){
+  try{ localStorage.setItem(MULTI_STORAGE_KEY, JSON.stringify({gameCode, isCreator})); }catch(e){}
+}
+function loadMultiSession(){
+  try{
+    const raw = localStorage.getItem(MULTI_STORAGE_KEY);
+    if(!raw) return null;
+    const data = JSON.parse(raw);
+    return (data && data.gameCode) ? data : null;
+  }catch(e){ return null; }
+}
+function clearMultiSession(){
+  try{ localStorage.removeItem(MULTI_STORAGE_KEY); }catch(e){}
+}
+function checkLandingState(){
+  const session = loadMultiSession();
+  document.getElementById('multiResumePrompt').classList.toggle('hidden', !session);
+  document.getElementById('landingOptions').classList.toggle('hidden', !!session);
+  if(session){
+    document.getElementById('multiResumeSummary').textContent =
+      'You have a multi-device game in progress (code ' + session.gameCode + ').';
+  }
+}
+async function resumeMultiSession(){
+  const session = loadMultiSession();
+  if(!session) return;
+  const btn = document.getElementById('multiResumeBtn');
+  btn.disabled = true;
+  btn.textContent = 'Resuming…';
+
+  const { data, error } = await sb.rpc('join_game', { p_game_id: session.gameCode, p_device_id: deviceId });
+  const result = data && data[0];
+  if(error || !result || result.status==='not_found' || result.status==='full'){
+    // The game is gone, or somehow no longer has room for us — nothing to resume.
+    btn.disabled = false;
+    btn.textContent = 'Resume Game';
+    clearMultiSession();
+    checkLandingState();
+    return;
+  }
+
+  currentGameCode = session.gameCode;
+  const slot = result.slot;
+  const { data: gameRow } = await sb.from('games').select('started_at').eq('id', session.gameCode).single();
+
+  btn.disabled = false;
+  btn.textContent = 'Resume Game';
+
+  if(gameRow && gameRow.started_at){
+    await enterMultiDeviceGame(slot);
+  } else if(session.isCreator){
+    enterLobby(slot);
+  } else {
+    await enterJoinConfirm(session.gameCode, slot, 'reconnected');
+  }
+}
+function discardMultiSession(){
+  clearMultiSession();
+  checkLandingState();
+}
+
+// Realtime channels drop and silently reconnect on their own (a wifi blip,
+// a phone sleeping); Supabase's client re-subscribes automatically, but
+// whatever happened while disconnected isn't replayed. This wraps a
+// channel's status callback so any transition back to SUBSCRIBED *after*
+// having actually dropped triggers a resync — never on the initial connect.
+function makeReconnectHandler(onReconnected){
+  let sawDrop = false;
+  return function(status){
+    if(status==='CLOSED' || status==='CHANNEL_ERROR' || status==='TIMED_OUT'){
+      sawDrop = true;
+    } else if(status==='SUBSCRIBED' && sawDrop){
+      sawDrop = false;
+      onReconnected();
+    }
+  };
+}
+async function resyncEventLog(){
+  if(!currentGameCode) return;
+  const { data, error } = await sb.from('game_events').select('seq,event')
+    .eq('game_id', currentGameCode).order('seq', { ascending: true });
+  if(!error && data) data.forEach(row => applyIncomingEvent(row.seq, row.event));
+}
+async function checkGameStartedNow(code, slot){
+  const { data } = await sb.from('games').select('started_at').eq('id', code).single();
+  if(data && data.started_at) handleGameStarted(slot);
+}
+async function checkOtherPlayerJoined(code, onOtherJoined){
+  const { data } = await sb.from('game_players').select('device_id').eq('game_id', code);
+  if(data && data.some(r => r.device_id !== deviceId)) onOtherJoined();
+}
+
 function selectCreatorSlot(slot){
   creatorSlot = slot;
   document.getElementById('slotBtn0').classList.toggle('active', slot===0);
@@ -1313,6 +1425,7 @@ async function createMultiGame(){
 }
 
 function enterLobby(mySlot){
+  creatorSlot = mySlot; // keep in sync with startFromLobby()'s read of it, including on a resumed session where mySlot may not match the create-flow default
   const otherSlot = mySlot===0 ? 1 : 0;
   const otherLabel = otherSlot===0 ? 'First Player' : 'Second Player';
 
@@ -1325,13 +1438,19 @@ function enterLobby(mySlot){
   statusEl.innerHTML = '<span class="spinner"></span> Waiting for ' + otherLabel + '…';
   document.getElementById('lobbyStartBtn').disabled = true;
 
+  saveMultiSession(currentGameCode, true);
   show('screen-lobby');
 
-  subscribeToPlayers(currentGameCode, function(){
+  const onOtherJoined = function(){
     statusEl.className = 'lobby-status ready';
     statusEl.textContent = otherLabel + ' joined';
     document.getElementById('lobbyStartBtn').disabled = false;
-  });
+  };
+  subscribeToPlayers(currentGameCode, onOtherJoined);
+  // Covers resuming into the lobby after the other player already joined
+  // while this device was away — there's no live INSERT to catch for that,
+  // since it already happened.
+  checkOtherPlayerJoined(currentGameCode, onOtherJoined);
 }
 
 function subscribeToPlayers(code, onOtherJoined){
@@ -1342,7 +1461,7 @@ function subscribeToPlayers(code, onOtherJoined){
       function(payload){
         if(payload.new.device_id !== deviceId) onOtherJoined();
       })
-    .subscribe();
+    .subscribe(makeReconnectHandler(function(){ checkOtherPlayerJoined(code, onOtherJoined); }));
 }
 
 // applyIncomingEvent() is the *only* thing that ever mutates `events` in
@@ -1365,7 +1484,7 @@ function subscribeToGameEvents(code){
     .on('postgres_changes',
       { event: 'INSERT', schema: 'public', table: 'game_events', filter: 'game_id=eq.' + code },
       function(payload){ applyIncomingEvent(payload.new.seq, payload.new.event); })
-    .subscribe();
+    .subscribe(makeReconnectHandler(resyncEventLog));
 }
 async function enterMultiDeviceGame(slot){
   isMultiDevice = true;
@@ -1418,7 +1537,9 @@ async function startFromLobby(){
 function leaveLobby(){
   if(lobbyChannel){ sb.removeChannel(lobbyChannel); lobbyChannel = null; }
   currentGameCode = null;
+  clearMultiSession();
   show('screen-landing');
+  checkLandingState();
 }
 
 async function attemptJoin(){
@@ -1465,6 +1586,7 @@ async function enterJoinConfirm(code, slot, status){
     'Round limit: ' + (meta.roundLimit!=null ? meta.roundLimit : '?') +
     ' · Target: ' + fmt(meta.targetDurationSec || 0, true);
 
+  saveMultiSession(code, false);
   show('screen-join-confirm');
 
   // Subscribe first, then check started_at directly — covers both "the
@@ -1472,8 +1594,7 @@ async function enterJoinConfirm(code, slot, status){
   // after the game already started" (caught by the direct check).
   joinStartHandled = false;
   subscribeToGameStart(code, slot);
-  const { data: gameRow } = await sb.from('games').select('started_at').eq('id', code).single();
-  if(gameRow && gameRow.started_at) await handleGameStarted(slot);
+  await checkGameStartedNow(code, slot);
 }
 function subscribeToGameStart(code, slot){
   if(gameStartChannel){ sb.removeChannel(gameStartChannel); gameStartChannel = null; }
@@ -1483,7 +1604,7 @@ function subscribeToGameStart(code, slot){
       function(payload){
         if(payload.new.started_at) handleGameStarted(slot);
       })
-    .subscribe();
+    .subscribe(makeReconnectHandler(function(){ checkGameStartedNow(code, slot); }));
 }
 async function handleGameStarted(slot){
   if(joinStartHandled) return;
@@ -1494,10 +1615,13 @@ async function handleGameStarted(slot){
 function leaveJoinConfirm(){
   if(gameStartChannel){ sb.removeChannel(gameStartChannel); gameStartChannel = null; }
   currentGameCode = null;
+  clearMultiSession();
   show('screen-landing');
+  checkLandingState();
 }
 
 show('screen-landing');
+checkLandingState();
 </script>
 </body>
 </html>
