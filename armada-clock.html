@@ -381,8 +381,14 @@ let warningSoundPlayed = false; // the 15-minute warning chime fires once per ga
 let overtimeSoundPlayed = false; // the clock-expired chime also fires once per game
 let audioCtx = null;
 
+// One-time setup phases, played once before Round 1 (round:0) — never repeated per round.
+const PREGAME_SEQUENCE = ["obstacles","deploy"];
 const PHASE_SEQUENCE = ["command","ship","squadron","status"];
-const PHASE_LABELS = {command:"Command Phase", ship:"Ship Phase", squadron:"Squadron Phase", status:"Status Phase"};
+const PHASE_LABELS = {
+  obstacles:"Place Obstacles", deploy:"Deploy Fleets",
+  command:"Command Phase", ship:"Ship Phase", squadron:"Squadron Phase", status:"Status Phase"
+};
+const ALL_PHASES_FOR_STATS = PREGAME_SEQUENCE.concat(PHASE_SEQUENCE);
 const PLAYER_TIMED_PHASES = ["ship","squadron"];
 const FIRST_PLAYER = 0;
 
@@ -424,8 +430,8 @@ function startGame(){
   targetDurationSec = h*3600 + m*60;
 
   gameStartTs = Date.now();
-  events = [{type:'game_start', ts:gameStartTs, round:1, phase:'command'}];
-  events.push({type:'phase_start', phase:'command', round:1, ts:gameStartTs});
+  events = [{type:'game_start', ts:gameStartTs, round:0, phase:'obstacles'}];
+  events.push({type:'phase_start', phase:'obstacles', round:0, ts:gameStartTs});
   lastActionWasUndo = false;
   lastPushCount = 0;
   warningSoundPlayed = false;
@@ -561,6 +567,17 @@ function advancePhase(){
   }
   events.push({type:'phase_end', phase:ps.phase, round:ps.round, ts:t});
 
+  const pregameIdx = PREGAME_SEQUENCE.indexOf(ps.phase);
+  if(pregameIdx!==-1){
+    // One-time setup: Place Obstacles -> Deploy Fleets -> Round 1 Command Phase.
+    const nextPhase = pregameIdx < PREGAME_SEQUENCE.length-1 ? PREGAME_SEQUENCE[pregameIdx+1] : 'command';
+    const nextRound = pregameIdx < PREGAME_SEQUENCE.length-1 ? 0 : 1;
+    events.push({type:'phase_start', phase:nextPhase, round:nextRound, ts:t});
+    markAction(startLen);
+    render();
+    return;
+  }
+
   const idx = PHASE_SEQUENCE.indexOf(ps.phase);
   if(idx < PHASE_SEQUENCE.length-1){
     const nextPhase = PHASE_SEQUENCE[idx+1];
@@ -695,7 +712,7 @@ function render(){
   }
 
   const ps = currentPhaseEvent();
-  document.getElementById('roundLabelTop').textContent = "Round "+ps.round+" of "+roundLimit;
+  document.getElementById('roundLabelTop').textContent = ps.round===0 ? "Game Setup" : "Round "+ps.round+" of "+roundLimit;
   document.getElementById('phaseLabelTop').textContent = PHASE_LABELS[ps.phase];
 
   const shared = PLAYER_TIMED_PHASES.indexOf(ps.phase)===-1;
@@ -710,13 +727,19 @@ function render(){
 
   const advanceBtn = document.getElementById('advanceBtn');
   advanceBtn.disabled = paused;
-  const idx = PHASE_SEQUENCE.indexOf(ps.phase);
-  const isLast = idx===PHASE_SEQUENCE.length-1 && ps.round===roundLimit;
-  if(isLast){
-    advanceBtn.textContent = "End Game";
+  const pregameIdx = PREGAME_SEQUENCE.indexOf(ps.phase);
+  if(pregameIdx!==-1){
+    const nextLabel = pregameIdx < PREGAME_SEQUENCE.length-1 ? PHASE_LABELS[PREGAME_SEQUENCE[pregameIdx+1]] : PHASE_LABELS.command;
+    advanceBtn.textContent = "Begin "+nextLabel;
   } else {
-    const nextPhase = PHASE_SEQUENCE[(idx+1) % PHASE_SEQUENCE.length];
-    advanceBtn.textContent = "Begin "+PHASE_LABELS[nextPhase];
+    const idx = PHASE_SEQUENCE.indexOf(ps.phase);
+    const isLast = idx===PHASE_SEQUENCE.length-1 && ps.round===roundLimit;
+    if(isLast){
+      advanceBtn.textContent = "End Game";
+    } else {
+      const nextPhase = PHASE_SEQUENCE[(idx+1) % PHASE_SEQUENCE.length];
+      advanceBtn.textContent = "Begin "+PHASE_LABELS[nextPhase];
+    }
   }
 }
 
@@ -780,7 +803,7 @@ function renderStats(){
   // one — this fully accounts for all elapsed time within a phase, in sequence.
   // The same walk also builds the chronological activity log grouped by round.
   const durations = {0:[], 1:[]}; // completed ("done") activations only, {sec, phase}
-  const phaseTotals = {command:0, ship:0, squadron:0, status:0};
+  const phaseTotals = {obstacles:0, deploy:0, command:0, ship:0, squadron:0, status:0};
   const roundPlayerTotals = {}; // round -> {0:sec,1:sec}
   const activityByRound = {}; // round -> ordered list of {kind, ...}
   let boundaryTs = null;
@@ -832,7 +855,7 @@ function renderStats(){
       <span class="num mono">${fmt(avgs[p])}</span>
     </div>`).join('');
 
-  document.getElementById('phaseGrid').innerHTML = PHASE_SEQUENCE.map(p=>`
+  document.getElementById('phaseGrid').innerHTML = ALL_PHASES_FOR_STATS.map(p=>`
     <div class="phase-cell">
       <div class="pc-label">${PHASE_LABELS[p]}</div>
       <div class="pc-val mono">${fmt(phaseTotals[p])}</div>
@@ -876,7 +899,7 @@ function renderStats(){
     paceBlock.classList.add('hidden');
   } else {
     paceBlock.classList.remove('hidden');
-    const overhead = phaseTotals.command + phaseTotals.status;
+    const overhead = phaseTotals.obstacles + phaseTotals.deploy + phaseTotals.command + phaseTotals.status;
     const activationBudget = Math.max(0, targetDurationSec - overhead);
     const totalDone = counts[0]+counts[1];
     const requiredAvg = totalDone>0 ? activationBudget/totalDone : null;
@@ -898,7 +921,7 @@ function renderStats(){
     if(fullyCompleted && requiredAvg!==null){
       summaryHtml = `This game finished all ${roundLimit} rounds but ran ${fmt(diff)} over the ${fmt(targetDurationSec,true)} target.
         To fit inside that target, activations needed to average about <strong class="mono">${fmt(requiredAvg)}</strong> each
-        (Command and Status phases used ${fmt(overhead)} of the budget on their own).`;
+        (Obstacles, Deployment, Command, and Status phases used ${fmt(overhead)} of the budget on their own).`;
       isSlowActivation = (a)=> a.kind==='activation' && a.sec >= requiredAvg*OUTLIER_MULTIPLIER;
       rowsHtml = [0,1].map(p=>{
         const over = avgs[p] > requiredAvg*PACE_TOLERANCE;
@@ -949,7 +972,7 @@ function renderStats(){
         <span class="mono">${fmt(it.sec)}</span>
       </div>`;
     }).join('');
-    return `<div class="activity-round"><h4>Round ${r}</h4>${rows}</div>`;
+    return `<div class="activity-round"><h4>${r===0?'Game Setup':'Round '+r}</h4>${rows}</div>`;
   }).join('') || '<div style="color:var(--text-dim); font-size:13px;">No activations recorded.</div>';
 }
 </script>
