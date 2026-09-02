@@ -14,7 +14,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Fleet Clock — Armada Tournament Timer",
+  title: "Fleet Chrono — Armada Tournament Timer",
   description: "Tournament game timer for Star Wars: Armada.",
 };
 

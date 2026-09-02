@@ -1,4 +1,4 @@
-# Fleet Clock — Star Wars: Armada Tournament Timer
+# Fleet Chrono — Star Wars: Armada Tournament Timer
 
 Mobile-first web app for tracking tournament game time in Star Wars: Armada. Sits on the table between two players during a match.
 
@@ -6,7 +6,7 @@ Mobile-first web app for tracking tournament game time in Star Wars: Armada. Sit
 
 Standard tournament rounds run 2h15m. Currently players self-police with a phone timer or alarm, which just stops (or is ignored) at expiry — there's no clean way to see how far into overtime a game has run, and no visibility into where time actually went (which player, which phase).
 
-Fleet Clock:
+Fleet Chrono:
 - Runs a single game clock counting down from the round target. At zero, it doesn't stop — it flips into a clearly-marked overtime state and keeps counting up until players end the game.
 - Tracks the fixed phase sequence per round: **command → ship → squadron → status**, across a configurable round limit (default 6).
 - Within ship and squadron phases (where players alternate ship/squadron activations), tracks each player's individual turn time, chess-clock style — but as a **stopwatch only, no time bank / no pressure**. This is pure telemetry, not a competitive constraint.

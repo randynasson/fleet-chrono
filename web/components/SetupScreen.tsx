@@ -30,7 +30,7 @@ export default function SetupScreen({
 
   return (
     <div className="flex h-full flex-col p-10 px-7">
-      <h1 className="mb-1 text-[22px] font-bold tracking-tight">Fleet Clock</h1>
+      <h1 className="mb-1 text-[22px] font-bold tracking-tight">Fleet Chrono</h1>
       <p className="mb-9 text-sm leading-relaxed text-text-dim">
         Tournament game timer for Star Wars: Armada. Tracks the round clock,
         phases, and each commander&apos;s turn time.

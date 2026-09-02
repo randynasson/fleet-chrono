@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Fleet Clock — Armada Tournament Timer</title>
+<title>Fleet Chrono — Armada Tournament Timer</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap');
 
@@ -93,12 +93,24 @@
     background:var(--amber-dim); color:var(--amber); font-size:12px; font-weight:600;
     text-align:center; padding:6px; letter-spacing:0.02em;
   }
+  @keyframes pulse-warn{ 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+  .warning-banner{
+    background:var(--amber-dim); color:var(--amber); font-size:12px; font-weight:600;
+    text-align:center; padding:6px; letter-spacing:0.02em;
+    animation:pulse-warn 1.2s ease-in-out infinite;
+  }
+  .game-clock.warning{ color:var(--amber); animation:pulse-warn 1.2s ease-in-out infinite; }
 
   .stage{ flex:1; padding:24px 20px; display:flex; flex-direction:column; }
 
   /* shared phase (command/status) */
   .shared-phase{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
   .shared-phase .phase-clock{ font-size:56px; font-weight:700; margin-bottom:8px; }
+
+  /* between rounds: continue or end the game here */
+  .between-rounds{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+  .between-rounds .br-title{ font-size:19px; font-weight:700; margin-bottom:8px; }
+  .between-rounds .br-sub{ font-size:13px; color:var(--text-dim); max-width:260px; line-height:1.5; }
 
   /* ship/squadron split */
   .split{ flex:1; display:flex; flex-direction:column; gap:14px; }
@@ -123,6 +135,8 @@
     display:flex; gap:10px;
   }
   .controls-bar .btn{ flex:1; }
+  .round-end-controls{ display:flex; gap:8px; flex:1; }
+  .round-end-controls .btn{ flex:1; }
   .icon-btn{
     width:52px; flex:none; display:flex; align-items:center; justify-content:center;
     background:transparent; border:1px solid var(--hairline); border-radius:12px; color:var(--text-dim);
@@ -164,6 +178,18 @@
   .phase-cell .pc-label{ font-size:11px; color:var(--text-dim); margin-bottom:4px; }
   .phase-cell .pc-val{ font-size:16px; font-weight:700; }
 
+  /* ---------- PACE ANALYSIS ---------- */
+  .pace-summary{ font-size:13px; color:var(--text-dim); line-height:1.5; margin-bottom:14px; }
+  .pace-player{ background:var(--panel-raised); border-radius:10px; padding:14px; margin-bottom:10px; }
+  .pace-player:last-child{ margin-bottom:0; }
+  .pace-player .pace-name{ display:flex; align-items:center; gap:8px; font-size:14px; font-weight:600; }
+  .pace-player .pace-status{ font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; letter-spacing:0.02em; }
+  .pace-status.ontrack{ background:var(--cyan-dim); color:var(--cyan); }
+  .pace-status.over{ background:var(--red-dim); color:var(--red); }
+  .pace-player .pace-detail{ font-size:12px; color:var(--text-dim); margin:4px 0 2px; }
+  .pace-type-row{ display:flex; justify-content:space-between; font-size:12px; color:var(--text-dim); margin-top:4px; }
+  .pace-type-row.flagged{ color:var(--red); font-weight:600; }
+
   /* ---------- ACTIVITY LOG ---------- */
   .activity-round{ margin-bottom:22px; }
   .activity-round h4{ font-size:13px; font-weight:700; margin:0; }
@@ -173,6 +199,11 @@
   .activity-row .dot{ margin-right:8px; }
   .activity-row .a-name{ flex:1; }
   .activity-row .a-outcome{ color:var(--text-dim); margin-right:10px; font-size:12px; }
+  .activity-row.slow{ background:rgba(229,72,77,0.08); border-radius:8px; margin:0 -8px; padding:8px; }
+  .slow-tag{
+    font-size:10px; font-weight:700; color:var(--red); background:var(--red-dim);
+    padding:2px 7px; border-radius:999px; letter-spacing:0.03em; margin-right:10px;
+  }
   .activity-shared-row{
     display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--hairline);
     font-size:13px; color:var(--text-dim);
@@ -187,7 +218,7 @@
 
   <!-- SETUP -->
   <div id="screen-setup" class="setup">
-    <h1>Fleet Clock</h1>
+    <h1>Fleet Chrono</h1>
     <p class="sub">Tournament game timer for Star Wars: Armada. Tracks the round clock, phases, and each player's turn time.</p>
 
     <div class="field">
@@ -213,6 +244,7 @@
   <!-- LIVE GAME -->
   <div id="screen-live" class="live hidden">
     <div id="overtimeBanner" class="overtime-banner hidden">GAME CLOCK EXPIRED — IN OVERTIME</div>
+    <div id="warningBanner" class="warning-banner hidden">15 MINUTES REMAINING</div>
     <div id="pausedBanner" class="paused-banner hidden">GAME PAUSED</div>
     <div class="strip">
       <div id="gameClock" class="game-clock mono">2:15:00</div>
@@ -226,6 +258,12 @@
       <!-- shared phase view -->
       <div id="sharedPhaseView" class="shared-phase hidden">
         <div id="sharedPhaseClock" class="phase-clock mono">00:00</div>
+      </div>
+
+      <!-- between-rounds: continue or end the game here (never mid-round) -->
+      <div id="betweenRoundsView" class="between-rounds hidden">
+        <div id="betweenRoundsTitle" class="br-title">Round 1 Complete</div>
+        <div class="br-sub">Continue to the next round, or end the game here.</div>
       </div>
 
       <!-- ship/squadron split view -->
@@ -263,6 +301,10 @@
       <button id="undoBtn" class="icon-btn" onclick="undo()" title="Undo last action">↶</button>
       <button id="pauseBtn" class="icon-btn" onclick="togglePause()" title="Pause">⏸</button>
       <button id="advanceBtn" class="btn btn-primary" onclick="advancePhase()">Begin Ship Phase</button>
+      <div id="roundEndControls" class="round-end-controls hidden">
+        <button id="beginRoundBtn" class="btn btn-primary" onclick="beginNextRound()">Begin Round 2</button>
+        <button class="btn btn-ghost" onclick="endGameNow()">End Game</button>
+      </div>
     </div>
   </div>
 
@@ -276,6 +318,13 @@
         <div id="finalTime" class="final-time"></div>
       </div>
       <button class="btn btn-ghost btn-small" onclick="newGame()">New game</button>
+    </div>
+
+    <div id="paceBlock" class="stat-block hidden">
+      <h3>PACE ANALYSIS</h3>
+      <div id="paceSummary" class="pace-summary"></div>
+      <div id="paceRows"></div>
+      <button class="link-btn" onclick="show('screen-activity')">View highlighted activations →</button>
     </div>
 
     <div class="stat-block">
@@ -327,6 +376,10 @@ let gameStartTs = null;
 let events = []; // {type, player(0/1 or null), phase, round, ts, outcome}
 let tickHandle = null;
 let lastActionWasUndo = false; // undo is single-step: armed only until the next event
+let lastPushCount = 0; // how many events the most recent action pushed, so undo reverts all of them
+let warningSoundPlayed = false; // the 15-minute warning chime fires once per game
+let overtimeSoundPlayed = false; // the clock-expired chime also fires once per game
+let audioCtx = null;
 
 const PHASE_SEQUENCE = ["command","ship","squadron","status"];
 const PHASE_LABELS = {command:"Command Phase", ship:"Ship Phase", squadron:"Squadron Phase", status:"Status Phase"};
@@ -374,6 +427,10 @@ function startGame(){
   events = [{type:'game_start', ts:gameStartTs, round:1, phase:'command'}];
   events.push({type:'phase_start', phase:'command', round:1, ts:gameStartTs});
   lastActionWasUndo = false;
+  lastPushCount = 0;
+  warningSoundPlayed = false;
+  overtimeSoundPlayed = false;
+  try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ audioCtx = null; }
 
   show('screen-live');
   tickHandle = setInterval(render, 250);
@@ -386,6 +443,13 @@ function currentPhaseEvent(){
   return null;
 }
 function isGameEnded(){ return events.some(e=>e.type==='game_end'); }
+// A round ends with round_end but no phase_start for the next round is pushed
+// until the players choose to continue — this is the deliberate pause point
+// where "end the game now" is offered (never mid-round, only here).
+function isBetweenRounds(){
+  const last = events[events.length-1];
+  return !!last && last.type==='round_end';
+}
 
 // Activations are not stored as separate start/end events — each completed
 // activation (Done or Pass) is a single log entry, and the active player /
@@ -416,24 +480,35 @@ function canPass(ps, player){
   return last.outcome!=='pass'; // no two consecutive passes by the same player
 }
 function canUndo(){
-  return !lastActionWasUndo && events.length>2; // always keep game_start + first phase_start
+  // Always keep game_start + the first phase_start; undo is single-step
+  // (armed once per action) and reverts the *entire* last action, however
+  // many events it pushed — see markAction() below.
+  return !lastActionWasUndo && lastPushCount>0 && (events.length-lastPushCount)>=2;
 }
 
-/* ---------------- actions ---------------- */
+/* ---------------- actions ----------------
+   Every action funnels its event(s) through markAction() so undo() can
+   always pop exactly what the last action pushed, not just one raw event. */
+function markAction(startLen){
+  lastPushCount = events.length - startLen;
+  lastActionWasUndo = false;
+}
 function tapDone(playerIdx){
-  if(isGameEnded() || isPaused()) return;
+  if(isGameEnded() || isPaused() || isBetweenRounds()) return;
   const ps = currentPhaseEvent();
   if(currentActivePlayer(ps)!==playerIdx) return;
+  const startLen = events.length;
   events.push({type:'activation', phase:ps.phase, round:ps.round, player:playerIdx, outcome:'done', ts:effectiveNow()});
-  lastActionWasUndo = false;
+  markAction(startLen);
   render();
 }
 function tapPass(playerIdx){
-  if(isGameEnded() || isPaused()) return;
+  if(isGameEnded() || isPaused() || isBetweenRounds()) return;
   const ps = currentPhaseEvent();
   if(currentActivePlayer(ps)!==playerIdx || !canPass(ps, playerIdx)) return;
+  const startLen = events.length;
   events.push({type:'activation', phase:ps.phase, round:ps.round, player:playerIdx, outcome:'pass', ts:effectiveNow()});
-  lastActionWasUndo = false;
+  markAction(startLen);
   render();
 }
 // The Pass/Done button becomes "Undo" immediately after it's tapped, and
@@ -449,20 +524,23 @@ function handleDoneOrUndo(playerIdx){
 }
 function undo(){
   if(!canUndo()) return;
-  events.pop();
+  events.splice(events.length-lastPushCount, lastPushCount);
   lastActionWasUndo = true;
+  lastPushCount = 0;
   render();
 }
 function pauseGame(){
   if(isGameEnded() || isPaused()) return;
+  const startLen = events.length;
   events.push({type:'pause', ts:Date.now()});
-  lastActionWasUndo = false;
+  markAction(startLen);
   render();
 }
 function resumeGame(){
   if(!isPaused()) return;
+  const startLen = events.length;
   events.push({type:'resume', ts:Date.now()});
-  lastActionWasUndo = false;
+  markAction(startLen);
   render();
 }
 function togglePause(){
@@ -470,7 +548,8 @@ function togglePause(){
   isPaused() ? resumeGame() : pauseGame();
 }
 function advancePhase(){
-  if(isPaused()) return;
+  if(isPaused() || isBetweenRounds()) return;
+  const startLen = events.length;
   const t = effectiveNow();
   const ps = currentPhaseEvent();
 
@@ -486,22 +565,40 @@ function advancePhase(){
   if(idx < PHASE_SEQUENCE.length-1){
     const nextPhase = PHASE_SEQUENCE[idx+1];
     events.push({type:'phase_start', phase:nextPhase, round:ps.round, ts:t});
+    markAction(startLen);
+    render();
+  } else if(ps.round < roundLimit){
+    // Round over, but not the last one: stop at round_end and let the
+    // players choose to continue or end the game here — never auto-advance
+    // into a new round.
+    events.push({type:'round_end', round:ps.round, ts:t});
+    markAction(startLen);
+    render();
   } else {
-    if(ps.round < roundLimit){
-      events.push({type:'round_end', round:ps.round, ts:t});
-      events.push({type:'phase_start', phase:'command', round:ps.round+1, ts:t});
-    } else {
-      events.push({type:'round_end', round:ps.round, ts:t});
-      lastActionWasUndo = false;
-      endGame();
-      return;
-    }
+    events.push({type:'round_end', round:ps.round, ts:t});
+    events.push({type:'game_end', ts:t});
+    markAction(startLen);
+    endGame();
   }
-  lastActionWasUndo = false;
+}
+// Only reachable between rounds (isBetweenRounds()) — the round-limit case
+// already ends the game automatically in advancePhase() above.
+function beginNextRound(){
+  if(!isBetweenRounds()) return;
+  const startLen = events.length;
+  const finishedRound = events[events.length-1].round;
+  events.push({type:'phase_start', phase:'command', round:finishedRound+1, ts:effectiveNow()});
+  markAction(startLen);
   render();
 }
-function endGame(){
+function endGameNow(){
+  if(!isBetweenRounds()) return;
+  const startLen = events.length;
   events.push({type:'game_end', ts:effectiveNow()});
+  markAction(startLen);
+  endGame();
+}
+function endGame(){
   clearInterval(tickHandle);
   renderStats();
   show('screen-stats');
@@ -511,6 +608,7 @@ function newGame(){
   events = [];
   gameStartTs = null;
   lastActionWasUndo = false;
+  lastPushCount = 0;
   show('screen-setup');
 }
 
@@ -521,6 +619,27 @@ function show(id){
   });
 }
 
+const WARNING_THRESHOLD_SEC = 15*60;
+const ALERT_TONE_FREQ_HZ = 880; // change this (or the envelope below) to use a different alert sound
+const PACE_TOLERANCE = 1.1;      // a player/type must exceed the pace target by >10% to count as "over"
+const OUTLIER_MULTIPLIER = 1.75; // an activation is highlighted as slow at 1.75x the relevant baseline
+
+function playAlertTone(){
+  if(!audioCtx) return;
+  try{
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.frequency.value = ALERT_TONE_FREQ_HZ;
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    const now = audioCtx.currentTime;
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.2, now+0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now+0.5);
+    osc.start(now);
+    osc.stop(now+0.55);
+  }catch(e){}
+}
+
 function render(){
   const t = effectiveNow();
   const paused = isPaused();
@@ -529,20 +648,51 @@ function render(){
   const remaining = targetDurationSec - elapsed;
   const gc = document.getElementById('gameClock');
   const overtimeBanner = document.getElementById('overtimeBanner');
+  const warningBanner = document.getElementById('warningBanner');
+  const inWarningWindow = remaining>0 && remaining<=WARNING_THRESHOLD_SEC;
   if(remaining <= 0){
     gc.textContent = "+"+fmt(-remaining, true);
     gc.classList.add('overtime');
+    gc.classList.remove('warning');
     overtimeBanner.classList.remove('hidden');
+    warningBanner.classList.add('hidden');
+    if(!overtimeSoundPlayed && !paused){
+      overtimeSoundPlayed = true;
+      playAlertTone();
+    }
   } else {
     gc.textContent = fmt(remaining, true);
     gc.classList.remove('overtime');
     overtimeBanner.classList.add('hidden');
+    gc.classList.toggle('warning', inWarningWindow);
+    warningBanner.classList.toggle('hidden', !inWarningWindow);
+    if(inWarningWindow && !warningSoundPlayed && !paused){
+      warningSoundPlayed = true;
+      playAlertTone();
+    }
   }
 
   document.getElementById('pausedBanner').classList.toggle('hidden', !paused);
   const pauseBtn = document.getElementById('pauseBtn');
   pauseBtn.textContent = paused ? '▶' : '⏸';
   pauseBtn.title = paused ? 'Resume' : 'Pause';
+  document.getElementById('undoBtn').disabled = !canUndo();
+
+  const betweenRounds = isBetweenRounds();
+  document.getElementById('advanceBtn').classList.toggle('hidden', betweenRounds);
+  document.getElementById('roundEndControls').classList.toggle('hidden', !betweenRounds);
+  document.getElementById('betweenRoundsView').classList.toggle('hidden', !betweenRounds);
+
+  if(betweenRounds){
+    const finishedRound = events[events.length-1].round;
+    document.getElementById('sharedPhaseView').classList.add('hidden');
+    document.getElementById('splitView').classList.add('hidden');
+    document.getElementById('roundLabelTop').textContent = "Round "+finishedRound+" of "+roundLimit;
+    document.getElementById('phaseLabelTop').textContent = "Round Complete";
+    document.getElementById('betweenRoundsTitle').textContent = "Round "+finishedRound+" Complete";
+    document.getElementById('beginRoundBtn').textContent = "Begin Round "+(finishedRound+1);
+    return;
+  }
 
   const ps = currentPhaseEvent();
   document.getElementById('roundLabelTop').textContent = "Round "+ps.round+" of "+roundLimit;
@@ -568,8 +718,6 @@ function render(){
     const nextPhase = PHASE_SEQUENCE[(idx+1) % PHASE_SEQUENCE.length];
     advanceBtn.textContent = "Begin "+PHASE_LABELS[nextPhase];
   }
-
-  document.getElementById('undoBtn').disabled = !canUndo();
 }
 
 function renderSplitView(ps, t, paused){
@@ -708,14 +856,96 @@ function renderStats(){
   }).join('');
   document.getElementById('roundBars').innerHTML = roundBarsHtml || '<div style="color:var(--text-dim); font-size:13px;">No timed activations recorded.</div>';
 
+  /* ---------------- pace analysis ----------------
+     Only shown when the game actually ran over its configured target. The
+     baseline is never "vs. the other player" — it's the target duration and
+     activation count doing the math, per the design discussion. */
+  const byType = {0:{ship:[], squadron:[]}, 1:{ship:[], squadron:[]}};
+  [0,1].forEach(p=>durations[p].forEach(d=>{ if(byType[p][d.phase]) byType[p][d.phase].push(d.sec); }));
+  function avgOf(arr){ return arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null; }
+
+  const lastRoundEnd = events.slice().reverse().find(e=>e.type==='round_end');
+  const roundsCompleted = lastRoundEnd ? lastRoundEnd.round : 0;
+  const fullyCompleted = roundsCompleted>=roundLimit;
+  const overBudget = diff>0;
+
+  const paceBlock = document.getElementById('paceBlock');
+  let isSlowActivation = ()=>false;
+
+  if(!overBudget){
+    paceBlock.classList.add('hidden');
+  } else {
+    paceBlock.classList.remove('hidden');
+    const overhead = phaseTotals.command + phaseTotals.status;
+    const activationBudget = Math.max(0, targetDurationSec - overhead);
+    const totalDone = counts[0]+counts[1];
+    const requiredAvg = totalDone>0 ? activationBudget/totalDone : null;
+
+    let summaryHtml, rowsHtml;
+
+    function typeRowsHtml(p, compareTo){
+      return [['Ship','ship'],['Squadron','squadron']].map(([label,key])=>{
+        const arr = byType[p][key];
+        if(!arr.length) return '';
+        const avg = avgOf(arr);
+        const flagged = compareTo!=null && avg > compareTo*PACE_TOLERANCE;
+        return `<div class="pace-type-row${flagged?' flagged':''}">
+          <span>${label} (${arr.length})</span><span class="mono">${fmt(avg)} avg${flagged?' — over pace':''}</span>
+        </div>`;
+      }).join('');
+    }
+
+    if(fullyCompleted && requiredAvg!==null){
+      summaryHtml = `This game finished all ${roundLimit} rounds but ran ${fmt(diff)} over the ${fmt(targetDurationSec,true)} target.
+        To fit inside that target, activations needed to average about <strong class="mono">${fmt(requiredAvg)}</strong> each
+        (Command and Status phases used ${fmt(overhead)} of the budget on their own).`;
+      isSlowActivation = (a)=> a.kind==='activation' && a.sec >= requiredAvg*OUTLIER_MULTIPLIER;
+      rowsHtml = [0,1].map(p=>{
+        const over = avgs[p] > requiredAvg*PACE_TOLERANCE;
+        return `<div class="pace-player">
+          <div class="pace-name">
+            <span class="dot ${p===0?'amber':'cyan'}"></span>${players[p]}
+            <span class="pace-status ${over?'over':'ontrack'}">${over?'Over pace':'On track'}</span>
+          </div>
+          <div class="pace-detail">${counts[p]} activations, averaging ${fmt(avgs[p])} each.</div>
+          ${typeRowsHtml(p, requiredAvg)}
+        </div>`;
+      }).join('');
+    } else if(!fullyCompleted){
+      summaryHtml = `This game ended after Round ${roundsCompleted} of ${roundLimit}, already ${fmt(diff)} over the
+        ${fmt(targetDurationSec,true)} target. Future rounds' activation counts can't be predicted (fleets shrink as
+        ships and squadrons are destroyed), so there's no exact pace target here — but each player's own slowest
+        activations, relative to their own average, are highlighted below.`;
+      isSlowActivation = (a)=>{
+        if(a.kind!=='activation') return false;
+        const ownAvg = avgOf(byType[a.player][a.phase] || []);
+        return ownAvg!==null && a.sec >= ownAvg*OUTLIER_MULTIPLIER;
+      };
+      rowsHtml = [0,1].map(p=>`
+        <div class="pace-player">
+          <div class="pace-name"><span class="dot ${p===0?'amber':'cyan'}"></span>${players[p]}</div>
+          <div class="pace-detail">${counts[p]} activations, averaging ${fmt(avgs[p])} each.</div>
+          ${typeRowsHtml(p, null)}
+        </div>`).join('');
+    } else {
+      summaryHtml = `This game finished all ${roundLimit} rounds but ran ${fmt(diff)} over the ${fmt(targetDurationSec,true)} target.`;
+      rowsHtml = '';
+    }
+
+    document.getElementById('paceSummary').innerHTML = summaryHtml;
+    document.getElementById('paceRows').innerHTML = rowsHtml;
+  }
+
   document.getElementById('activityLog').innerHTML = Object.keys(activityByRound).map(Number).sort((a,b)=>a-b).map(r=>{
     const rows = activityByRound[r].map(it=>{
       if(it.kind==='phase-start') return `<div class="activity-phase-label">${PHASE_LABELS[it.phase]}</div>`;
       if(it.kind==='shared') return `<div class="activity-shared-row"><span>${PHASE_LABELS[it.phase]} (shared)</span><span class="mono">${fmt(it.sec)}</span></div>`;
-      return `<div class="activity-row">
+      const slow = isSlowActivation(it);
+      return `<div class="activity-row${slow?' slow':''}">
         <span class="dot ${it.player===0?'amber':'cyan'}"></span>
         <span class="a-name">${players[it.player]}</span>
         <span class="a-outcome">${it.outcome==='pass'?'Passed':'Done'}</span>
+        ${slow?'<span class="slow-tag">SLOW</span>':''}
         <span class="mono">${fmt(it.sec)}</span>
       </div>`;
     }).join('');
