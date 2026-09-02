@@ -51,6 +51,7 @@
 
   /* ---------- SETUP SCREEN ---------- */
   .setup{ padding:40px 28px; display:flex; flex-direction:column; height:100%; }
+  .setup-form, .resume-prompt{ display:flex; flex-direction:column; flex:1; }
   .setup h1{ font-size:22px; font-weight:700; margin:0 0 4px; letter-spacing:-0.01em; }
   .setup .sub{ color:var(--text-dim); font-size:14px; margin:0 0 36px; line-height:1.5; }
   .field{ margin-bottom:20px; }
@@ -219,26 +220,36 @@
   <!-- SETUP -->
   <div id="screen-setup" class="setup">
     <h1>Fleet Chrono</h1>
-    <p class="sub">Tournament game timer for Star Wars: Armada. Tracks the round clock, phases, and each player's turn time.</p>
 
-    <div class="field">
-      <label>Round limit</label>
-      <input id="roundLimit" type="text" inputmode="numeric" value="6">
-    </div>
-    <div class="field">
-      <label>Game clock (target duration)</label>
-      <div class="duration-row">
-        <div class="field"><input id="durH" type="text" inputmode="numeric" value="2"></div>
-        <div class="field"><input id="durM" type="text" inputmode="numeric" value="15"></div>
-      </div>
-      <div style="display:flex; gap:10px; font-size:11px; color:var(--text-dim); margin-top:-14px;">
-        <div style="flex:1; text-align:center;">hours</div>
-        <div style="flex:1; text-align:center;">minutes</div>
-      </div>
+    <div id="resumePrompt" class="resume-prompt hidden">
+      <p class="sub" id="resumeSummary">A game was in progress.</p>
+      <div class="spacer"></div>
+      <button id="resumeBtn" class="btn btn-primary" onclick="resumeSavedGame()">Resume Game</button>
+      <button class="btn btn-ghost" style="margin-top:10px;" onclick="discardSavedGame()">Discard &amp; Start New</button>
     </div>
 
-    <div class="spacer"></div>
-    <button class="btn btn-primary" onclick="startGame()">Start game</button>
+    <div id="setupForm" class="setup-form">
+      <p class="sub">Tournament game timer for Star Wars: Armada. Tracks the round clock, phases, and each player's turn time.</p>
+
+      <div class="field">
+        <label>Round limit</label>
+        <input id="roundLimit" type="text" inputmode="numeric" value="6">
+      </div>
+      <div class="field">
+        <label>Game clock (target duration)</label>
+        <div class="duration-row">
+          <div class="field"><input id="durH" type="text" inputmode="numeric" value="2"></div>
+          <div class="field"><input id="durM" type="text" inputmode="numeric" value="15"></div>
+        </div>
+        <div style="display:flex; gap:10px; font-size:11px; color:var(--text-dim); margin-top:-14px;">
+          <div style="flex:1; text-align:center;">hours</div>
+          <div style="flex:1; text-align:center;">minutes</div>
+        </div>
+      </div>
+
+      <div class="spacer"></div>
+      <button class="btn btn-primary" onclick="startGame()">Start game</button>
+    </div>
   </div>
 
   <!-- LIVE GAME -->
@@ -399,6 +410,31 @@ function fmt(sec, forceHours){
   return String(m).padStart(2,'0')+":"+String(s).padStart(2,'0');
 }
 
+/* ---------------- local persistence ----------------
+   Single-device games have no server, so an accidental refresh or a mobile
+   swipe-back gesture would otherwise silently wipe an in-progress game. The
+   event log (the app's single source of truth) is auto-saved to
+   localStorage on every change and offered back on load — this is pure
+   client-side resilience, not a step toward server-backed state. */
+const STORAGE_KEY = 'fleetChronoGame';
+function persistState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({players, roundLimit, targetDurationSec, gameStartTs, events}));
+  }catch(e){}
+}
+function clearPersistedState(){
+  try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+}
+function loadPersistedState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return null;
+    const data = JSON.parse(raw);
+    if(!data || !Array.isArray(data.events) || data.events.length<2) return null;
+    return data;
+  }catch(e){ return null; }
+}
+
 /* ---------------- pause-aware clock ---------------- */
 function isPaused(){
   for(let i=events.length-1;i>=0;i--){
@@ -437,6 +473,7 @@ function startGame(){
   warningSoundPlayed = false;
   overtimeSoundPlayed = false;
   try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ audioCtx = null; }
+  persistState();
 
   show('screen-live');
   tickHandle = setInterval(render, 250);
@@ -498,6 +535,7 @@ function canUndo(){
 function markAction(startLen){
   lastPushCount = events.length - startLen;
   lastActionWasUndo = false;
+  persistState();
 }
 function tapDone(playerIdx){
   if(isGameEnded() || isPaused() || isBetweenRounds()) return;
@@ -533,6 +571,7 @@ function undo(){
   events.splice(events.length-lastPushCount, lastPushCount);
   lastActionWasUndo = true;
   lastPushCount = 0;
+  persistState();
   render();
 }
 function pauseGame(){
@@ -626,7 +665,43 @@ function newGame(){
   gameStartTs = null;
   lastActionWasUndo = false;
   lastPushCount = 0;
+  clearPersistedState();
+  document.getElementById('resumePrompt').classList.add('hidden');
+  document.getElementById('setupForm').classList.remove('hidden');
   show('screen-setup');
+}
+function resumeSavedGame(){
+  const data = loadPersistedState();
+  if(!data) return;
+  players = data.players;
+  roundLimit = data.roundLimit;
+  targetDurationSec = data.targetDurationSec;
+  gameStartTs = data.gameStartTs;
+  events = data.events;
+  // Conservative on resume: never allow undoing something from before the
+  // reload — the precise boundary of "the last action" is gone with the
+  // page state, so undo simply starts disarmed until a new action happens.
+  lastActionWasUndo = true;
+  lastPushCount = 0;
+  try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ audioCtx = null; }
+
+  if(isGameEnded(events)){
+    renderStats();
+    show('screen-stats');
+  } else {
+    // Don't replay an alert tone for a threshold already passed before the reload.
+    const remaining = targetDurationSec - (effectiveNow()-gameStartTs)/1000;
+    warningSoundPlayed = remaining <= WARNING_THRESHOLD_SEC;
+    overtimeSoundPlayed = remaining <= 0;
+    show('screen-live');
+    tickHandle = setInterval(render, 250);
+    render();
+  }
+}
+function discardSavedGame(){
+  clearPersistedState();
+  document.getElementById('resumePrompt').classList.add('hidden');
+  document.getElementById('setupForm').classList.remove('hidden');
 }
 
 /* ---------------- render loop ---------------- */
@@ -975,6 +1050,31 @@ function renderStats(){
     return `<div class="activity-round"><h4>${r===0?'Game Setup':'Round '+r}</h4>${rows}</div>`;
   }).join('') || '<div style="color:var(--text-dim); font-size:13px;">No activations recorded.</div>';
 }
+
+/* ---------------- resume-on-load ---------------- */
+(function initResumePrompt(){
+  const data = loadPersistedState();
+  const resumePrompt = document.getElementById('resumePrompt');
+  const setupForm = document.getElementById('setupForm');
+  if(!data){
+    resumePrompt.classList.add('hidden');
+    setupForm.classList.remove('hidden');
+    return;
+  }
+  const ended = data.events.some(e=>e.type==='game_end');
+  let summary;
+  if(ended){
+    summary = "Your last game finished — view the results, or start a new one.";
+  } else {
+    const roundEvt = data.events.slice().reverse().find(e=>e.type==='phase_start' || e.type==='round_end');
+    const round = roundEvt ? roundEvt.round : 1;
+    summary = `Round ${round} of ${data.roundLimit} was in progress when you left.`;
+  }
+  document.getElementById('resumeSummary').textContent = summary;
+  document.getElementById('resumeBtn').textContent = ended ? 'View Results' : 'Resume Game';
+  resumePrompt.classList.remove('hidden');
+  setupForm.classList.add('hidden');
+})();
 </script>
 </body>
 </html>

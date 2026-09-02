@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--prefix", "web"],
       "port": 3000
+    },
+    {
+      "name": "armada-clock-static",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-l", "4173", "."],
+      "port": 4173
     }
   ]
 }
