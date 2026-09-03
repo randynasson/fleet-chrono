@@ -34,9 +34,33 @@ Ideas, needs, and open questions we've noted but decided not to pursue immediate
   Deliberately not built: a live "your opponent disconnected" indicator — recovery is silent on
   both ends for now. No live-game spectator mode — considered and ruled out; if third-party access
   is ever needed later, it'd be to summaries/logs after the fact, not a live game view.
-- Undo in multi-device games: not built in the initial gameplay-sync pass (2026-09-02) — the Undo
-  button is hidden entirely for multi-device games. Single-device undo just splices the local
-  `events` array, which has no server-side equivalent yet; supporting it would need a
-  `retract_last_event`-style DELETE RPC plus a realtime DELETE handler on the client (with
-  `REPLICA IDENTITY FULL` on `game_events` so the delete payload carries the row being removed) —
-  judged to be its own sub-feature, not a drop-in addition to the sync work.
+- ~~Undo in multi-device games~~ — **built 2026-09-02.** `retract_last_event(game_id,
+  expected_seq, count)` deletes the trailing `count` rows only if `expected_seq` still matches the
+  true last row (a cheap race guard against the log moving on between the client's check and the
+  call). `count` matters because some actions push more than one event at once (`advancePhase` can
+  push an auto-closed activation, a phase_end, and a phase_start together) — a single-row retract
+  would've left the rest behind as orphaned debris instead of a clean revert, so every pushed event
+  now carries an `actionId` (shared by every event one action call pushes), and `count` is derived
+  by scanning the log itself for how many trailing events share the current last one's actionId —
+  not from local bookkeeping, so any device gets the same answer even right after a resume with no
+  memory of what was just pushed. Neither device mutates `events` on undo — same pattern as pushes,
+  a realtime notification is what actually reflects it, so the two logs can't diverge. One platform
+  wrinkle found while building this: Supabase Realtime's DELETE payload only ever forwards the
+  primary key, never the rest of the row, even with `REPLICA IDENTITY FULL` set at the Postgres
+  level (confirmed directly — `relreplident` was genuinely `'f'`, the column just isn't forwarded).
+  So a DELETE notification can't say which row went away, only that something did; the client
+  treats any DELETE as "resync the whole log" instead, reusing the same full-reconciliation fetch
+  reconnect-handling already needed. The single-step lock (only the *most recent* action is
+  undoable, never chain further back) doesn't need any shared/server flag either: every session —
+  fresh entry or a resume-from-reload — starts locked, same conservative default single-device
+  resume already used, and unlocks only when that session observes a fresh push arrive live;
+  observing a delete re-locks it. Since both devices see the identical realtime stream this stays
+  consistent between them without syncing anything extra. Covers both of the app's existing undo
+  controls: the per-player Done→Undo toggle (gated to the owning device, both by hiding the
+  control on the other device and by an explicit check in `handleDoneOrUndo`) and the standalone
+  header icon for undoing a shared action like a phase advance or a pause tap — which only shows
+  itself when the last event *isn't* someone's activation, so it can never reach across and undo
+  the other player's move. (Building this surfaced a real dormant bug from the original sync pass:
+  `renderSplitView`'s "just acted" control visibility wasn't gated by device ownership at all — it
+  just happened to never matter before, since undo was always unavailable in multi-device. Fixed
+  alongside this.)

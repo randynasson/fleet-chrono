@@ -649,12 +649,28 @@ function canPass(ps, player){
   if(!last) return player!==FIRST_PLAYER; // First Player can never pass their first activation
   return last.outcome!=='pass'; // no two consecutive passes by the same player
 }
+// How many trailing events belong to the same action as the current last
+// event, derived purely from the shared log's own actionId tags — not from
+// any locally-cached count. That means any device (including one that just
+// resumed, with no memory of what it or the other device just did) computes
+// the exact same answer, since it's reading the same shared source of truth.
+function currentActionEventCount(){
+  if(events.length===0) return 0;
+  const id = events[events.length-1].actionId;
+  let count = 0;
+  for(let i=events.length-1;i>=0;i--){
+    if(events[i].actionId!==id) break;
+    count++;
+  }
+  return count;
+}
 function canUndo(){
   // Always keep game_start + the first phase_start; undo is single-step
   // (armed once per action) and reverts the *entire* last action, however
-  // many events it pushed — see markAction() below. Not available at all in
-  // multi-device mode yet — see pushEvent()'s note.
-  if(isMultiDevice) return false;
+  // many events it pushed — see markAction() below. Multi-device uses a
+  // differently-mechanized but equivalent single-step lock — see
+  // multiUndoUnlocked's declaration comment.
+  if(isMultiDevice) return multiDeviceReady && multiUndoUnlocked && (events.length-currentActionEventCount())>=2;
   return !lastActionWasUndo && lastPushCount>0 && (events.length-lastPushCount)>=2;
 }
 
@@ -668,8 +684,14 @@ function canUndo(){
    so both devices are always rendering the same confirmed log, never a
    local guess. markAction() takes an explicit count (how many events this
    action just pushed) rather than inferring it from array-length, since in
-   multi-device mode the array hasn't changed yet when markAction() runs. */
-async function pushEvent(eventObj){
+   multi-device mode the array hasn't changed yet when markAction() runs.
+   Every event also carries an actionId — the single-device splice-based
+   undo doesn't need it (lastPushCount already knows the count), but it's
+   what lets multi-device undo correctly revert an action that pushed more
+   than one event (see currentActionEventCount() above) regardless of which
+   device — or neither, after a resume — actually pushed it. */
+async function pushEvent(eventObj, actionId){
+  eventObj.actionId = actionId;
   if(isMultiDevice){
     const { error } = await sb.rpc('append_event', { p_game_id: currentGameCode, p_event: eventObj });
     if(error) console.error('append_event failed', error);
@@ -687,7 +709,7 @@ async function tapDone(playerIdx){
   if(isMultiDevice && playerIdx!==myPlayerSlot) return;
   const ps = currentPhaseEvent();
   if(currentActivePlayer(ps)!==playerIdx) return;
-  await pushEvent({type:'activation', phase:ps.phase, round:ps.round, player:playerIdx, outcome:'done', ts:effectiveNow()});
+  await pushEvent({type:'activation', phase:ps.phase, round:ps.round, player:playerIdx, outcome:'done', ts:effectiveNow()}, generateId());
   markAction(1);
   if(!isMultiDevice) render();
 }
@@ -696,7 +718,7 @@ async function tapPass(playerIdx){
   if(isMultiDevice && playerIdx!==myPlayerSlot) return;
   const ps = currentPhaseEvent();
   if(currentActivePlayer(ps)!==playerIdx || !canPass(ps, playerIdx)) return;
-  await pushEvent({type:'activation', phase:ps.phase, round:ps.round, player:playerIdx, outcome:'pass', ts:effectiveNow()});
+  await pushEvent({type:'activation', phase:ps.phase, round:ps.round, player:playerIdx, outcome:'pass', ts:effectiveNow()}, generateId());
   markAction(1);
   if(!isMultiDevice) render();
 }
@@ -704,6 +726,7 @@ async function tapPass(playerIdx){
 // reverts to Pass/Done the instant anything else happens (single-step only —
 // this is a quick mis-tap correction, not a history walkback).
 function handleDoneOrUndo(playerIdx){
+  if(isMultiDevice && playerIdx!==myPlayerSlot) return;
   const last = events[events.length-1];
   if(last && last.type==='activation' && last.player===playerIdx && canUndo()){
     undo();
@@ -711,8 +734,21 @@ function handleDoneOrUndo(playerIdx){
     tapDone(playerIdx);
   }
 }
-function undo(){
+async function undo(){
   if(!canUndo()) return;
+  if(isMultiDevice){
+    if(topEventSeq==null) return;
+    // No local mutation here — same pattern as pushEvent(): the realtime
+    // DELETE notification (handled by resyncEventLog(), since Supabase
+    // Realtime's DELETE payloads don't carry which row) is what actually
+    // removes it, so both devices' logs can never diverge. If the RPC's
+    // expected-seq guard refuses (a race — the other device acted a moment
+    // earlier), nothing happens locally either; the button just goes back
+    // to normal once whatever they did arrives.
+    const count = currentActionEventCount();
+    await sb.rpc('retract_last_event', { p_game_id: currentGameCode, p_expected_seq: topEventSeq, p_count: count });
+    return;
+  }
   events.splice(events.length-lastPushCount, lastPushCount);
   lastActionWasUndo = true;
   lastPushCount = 0;
@@ -721,13 +757,13 @@ function undo(){
 }
 async function pauseGame(){
   if(isGameEnded() || isPaused()) return;
-  await pushEvent({type:'pause', ts:Date.now()});
+  await pushEvent({type:'pause', ts:Date.now()}, generateId());
   markAction(1);
   if(!isMultiDevice) render();
 }
 async function resumeGame(){
   if(!isPaused()) return;
-  await pushEvent({type:'resume', ts:Date.now()});
+  await pushEvent({type:'resume', ts:Date.now()}, generateId());
   markAction(1);
   if(!isMultiDevice) render();
 }
@@ -739,16 +775,17 @@ async function advancePhase(){
   if(isPaused() || isBetweenRounds()) return;
   const t = effectiveNow();
   const ps = currentPhaseEvent();
+  const actionId = generateId(); // shared across every event this call pushes, so undo reverts all of them together
   let count = 0;
 
   // Auto-close whichever activation is still in progress so its time is
   // attributed correctly and never leaks across the phase boundary.
   if(PLAYER_TIMED_PHASES.indexOf(ps.phase)!==-1){
     const activePlayer = currentActivePlayer(ps);
-    await pushEvent({type:'activation', phase:ps.phase, round:ps.round, player:activePlayer, outcome:'done', ts:t});
+    await pushEvent({type:'activation', phase:ps.phase, round:ps.round, player:activePlayer, outcome:'done', ts:t}, actionId);
     count++;
   }
-  await pushEvent({type:'phase_end', phase:ps.phase, round:ps.round, ts:t});
+  await pushEvent({type:'phase_end', phase:ps.phase, round:ps.round, ts:t}, actionId);
   count++;
 
   const pregameIdx = PREGAME_SEQUENCE.indexOf(ps.phase);
@@ -756,7 +793,7 @@ async function advancePhase(){
     // One-time setup: Place Obstacles -> Deploy Fleets -> Round 1 Command Phase.
     const nextPhase = pregameIdx < PREGAME_SEQUENCE.length-1 ? PREGAME_SEQUENCE[pregameIdx+1] : 'command';
     const nextRound = pregameIdx < PREGAME_SEQUENCE.length-1 ? 0 : 1;
-    await pushEvent({type:'phase_start', phase:nextPhase, round:nextRound, ts:t});
+    await pushEvent({type:'phase_start', phase:nextPhase, round:nextRound, ts:t}, actionId);
     count++;
     markAction(count);
     if(!isMultiDevice) render();
@@ -766,7 +803,7 @@ async function advancePhase(){
   const idx = PHASE_SEQUENCE.indexOf(ps.phase);
   if(idx < PHASE_SEQUENCE.length-1){
     const nextPhase = PHASE_SEQUENCE[idx+1];
-    await pushEvent({type:'phase_start', phase:nextPhase, round:ps.round, ts:t});
+    await pushEvent({type:'phase_start', phase:nextPhase, round:ps.round, ts:t}, actionId);
     count++;
     markAction(count);
     if(!isMultiDevice) render();
@@ -774,14 +811,14 @@ async function advancePhase(){
     // Round over, but not the last one: stop at round_end and let the
     // players choose to continue or end the game here — never auto-advance
     // into a new round.
-    await pushEvent({type:'round_end', round:ps.round, ts:t});
+    await pushEvent({type:'round_end', round:ps.round, ts:t}, actionId);
     count++;
     markAction(count);
     if(!isMultiDevice) render();
   } else {
-    await pushEvent({type:'round_end', round:ps.round, ts:t});
+    await pushEvent({type:'round_end', round:ps.round, ts:t}, actionId);
     count++;
-    await pushEvent({type:'game_end', ts:t});
+    await pushEvent({type:'game_end', ts:t}, actionId);
     count++;
     markAction(count);
     if(!isMultiDevice) endGame();
@@ -792,13 +829,13 @@ async function advancePhase(){
 async function beginNextRound(){
   if(!isBetweenRounds()) return;
   const finishedRound = events[events.length-1].round;
-  await pushEvent({type:'phase_start', phase:'command', round:finishedRound+1, ts:effectiveNow()});
+  await pushEvent({type:'phase_start', phase:'command', round:finishedRound+1, ts:effectiveNow()}, generateId());
   markAction(1);
   if(!isMultiDevice) render();
 }
 async function endGameNow(){
   if(!isBetweenRounds()) return;
-  await pushEvent({type:'game_end', ts:effectiveNow()});
+  await pushEvent({type:'game_end', ts:effectiveNow()}, generateId());
   markAction(1);
   if(!isMultiDevice) endGame();
 }
@@ -921,7 +958,15 @@ function render(){
   const pauseBtn = document.getElementById('pauseBtn');
   pauseBtn.textContent = paused ? '▶' : '⏸';
   pauseBtn.title = paused ? 'Resume' : 'Pause';
-  document.getElementById('undoBtn').classList.toggle('hidden', isMultiDevice);
+  // In multi-device mode, undoing a player-owned activation is exclusively
+  // the acting player's own job (via their panel's Done→Undo toggle, with
+  // its own ownership gate) — the shared icon only ever handles undoing a
+  // *shared* action (phase advance, pause), so it hides itself whenever the
+  // last event is someone's activation, rather than letting either device
+  // reach across and undo the other player's move.
+  const topEvt = events[events.length-1];
+  const topIsActivation = !!topEvt && topEvt.type==='activation';
+  document.getElementById('undoBtn').classList.toggle('hidden', isMultiDevice && topIsActivation);
   document.getElementById('undoBtn').disabled = !canUndo();
 
   const betweenRounds = isBetweenRounds();
@@ -994,7 +1039,7 @@ function renderSplitView(ps, t, paused){
     panel.classList.toggle('active-amber', isActive && pi===0);
     panel.classList.toggle('active-cyan', isActive && pi===1);
     clockWrap.classList.toggle('hidden', !isActive);
-    controls.classList.toggle('hidden', !((isActive && isMine) || isJustActed));
+    controls.classList.toggle('hidden', !(isMine && (isActive || isJustActed)));
 
     if(isActive){
       statusEl.textContent = paused ? "Paused" : "Active — activation in progress";
@@ -1278,6 +1323,15 @@ let myPlayerSlot = null;
 let eventsChannel = null;
 let eventsBySeq = new Map(); // seq -> event; rebuilt into `events` on every incoming row so out-of-order delivery (subscribe-then-fetch overlap) can never corrupt ordering
 let multiDeviceReady = false; // true once the initial event-log fetch has landed; suppresses render() during backfill
+let topEventSeq = null; // seq of the current last event, needed as the race guard passed to retract_last_event
+// Single-step lock for multi-device undo. Every session (fresh entry OR a
+// resume-from-reload) starts locked, the same conservative default
+// single-device resume already uses — and unlocks only when THIS session
+// observes a fresh push arrive live (not during backfill). Any observed
+// delete re-locks it. Because both devices process the identical realtime
+// stream, they converge to the same value independently — no shared/
+// server-side flag needed, and a reload never needs "syncing back up."
+let multiUndoUnlocked = false;
 let gameStartChannel = null;
 let joinStartHandled = false;
 
@@ -1371,7 +1425,18 @@ async function resyncEventLog(){
   if(!currentGameCode) return;
   const { data, error } = await sb.from('game_events').select('seq,event')
     .eq('game_id', currentGameCode).order('seq', { ascending: true });
-  if(!error && data) data.forEach(row => applyIncomingEvent(row.seq, row.event));
+  if(error || !data) return;
+  // Full reconciliation, not an incremental upsert: an incremental merge
+  // would never notice a row that was deleted (undone) while disconnected,
+  // since nothing tells it to remove a seq that's simply absent from the
+  // fresh fetch. Rebuilding from scratch handles missed inserts *and*
+  // missed deletes the same way the initial backfill already does.
+  eventsBySeq = new Map(data.map(row => [row.seq, row.event]));
+  rebuildEventsFromMap();
+  // Conservative: we may have missed an undo while disconnected — don't
+  // guess which case it was, just re-lock, same as any other resume.
+  multiUndoUnlocked = false;
+  if(multiDeviceReady) render();
 }
 async function checkGameStartedNow(code, slot){
   const { data } = await sb.from('games').select('started_at').eq('id', code).single();
@@ -1470,11 +1535,17 @@ function subscribeToPlayers(code, onOtherJoined){
 // subscribe-then-fetch pattern means a realtime row can legitimately arrive
 // before the backfill fetch resolves, and a naive append would corrupt
 // ordering (or a "seq <= lastSeq" skip would wrongly drop it).
-function applyIncomingEvent(seq, event){
-  eventsBySeq.set(seq, event);
+function rebuildEventsFromMap(){
   const seqs = Array.from(eventsBySeq.keys()).sort((a,b)=>a-b);
   events = seqs.map(s=>eventsBySeq.get(s));
+  topEventSeq = seqs.length ? seqs[seqs.length-1] : null;
+}
+function applyIncomingEvent(seq, event){
+  eventsBySeq.set(seq, event);
+  const wasNewTop = !multiDeviceReady ? false : (topEventSeq===null || seq > topEventSeq);
+  rebuildEventsFromMap();
   if(!multiDeviceReady) return; // still backfilling; enterMultiDeviceGame() will render once ready
+  if(wasNewTop) multiUndoUnlocked = true; // a genuinely fresh push arrived live — arm undo for it
   if(event.type==='game_end'){ endGame(); return; }
   render();
 }
@@ -1484,6 +1555,16 @@ function subscribeToGameEvents(code){
     .on('postgres_changes',
       { event: 'INSERT', schema: 'public', table: 'game_events', filter: 'game_id=eq.' + code },
       function(payload){ applyIncomingEvent(payload.new.seq, payload.new.event); })
+    .on('postgres_changes',
+      // Supabase Realtime's DELETE payload only ever forwards the primary
+      // key (`old: {id}`), never the other columns — true even with
+      // REPLICA IDENTITY FULL set at the Postgres level, confirmed by
+      // direct testing. So a DELETE notification here can't say *which*
+      // row went away, only *that* something did — treated as "resync the
+      // whole log," which is exactly what an undo needs anyway (full
+      // reconciliation, not a surgical single-row removal).
+      { event: 'DELETE', schema: 'public', table: 'game_events', filter: 'game_id=eq.' + code },
+      function(){ resyncEventLog(); })
     .subscribe(makeReconnectHandler(resyncEventLog));
 }
 async function enterMultiDeviceGame(slot){
@@ -1491,6 +1572,8 @@ async function enterMultiDeviceGame(slot){
   myPlayerSlot = slot;
   eventsBySeq = new Map();
   events = [];
+  topEventSeq = null;
+  multiUndoUnlocked = false; // every fresh entry/resume starts locked — see the multiUndoUnlocked declaration comment
   multiDeviceReady = false;
   lastActionWasUndo = false;
   lastPushCount = 0;
@@ -1504,8 +1587,7 @@ async function enterMultiDeviceGame(slot){
     .eq('game_id', currentGameCode).order('seq', { ascending: true });
   if(!error && data){
     data.forEach(row => eventsBySeq.set(row.seq, row.event));
-    const seqs = Array.from(eventsBySeq.keys()).sort((a,b)=>a-b);
-    events = seqs.map(s=>eventsBySeq.get(s));
+    rebuildEventsFromMap();
   }
 
   const startEvt = events.find(e=>e.type==='game_start');
