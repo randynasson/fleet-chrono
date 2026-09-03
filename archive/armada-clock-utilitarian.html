@@ -3,47 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Fleet Chrono — Holo Tactical Violet</title>
-<link href="https://fonts.googleapis.com/css2?family=Saira:wght@300;400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<title>Fleet Chrono — Armada Tournament Timer</title>
 <style>
-  /* Holo Tactical Violet -- design/design_handoff_fleet_chrono_holo_tactical/README.md
-     Pure visual restyle: zero script changes. Per-player card/row treatments
-     that the README calls for (amber vs violet card border, tinted names)
-     are derived with :has() from the .dot.amber/.dot.cyan markup render()
-     already emits -- no new classes needed from the script. */
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap');
+
   :root{
-    --void:#06040b;
-    --frame-border:#2e1f42;
-    --violet:#c08cf5;
-    --violet-bright:#e2ccfd;
-    --violet-text:#d9befa;
-    --violet-hi:#f1e6fc;
-    --violet-mid:#e2d3f5;
-    --violet-body:#a294b8;
-    --violet-muted:#8f81a6;
-    --violet-idle:#9c8ab0;
-    --violet-idle-num:#7d6a94;
-    --violet-cta-ink:#170a24;
-    --amber:#e8a33d;
-    --amber-hi:#ffd79a;
-    --amber-label:#ffe6bf;
-    --amber-badge:#ffce7d;
-    --amber-ghost-text:#f0c98a;
-    --amber-ink:#2a1b04;
-    --red:#f08a94;
-    --red-line:rgba(240,90,110,.45);
-    --red-wash:rgba(240,90,110,.10);
-    --green:#9ee0b0;
-    /* legacy aliases -- keep any un-migrated selector resolving sensibly */
-    --panel:var(--void);
-    --panel-raised:rgba(192,140,245,.06);
-    --hairline:rgba(192,140,245,.24);
-    --cyan:var(--violet);
-    --cyan-dim:rgba(192,140,245,.1);
-    --amber-dim:rgba(232,163,61,.16);
-    --red-dim:rgba(240,90,110,.16);
-    --text:var(--violet-hi);
-    --text-dim:var(--violet-muted);
+    --void:#0D1321;
+    --panel:#1B2436;
+    --panel-raised:#212C42;
+    --hairline:#3A4A63;
+    --amber:#E8A33D;
+    --amber-dim:#5A4426;
+    --cyan:#5FD4D0;
+    --cyan-dim:#204848;
+    --red:#E5484D;
+    --red-dim:#4A2124;
+    --text:#EDEFF4;
+    --text-dim:#8C96AB;
   }
 
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
@@ -51,8 +27,8 @@
   body{
     margin:0;
     background:var(--void);
-    color:var(--violet-body);
-    font-family:'Saira',sans-serif;
+    color:var(--text);
+    font-family:'Inter',sans-serif;
     display:flex;
     align-items:center;
     justify-content:center;
@@ -60,370 +36,203 @@
     padding:24px 12px;
   }
   .device{
-    position:relative;
     width:100%;
     max-width:420px;
-    height:760px;
-    background:var(--void);
+    min-height:760px;
+    background:var(--panel);
     border-radius:28px;
-    border:1px solid var(--frame-border);
+    border:1px solid var(--hairline);
     display:flex;
     flex-direction:column;
     overflow:hidden;
-    box-shadow:0 30px 70px rgba(0,0,0,.7), inset 0 0 80px rgba(192,140,245,.07);
+    box-shadow:0 30px 60px rgba(0,0,0,0.5);
   }
-  .mono{ font-family:'Share Tech Mono',monospace; font-variant-numeric:tabular-nums; }
+  .mono{ font-family:'JetBrains Mono',monospace; font-variant-numeric:tabular-nums; }
 
-  /* Ambient floor glow -- one per screen. A single consistent position
-     (bottom-ish) rather than the README's per-screen-tuned variants, to
-     keep this pass bounded; every screen family gets it via ::before so no
-     extra markup is needed anywhere. */
-  .setup::before, .live::before, .stats::before{
-    content:''; position:absolute; inset:0; pointer-events:none; z-index:0;
-    background:radial-gradient(90% 55% at 50% 105%, rgba(192,140,245,.18), transparent 70%);
-  }
-
-  /* Corner brackets -- absolutely positioned on a `position:relative` parent */
-  .bracket{ position:absolute; width:26px; height:26px; pointer-events:none; z-index:1; }
-  .bracket.tl{ top:0; left:0; border-top:2px solid var(--violet); border-left:2px solid var(--violet); }
-  .bracket.tr{ top:0; right:0; border-top:2px solid var(--violet); border-right:2px solid var(--violet); }
-  .bracket.bl{ bottom:0; left:0; border-bottom:2px solid var(--violet); border-left:2px solid var(--violet); }
-  .bracket.br{ bottom:0; right:0; border-bottom:2px solid var(--violet); border-right:2px solid var(--violet); }
-  .bracket.sm{ width:22px; height:22px; }
-  .bracket.lg{ width:30px; height:30px; }
-
-  .micro-label{ font-size:13px; letter-spacing:.24em; text-transform:uppercase; color:rgba(192,140,245,.75); margin-bottom:10px; }
-
-  /* Status lamps */
-  .lamp{ width:7px; height:7px; border-radius:50%; flex:none; }
-  .lamp.violet{ background:var(--violet); box-shadow:0 0 8px var(--violet); animation:fc-breathe 2s ease-in-out infinite; }
-
-  @keyframes fc-blink   { 0%,100%{opacity:1} 50%{opacity:.25} }
-  @keyframes fc-breathe { 0%,100%{opacity:.55} 50%{opacity:1} }
-  @keyframes fc-sweep   { 0%{transform:translateX(-100%)} 100%{transform:translateX(220%)} }
-
-  /* ---------- SETUP / LANDING SCREENS ---------- */
-  .setup{ position:relative; padding:44px 30px 34px; display:flex; flex-direction:column; height:100%; z-index:1; }
+  /* ---------- SETUP SCREEN ---------- */
+  .setup{ padding:40px 28px; display:flex; flex-direction:column; height:100%; }
   .setup-form, .resume-prompt{ display:flex; flex-direction:column; flex:1; }
-  .landing-options{ display:flex; flex-direction:column; gap:12px; }
-  #landingOptions{ display:flex; flex-direction:column; flex:1; }
-
-  .setup h1{
-    font-family:'Share Tech Mono',monospace; font-size:26px; font-weight:400; letter-spacing:.06em;
-    color:var(--violet-hi); margin:0 0 4px; text-transform:uppercase;
-  }
-  .wordmark{ position:relative; padding:18px 0 0 22px; margin-bottom:8px; }
-  .wordmark .bracket{ width:30px; height:30px; }
-  .wordmark h1{ font-size:44px; line-height:1.05; margin:0; }
-  .wordmark .tagline{ font-size:13px; letter-spacing:.20em; text-transform:uppercase; color:var(--violet-muted); margin-top:8px; }
-  .wordmark .rule{ height:1px; margin-top:14px; background:linear-gradient(90deg, rgba(192,140,245,.5), transparent); }
-
-  .setup .sub{ color:var(--violet-body); font-size:15px; margin:0 0 30px; line-height:1.55; }
-
-  .step-row{ display:flex; align-items:center; gap:10px; margin-bottom:30px; }
-  .step-row .step-label{ font-size:13px; letter-spacing:.20em; text-transform:uppercase; color:var(--violet-text); }
-  .step-row .step-rule{ flex:1; height:1px; background:rgba(192,140,245,.3); }
-  .step-row .step-num{ font-size:13px; color:var(--violet); letter-spacing:.05em; }
-
+  .landing-options{ display:flex; flex-direction:column; gap:10px; }
   .slot-picker{ display:flex; gap:8px; }
   .slot-btn{
-    flex:1; padding:14px; border-radius:0; font-size:13px; font-weight:600; letter-spacing:.05em; cursor:pointer;
-    background:transparent; border:1px solid rgba(192,140,245,.32); color:var(--violet-text); font-family:'Saira',sans-serif;
-    text-transform:uppercase;
+    flex:1; padding:12px; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer;
+    background:transparent; border:1px solid var(--hairline); color:var(--text-dim); font-family:'Inter',sans-serif;
   }
-  .slot-btn.active{ background:var(--amber); border-color:var(--amber); color:var(--amber-ink); box-shadow:0 0 20px rgba(232,163,61,.4); }
-
-  .code-card{
-    position:relative; padding:34px 20px; text-align:center; margin-bottom:16px;
-    border:1px solid rgba(192,140,245,.3);
-    background:linear-gradient(180deg, rgba(192,140,245,.1), rgba(192,140,245,.02));
-  }
-  .join-code{ font-size:44px; letter-spacing:.2em; color:var(--violet-hi); text-shadow:0 0 26px rgba(192,140,245,.6); font-weight:400; }
-  .join-link{ font-size:13px; color:var(--violet-muted); margin-top:10px; word-break:break-all; }
-  .role-text{ font-size:17px; font-weight:500; color:var(--violet-hi); }
-  .role-detail{ font-size:13px; color:var(--violet-muted); margin-top:8px; }
-  .lobby-status{ display:flex; align-items:center; gap:8px; font-size:15px; margin-bottom:8px; }
+  .slot-btn.active{ background:var(--amber-dim); border-color:var(--amber); color:var(--amber); }
+  .code-card{ background:var(--panel-raised); border-radius:14px; padding:20px; text-align:center; margin-bottom:16px; }
+  .join-code{ font-size:26px; font-weight:700; letter-spacing:0.12em; }
+  .join-link{ font-size:12px; color:var(--text-dim); margin-top:8px; word-break:break-all; }
+  .lobby-status{ display:flex; align-items:center; gap:8px; font-size:13px; margin-bottom:8px; }
   .lobby-status.waiting{ color:var(--amber); }
-  .lobby-status.ready{ color:var(--violet); }
+  .lobby-status.ready{ color:var(--cyan); }
   .spinner{
-    width:14px; height:14px; border-radius:50%; border:2px solid var(--amber); border-top-color:transparent;
-    display:inline-block; animation:spin .8s linear infinite;
+    width:12px; height:12px; border-radius:50%; border:2px solid currentColor; border-top-color:transparent;
+    display:inline-block; animation:spin 0.8s linear infinite;
   }
   @keyframes spin{ to{ transform:rotate(360deg); } }
-  .field-error{ font-size:13px; color:var(--red); margin:-10px 0 16px; }
+  .field-error{ font-size:12px; color:var(--red); margin:-10px 0 16px; }
   .code-input{
-    width:100%; background:rgba(192,140,245,.06); border:1px solid rgba(192,140,245,.45); border-radius:0;
-    padding:20px; color:var(--violet-hi); font-size:32px; font-family:'Share Tech Mono',monospace;
-    text-align:center; letter-spacing:.22em; text-transform:uppercase; outline:none;
-    box-shadow:inset 0 0 24px rgba(192,140,245,.2);
+    width:100%; background:var(--void); border:1px solid var(--hairline); border-radius:10px;
+    padding:14px; color:var(--text); font-size:20px; font-family:'JetBrains Mono',monospace;
+    text-align:center; letter-spacing:0.15em; text-transform:uppercase;
   }
+  .setup h1{ font-size:22px; font-weight:700; margin:0 0 4px; letter-spacing:-0.01em; }
+  .setup .sub{ color:var(--text-dim); font-size:14px; margin:0 0 36px; line-height:1.5; }
   .field{ margin-bottom:20px; }
-  .field label{
-    display:block; font-size:13px; letter-spacing:.24em; text-transform:uppercase; color:var(--violet-text);
-    margin-bottom:10px; font-weight:400;
-  }
+  .field label{ display:block; font-size:13px; color:var(--text-dim); margin-bottom:8px; }
   .field input{
-    width:100%; background:rgba(192,140,245,.06); border:1px solid rgba(192,140,245,.3); border-radius:0;
-    padding:16px; color:var(--violet-hi); font-size:22px; font-family:'Share Tech Mono',monospace; text-align:center;
-    outline:none;
+    width:100%; background:var(--void); border:1px solid var(--hairline); border-radius:10px;
+    padding:14px; color:var(--text); font-size:16px; font-family:'Inter',sans-serif;
   }
-  .field input:focus{ border-color:var(--violet-bright); }
-  .duration-row{ display:flex; gap:12px; }
+  .field input:focus{ outline:none; border-color:var(--amber); }
+  .duration-row{ display:flex; gap:10px; }
   .duration-row .field{ flex:1; }
-  .duration-row input{ font-family:'Share Tech Mono',monospace; text-align:center; }
+  .duration-row input{ font-family:'JetBrains Mono',monospace; text-align:center; }
   .spacer{ flex:1; }
   .btn{
-    border:none; border-radius:0; padding:18px 16px; font-size:16px; font-weight:600; letter-spacing:.10em;
-    font-family:'Saira',sans-serif; cursor:pointer; text-align:center; text-transform:uppercase;
+    border:none; border-radius:12px; padding:16px; font-size:16px; font-weight:600;
+    font-family:'Inter',sans-serif; cursor:pointer; text-align:center;
   }
-  .btn-primary{ background:var(--violet); color:var(--violet-cta-ink); box-shadow:0 0 28px rgba(192,140,245,.4); }
-  .btn-primary:active{ box-shadow:0 0 10px rgba(192,140,245,.4); }
-  .btn-primary:disabled{ background:rgba(192,140,245,.1); color:rgba(216,190,250,.5); box-shadow:none; cursor:not-allowed; }
-  .btn-ghost{ background:transparent; border:1px solid rgba(192,140,245,.32); color:var(--violet-text); }
-  .btn-ghost:active{ background:rgba(192,140,245,.12); }
-  .btn-danger{ background:transparent; border:1px solid var(--red-line); color:var(--red); }
-  .btn-danger:active{ background:var(--red-wash); }
+  .btn-primary{ background:var(--amber); color:#241804; }
+  .btn-primary:active{ background:#d1922f; }
+  .btn-ghost{ background:transparent; border:1px solid var(--hairline); color:var(--text); }
+  .btn-ghost:active{ background:var(--panel-raised); }
+  .btn-danger{ background:var(--red); color:#2a0a0c; }
 
   /* ---------- LIVE GAME SCREEN ---------- */
-  .live{ position:relative; display:flex; flex-direction:column; height:100%; z-index:1; }
+  .live{ display:flex; flex-direction:column; height:100%; }
   .strip{
-    padding:22px 24px 18px; border-bottom:1px solid rgba(192,140,245,.24);
-    display:flex; align-items:flex-start; justify-content:space-between;
+    padding:18px 20px 16px; border-bottom:1px solid var(--hairline);
+    display:flex; align-items:baseline; justify-content:space-between;
   }
-  .strip .clock-label{ font-size:13px; letter-spacing:.20em; text-transform:uppercase; color:rgba(192,140,245,.75); margin-bottom:6px; }
-  .strip .game-clock{ font-size:38px; font-weight:400; color:var(--violet-hi); text-shadow:0 0 22px rgba(192,140,245,.6); }
-  .strip .game-clock.overtime{ color:var(--red); text-shadow:none; }
-  .strip .game-clock.warning{ color:var(--amber-hi); text-shadow:0 0 22px rgba(232,163,61,.6); }
+  .strip .game-clock{ font-size:28px; font-weight:700; }
+  .strip .game-clock.overtime{ color:var(--red); }
   .strip .meta{ text-align:right; }
-  .strip .round-label{ font-size:13px; letter-spacing:.20em; text-transform:uppercase; color:rgba(192,140,245,.75); margin-bottom:8px; }
-  .strip .phase-label-row{ display:flex; align-items:center; gap:7px; justify-content:flex-end; }
-  .strip .phase-label{ font-size:21px; font-weight:400; color:var(--violet-text); }
-
-  .overtime-banner, .warning-banner, .paused-banner{
-    padding:11px; text-align:center; font-size:14px; font-weight:600; letter-spacing:.22em; text-transform:uppercase;
+  .strip .round-label{ font-size:13px; color:var(--text-dim); }
+  .strip .phase-label{ font-size:15px; font-weight:600; margin-top:2px; }
+  .overtime-banner{
+    background:var(--red-dim); color:var(--red); font-size:12px; font-weight:600;
+    text-align:center; padding:6px; letter-spacing:0.02em;
   }
-  .warning-banner, .paused-banner{ background:rgba(232,163,61,.16); color:var(--amber-badge); border-bottom:1px solid rgba(232,163,61,.5); }
-  .warning-banner{ animation:fc-breathe 1.4s ease-in-out infinite; }
-  .overtime-banner{ background:rgba(240,90,110,.16); color:var(--red); border-bottom:1px solid var(--red-line); }
+  .paused-banner{
+    background:var(--amber-dim); color:var(--amber); font-size:12px; font-weight:600;
+    text-align:center; padding:6px; letter-spacing:0.02em;
+  }
+  @keyframes pulse-warn{ 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+  .warning-banner{
+    background:var(--amber-dim); color:var(--amber); font-size:12px; font-weight:600;
+    text-align:center; padding:6px; letter-spacing:0.02em;
+    animation:pulse-warn 1.2s ease-in-out infinite;
+  }
+  .game-clock.warning{ color:var(--amber); animation:pulse-warn 1.2s ease-in-out infinite; }
 
-  .stage{ position:relative; flex:1; padding:22px 20px; display:flex; flex-direction:column; z-index:1; }
+  .stage{ flex:1; padding:24px 20px; display:flex; flex-direction:column; }
 
-  /* shared phase (obstacles/deploy/command/status) */
+  /* shared phase (command/status) */
   .shared-phase{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
-  .shared-phase .pe-label{ font-size:14px; letter-spacing:.30em; text-transform:uppercase; color:var(--violet-muted); margin-bottom:14px; }
-  .shared-phase .pe-context{ font-size:15px; color:var(--violet-muted); margin-top:16px; }
-  .shared-phase .phase-clock-wrap{ position:relative; padding:8px 34px; }
-  .shared-phase .phase-clock{
-    font-size:82px; font-weight:400; color:var(--violet-hi); line-height:1;
-    text-shadow:0 0 40px rgba(192,140,245,.7), 0 0 80px rgba(192,140,245,.35);
-  }
+  .shared-phase .phase-clock{ font-size:56px; font-weight:700; margin-bottom:8px; }
 
   /* between rounds: continue or end the game here */
-  .between-rounds{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:0 12px; }
-  .between-rounds .br-rule{ width:100%; height:1px; margin:0 auto 20px; background:linear-gradient(90deg, transparent, rgba(192,140,245,.5), transparent); }
-  .between-rounds .br-title{
-    font-family:'Share Tech Mono',monospace; font-size:30px; font-weight:400; letter-spacing:.06em; color:var(--violet-hi);
-    text-shadow:0 0 22px rgba(192,140,245,.6); margin-bottom:20px; text-transform:uppercase;
-  }
-  .between-rounds .br-sub{ font-size:16px; color:var(--violet-body); max-width:280px; line-height:1.5; }
+  .between-rounds{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+  .between-rounds .br-title{ font-size:19px; font-weight:700; margin-bottom:8px; }
+  .between-rounds .br-sub{ font-size:13px; color:var(--text-dim); max-width:260px; line-height:1.5; }
 
   /* ship/squadron split */
-  .split{ flex:1; display:flex; flex-direction:column; gap:16px; }
-  .player-panel{ position:relative; padding:20px 22px; display:flex; flex-direction:column; justify-content:center; gap:8px; }
-  .player-panel.active-amber, .player-panel.active-cyan{ flex:1; padding:24px; justify-content:space-between; overflow:hidden; }
-  .player-panel.active-amber{ background:linear-gradient(180deg, rgba(232,163,61,.1), rgba(232,163,61,.02)); }
-  .player-panel.active-cyan{ background:linear-gradient(180deg, rgba(192,140,245,.1), rgba(192,140,245,.02)); }
-  /* true idle: not active, controls hidden -> compact horizontal row */
-  .player-panel:not(.active-amber):not(.active-cyan):has(.p-controls.hidden){
-    flex:.6; border:1px solid rgba(192,140,245,.2); flex-direction:row; align-items:center; justify-content:space-between;
+  .split{ flex:1; display:flex; flex-direction:column; gap:14px; }
+  .player-panel{
+    flex:1; border-radius:16px; border:1px solid var(--hairline); background:var(--panel-raised);
+    padding:20px; display:flex; flex-direction:column; justify-content:space-between;
+    transition:background 0.2s, border-color 0.2s;
   }
-  /* just-acted (Undo showing): not active, controls visible -> compact column, neutral border */
-  .player-panel:not(.active-amber):not(.active-cyan):has(.p-controls:not(.hidden)){
-    border:1px solid rgba(192,140,245,.2);
+  .player-panel.active-amber{ background:var(--amber-dim); border-color:var(--amber); }
+  .player-panel.active-cyan{ background:var(--cyan-dim); border-color:var(--cyan); }
+  .player-panel .p-name{ font-size:15px; font-weight:600; }
+  .player-panel .p-status{ font-size:12px; color:var(--text-dim); margin-top:2px; }
+  .player-panel .p-clock{ font-size:40px; font-weight:700; margin:14px 0; }
+  .player-panel .p-controls{ display:flex; gap:8px; }
+  .player-panel .p-controls .btn{ flex:1; padding:12px; font-size:14px; }
+  .btn-turn-amber{ background:var(--amber); color:#241804; }
+  .btn-turn-cyan{ background:var(--cyan); color:#062626; }
+  .btn-pass{ background:transparent; border:1px solid var(--hairline); color:var(--text-dim); }
+
+  .controls-bar{
+    padding:16px 20px 22px; border-top:1px solid var(--hairline);
+    display:flex; gap:10px;
   }
-  .player-panel .bracket{ display:none; }
-  .player-panel.active-amber .bracket{ display:block; border-color:var(--amber); }
-  .player-panel.active-cyan .bracket{ display:block; border-color:var(--violet); }
-  .player-panel .sweep{ position:absolute; top:0; left:0; height:1px; width:45%; display:none; }
-  .player-panel.active-amber .sweep{ display:block; background:linear-gradient(90deg, transparent, var(--amber), transparent); animation:fc-sweep 3.4s linear infinite; }
-  .player-panel.active-cyan .sweep{ display:block; background:linear-gradient(90deg, transparent, var(--violet), transparent); animation:fc-sweep 3.4s linear infinite; }
-
-  .player-panel .header-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
-  .player-panel .p-name{ font-size:20px; font-weight:500; }
-  .player-panel.active-amber .p-name{ color:var(--amber-label); }
-  .player-panel.active-cyan .p-name{ color:var(--violet-mid); }
-  .player-panel:not(.active-amber):not(.active-cyan) .p-name{ font-size:19px; font-weight:400; color:var(--violet-idle); }
-
-  .active-badge{
-    display:none; font-size:13px; font-family:'Share Tech Mono',monospace; letter-spacing:.14em; padding:4px 10px;
-    text-transform:uppercase; flex:none;
-  }
-  .player-panel.active-amber .active-badge{ display:inline-block; color:var(--amber-badge); border:1px solid rgba(232,163,61,.55); }
-  .player-panel.active-cyan .active-badge{ display:inline-block; color:var(--violet-text); border:1px solid rgba(192,140,245,.55); }
-
-  /* the JS-set status text ("Active -- activation in progress" / "Idle" /
-     "Done" / "Passed") is hidden for the active state (brackets/badge/sweep
-     already carry that meaning) and for genuine idle (replaced by the
-     static "Standing By" below) -- but stays visible verbatim for the
-     just-acted "Done"/"Passed" case, where it's still the only source of
-     that text. */
-  .player-panel .p-status{ font-size:13px; color:var(--violet-muted); }
-  .player-panel.active-amber .p-status, .player-panel.active-cyan .p-status{ display:none; }
-  .player-panel:not(.active-amber):not(.active-cyan):has(.p-controls.hidden) .p-status{ display:none; }
-  .standing-by{ display:none; font-size:13px; letter-spacing:.20em; text-transform:uppercase; color:var(--violet-idle); }
-  .player-panel:not(.active-amber):not(.active-cyan):has(.p-controls.hidden) .standing-by{ display:block; }
-
-  .panel-idle-right{ display:none; text-align:right; flex:none; }
-  .player-panel:not(.active-amber):not(.active-cyan):has(.p-controls.hidden) .panel-idle-right{ display:block; }
-  .idle-total-num{ font-size:26px; color:var(--violet-idle-num); }
-  .idle-total-label{ font-size:13px; letter-spacing:.18em; text-transform:uppercase; color:var(--violet-idle); margin-top:2px; }
-
-  .player-panel .p-clock{ font-size:68px; font-weight:400; margin:6px 0; line-height:1; }
-  .player-panel.active-amber .p-clock{ color:var(--amber-hi); text-shadow:0 0 34px rgba(232,163,61,.65), 0 0 70px rgba(232,163,61,.3); }
-  .player-panel.active-cyan .p-clock{ color:var(--violet-hi); text-shadow:0 0 22px rgba(192,140,245,.6); }
-
-  .player-panel .p-controls{ display:flex; gap:10px; }
-  .player-panel .p-controls .btn{ flex:1; padding:17px; font-size:16px; letter-spacing:.14em; }
-  .player-panel .p-controls .btn-turn-amber, .player-panel .p-controls .btn-turn-cyan{ flex:1.4; }
-  .btn-turn-amber{ background:var(--amber); color:var(--amber-ink); border:1px solid var(--amber-hi); box-shadow:0 0 24px rgba(232,163,61,.5); font-weight:600; }
-  .btn-turn-cyan{ background:var(--violet); color:var(--violet-cta-ink); border:1px solid var(--violet-bright); box-shadow:0 0 24px rgba(192,140,245,.5); font-weight:600; }
-  /* The Done->Undo swap is a correction action, not the primary CTA -- the
-     "just acted" state (not active, controls still showing) is the only time
-     this button ever reads "Undo", so that's what this keys off. */
-  .player-panel:not(.active-amber):not(.active-cyan):has(.p-controls:not(.hidden)) .btn-turn-amber{
-    background:transparent; color:var(--amber-ghost-text); border:1px solid rgba(232,163,61,.5); box-shadow:none; font-weight:500;
-  }
-  .player-panel:not(.active-amber):not(.active-cyan):has(.p-controls:not(.hidden)) .btn-turn-cyan{
-    background:transparent; color:var(--violet-text); border:1px solid rgba(192,140,245,.5); box-shadow:none; font-weight:500;
-  }
-  .btn-pass{ background:transparent; border:1px solid rgba(232,163,61,.35); color:var(--amber-ghost-text); font-weight:500; }
-  .player-panel.active-cyan .btn-pass{ border-color:rgba(192,140,245,.35); color:var(--violet-text); }
-
-  .controls-bar{ position:relative; padding:18px 20px 24px; border-top:1px solid rgba(192,140,245,.24); display:flex; gap:12px; z-index:1; }
   .controls-bar .btn{ flex:1; }
-  /* Round-complete: only Begin Round / End Game show, per the design reference --
-     Undo/Pause aren't hidden by the app's own JS in this state (they're always-on
-     controls elsewhere), so this hides them purely visually, keyed off the same
-     roundEndControls visibility the script already toggles. */
-  .controls-bar:has(#roundEndControls:not(.hidden)) #undoBtn,
-  .controls-bar:has(#roundEndControls:not(.hidden)) #pauseBtn{ display:none; }
-  .round-end-controls{ display:flex; gap:10px; flex:1; }
+  .round-end-controls{ display:flex; gap:8px; flex:1; }
   .round-end-controls .btn{ flex:1; }
-  .round-end-controls .btn:first-child{ flex:1.5; }
-  .round-end-controls .btn:last-child{ background:transparent; border:1px solid var(--red-line); color:var(--red); box-shadow:none; }
   .icon-btn{
-    width:54px; height:54px; flex:none; display:flex; align-items:center; justify-content:center;
-    background:transparent; border:1px solid rgba(192,140,245,.32); border-radius:0; color:var(--violet-text); font-size:22px;
+    width:52px; flex:none; display:flex; align-items:center; justify-content:center;
+    background:transparent; border:1px solid var(--hairline); border-radius:12px; color:var(--text-dim);
   }
-  .icon-btn .icon-undo{ display:block; }
-  /* Play/pause drawn in CSS -- Unicode ⏸/▶ render as colorful emoji glyphs on
-     iOS regardless of font, which clashes badly with this monochrome style. */
-  .icon-btn .icon-play{
-    display:none; width:0; height:0; margin-left:3px;
-    border-top:9px solid transparent; border-bottom:9px solid transparent; border-left:15px solid currentColor;
-  }
-  .icon-btn .icon-pause{ display:flex; gap:4px; }
-  .icon-btn .icon-pause span{ width:5px; height:17px; background:currentColor; }
-  #pauseBtn.is-paused .icon-play{ display:block; }
-  #pauseBtn.is-paused .icon-pause{ display:none; }
-  .btn:disabled, .icon-btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .btn:disabled, .icon-btn:disabled{ opacity:0.4; cursor:not-allowed; }
 
   /* ---------- STATS SCREEN ---------- */
-  .stats{ position:relative; padding:28px 22px 22px; overflow-y:auto; height:100%; z-index:1; }
-  .stats-header{
-    display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:24px;
-    padding-bottom:20px; border-bottom:1px solid rgba(192,140,245,.24);
+  .stats{ padding:28px 22px 22px; overflow-y:auto; height:100%; }
+  .stats-header{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:24px; }
+  .stats-header h2{ font-size:20px; font-weight:700; margin:0 0 2px; }
+  .btn-small{ padding:10px 14px; font-size:13px; flex:none; }
+  .stats .final-time{ color:var(--text-dim); font-size:13px; }
+  .stat-block{ margin-bottom:26px; }
+  .stat-block h3{ font-size:12px; color:var(--text-dim); font-weight:600; margin:0 0 10px; }
+  .player-stat-row{
+    display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--hairline);
   }
-  .stats-header h2{
-    font-family:'Share Tech Mono',monospace; font-size:26px; font-weight:400; letter-spacing:.05em; margin:0 0 6px;
-    color:var(--violet-hi); text-shadow:0 0 22px rgba(192,140,245,.6); text-transform:uppercase;
-  }
-  .btn-small{ padding:10px 16px; font-size:13px; flex:none; }
-  .stats .final-time{ color:var(--violet-muted); font-size:15px; line-height:1.5; }
-  .stats .final-time > div + div{ margin-top:2px; }
-  .stat-block{ margin-bottom:28px; }
-  .stat-block h3{ font-size:13px; letter-spacing:.26em; text-transform:uppercase; color:rgba(192,140,245,.75); font-weight:400; margin:0 0 12px; }
-  .player-stat-row{ display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid rgba(192,140,245,.14); }
   .player-stat-row:last-child{ border-bottom:none; }
-  .dot{ width:8px; height:8px; border-radius:50%; flex:none; }
-  .dot.amber{ background:var(--amber); box-shadow:0 0 8px var(--amber); }
-  .dot.cyan{ background:var(--violet); box-shadow:0 0 8px var(--violet); }
+  .dot{ width:10px; height:10px; border-radius:50%; flex:none; }
+  .dot.amber{ background:var(--amber); } .dot.cyan{ background:var(--cyan); }
   .player-stat-row .stat-row-body{ flex:1; }
-  .player-stat-row .name{ font-size:17px; font-weight:400; color:var(--violet-hi); }
-  .player-stat-row .sub{ font-size:13px; color:var(--violet-muted); margin-top:2px; }
-  .player-stat-row .num{ font-size:17px; color:var(--violet-hi); }
+  .player-stat-row .name{ font-size:14px; font-weight:600; }
+  .player-stat-row .sub{ font-size:11px; color:var(--text-dim); margin-top:2px; }
+  .player-stat-row .num{ font-size:15px; }
   .link-btn{
-    display:block; margin-top:12px; background:none; border:none; padding:0;
-    color:var(--violet-text); font-size:13px; font-weight:600; letter-spacing:.10em; text-transform:uppercase;
-    cursor:pointer; font-family:'Saira',sans-serif;
+    display:block; margin-top:10px; background:none; border:none; padding:0;
+    color:var(--amber); font-size:13px; font-weight:600; cursor:pointer; font-family:'Inter',sans-serif;
   }
-  .bar-row{ margin-bottom:16px; }
-  .bar-row .bar-label{ display:flex; justify-content:space-between; font-size:13px; color:var(--violet-muted); margin-bottom:8px; }
-  .bar-track{ height:10px; border-radius:0; background:rgba(192,140,245,.08); overflow:hidden; display:flex; }
-  .bar-fill.amber{ background:var(--amber); box-shadow:0 0 16px rgba(232,163,61,.7); }
-  .bar-fill.cyan{ background:var(--violet); box-shadow:0 0 16px rgba(192,140,245,.7); }
-  .round-split-text{ font-size:13px; color:var(--violet-muted); margin-top:8px; margin-bottom:16px; }
+  .bar-row{ margin-bottom:12px; }
+  .bar-row .bar-label{ display:flex; justify-content:space-between; font-size:12px; color:var(--text-dim); margin-bottom:5px; }
+  .bar-track{ height:8px; border-radius:4px; background:var(--void); overflow:hidden; display:flex; }
+  .bar-fill.amber{ background:var(--amber); }
+  .bar-fill.cyan{ background:var(--cyan); }
+  .round-split-text{ font-size:11px; color:var(--text-dim); margin-top:6px; margin-bottom:14px; }
   .round-split-text .amber-text{ color:var(--amber); }
-  .round-split-text .cyan-text{ color:var(--violet); }
+  .round-split-text .cyan-text{ color:var(--cyan); }
   .phase-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-  .phase-cell{ background:transparent; border:1px solid rgba(192,140,245,.2); border-radius:0; padding:13px 14px; }
-  .phase-cell .pc-label{ font-size:13px; color:var(--violet-muted); margin-bottom:4px; }
-  .phase-cell .pc-val{ font-size:21px; font-weight:400; color:var(--violet-hi); }
+  .phase-cell{ background:var(--panel-raised); border-radius:10px; padding:12px; }
+  .phase-cell .pc-label{ font-size:11px; color:var(--text-dim); margin-bottom:4px; }
+  .phase-cell .pc-val{ font-size:16px; font-weight:700; }
 
   /* ---------- PACE ANALYSIS ---------- */
-  .pace-summary{ font-size:14px; color:var(--violet-body); line-height:1.5; margin-bottom:16px; }
-  .pace-summary strong{ color:var(--violet-hi); font-weight:400; }
-  .pace-player{ border:1px solid rgba(192,140,245,.28); border-radius:0; padding:14px; margin-bottom:10px; background:transparent; }
-  /* amber vs violet card treatment, derived from the .dot color render() already emits -- no script change needed */
-  .pace-player:has(.dot.amber){ border-color:rgba(232,163,61,.35); background:linear-gradient(180deg, rgba(232,163,61,.08), transparent); }
-  .pace-player:has(.dot.cyan){ border-color:rgba(192,140,245,.28); background:transparent; }
+  .pace-summary{ font-size:13px; color:var(--text-dim); line-height:1.5; margin-bottom:14px; }
+  .pace-player{ background:var(--panel-raised); border-radius:10px; padding:14px; margin-bottom:10px; }
   .pace-player:last-child{ margin-bottom:0; }
-  .pace-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
-  .pace-player .pace-name{ display:flex; align-items:center; gap:8px; font-size:17px; font-weight:400; color:var(--violet-hi); }
-  .pace-player .pace-status{
-    font-size:13px; font-family:'Share Tech Mono',monospace; font-weight:400; padding:3px 9px; border-radius:0;
-    letter-spacing:.06em; flex:none; text-transform:uppercase;
-  }
-  .pace-status.ontrack{ background:transparent; color:var(--green); border:1px solid rgba(158,224,176,.5); }
-  .pace-status.over{ background:transparent; color:var(--red); border:1px solid var(--red-line); }
-  .pace-player .pace-detail{ font-size:13px; color:var(--violet-muted); margin:4px 0 0; }
-  .pace-type-row{ display:flex; justify-content:space-between; font-size:13px; color:var(--violet-muted); margin-top:4px; }
+  .pace-player .pace-name{ display:flex; align-items:center; gap:8px; font-size:14px; font-weight:600; }
+  .pace-player .pace-status{ font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; letter-spacing:0.02em; }
+  .pace-status.ontrack{ background:var(--cyan-dim); color:var(--cyan); }
+  .pace-status.over{ background:var(--red-dim); color:var(--red); }
+  .pace-player .pace-detail{ font-size:12px; color:var(--text-dim); margin:4px 0 2px; }
+  .pace-type-row{ display:flex; justify-content:space-between; font-size:12px; color:var(--text-dim); margin-top:4px; }
   .pace-type-row.flagged{ color:var(--red); font-weight:600; }
 
   /* ---------- ACTIVITY LOG ---------- */
   .activity-round{ margin-bottom:22px; }
-  .activity-round h4{
-    display:flex; align-items:center; gap:12px; font-family:'Share Tech Mono',monospace; font-size:19px; font-weight:400;
-    letter-spacing:.08em; margin:0; color:var(--violet-hi); text-transform:uppercase;
-  }
-  .activity-round h4::after{ content:''; flex:1; height:1px; background:rgba(192,140,245,.3); }
-  .activity-phase-label{
-    font-size:13px; color:rgba(192,140,245,.65); font-weight:400; margin:14px 0 6px; text-transform:uppercase; letter-spacing:.24em;
-  }
-  .activity-row{ display:flex; align-items:center; padding:12px 0; border-bottom:1px solid rgba(192,140,245,.14); font-size:16px; }
+  .activity-round h4{ font-size:13px; font-weight:700; margin:0; }
+  .activity-phase-label{ font-size:11px; color:var(--text-dim); font-weight:600; margin:12px 0 4px; text-transform:uppercase; letter-spacing:0.03em; }
+  .activity-row{ display:flex; align-items:center; padding:8px 0; border-bottom:1px solid var(--hairline); font-size:13px; }
   .activity-row:last-child{ border-bottom:none; }
-  .activity-row .dot{ margin-right:10px; }
+  .activity-row .dot{ margin-right:8px; }
   .activity-row .a-name{ flex:1; }
-  /* tint the player's name to their color, derived from the .dot already in the row */
-  .activity-row:has(.dot.amber) .a-name{ color:var(--amber-label); }
-  .activity-row:has(.dot.cyan) .a-name{ color:var(--violet-mid); }
-  .activity-row .a-outcome{ color:var(--violet-muted); margin-right:10px; font-size:14px; }
-  .activity-row .mono{ min-width:56px; text-align:right; font-size:17px; color:var(--violet-hi); }
-  .activity-row.slow{
-    border:1px solid rgba(240,90,110,.45); background:rgba(240,90,110,.1); border-radius:0;
-    margin:0 -10px; padding:12px 10px;
-  }
-  .activity-row.slow .mono{ color:#ffb8c0; }
+  .activity-row .a-outcome{ color:var(--text-dim); margin-right:10px; font-size:12px; }
+  .activity-row.slow{ background:rgba(229,72,77,0.08); border-radius:8px; margin:0 -8px; padding:8px; }
   .slow-tag{
-    font-size:13px; font-weight:400; font-family:'Share Tech Mono',monospace; color:var(--red);
-    border:1px solid var(--red-line); background:transparent; padding:3px 8px; border-radius:0;
-    letter-spacing:.14em; margin-right:10px; text-transform:uppercase;
+    font-size:10px; font-weight:700; color:var(--red); background:var(--red-dim);
+    padding:2px 7px; border-radius:999px; letter-spacing:0.03em; margin-right:10px;
   }
   .activity-shared-row{
-    display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(192,140,245,.14);
-    font-size:13px; color:var(--violet-muted);
+    display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--hairline);
+    font-size:13px; color:var(--text-dim);
   }
-  .activity-shared-row .mono{ font-size:17px; color:var(--violet-hi); }
 
   .hidden{ display:none !important; }
 </style>
@@ -434,12 +243,7 @@
 
   <!-- LANDING -->
   <div id="screen-landing" class="setup">
-    <div class="wordmark">
-      <div class="bracket tl"></div>
-      <h1>Fleet<br>Chrono</h1>
-      <div class="tagline">Tournament Chronometer</div>
-      <div class="rule"></div>
-    </div>
+    <h1>Fleet Chrono</h1>
 
     <div id="multiResumePrompt" class="resume-prompt hidden">
       <p class="sub" id="multiResumeSummary">A multi-device game was in progress.</p>
@@ -449,8 +253,8 @@
     </div>
 
     <div id="landingOptions">
-      <div class="spacer"></div>
       <p class="sub">How are you tracking this game?</p>
+      <div class="spacer"></div>
       <div class="landing-options">
         <button class="btn btn-primary" onclick="enterSingleDevice()">Use on this device</button>
         <button class="btn btn-ghost" onclick="show('screen-multi-setup')">Start a multi-device game</button>
@@ -498,11 +302,7 @@
   <!-- MULTI-DEVICE: CREATE -->
   <div id="screen-multi-setup" class="setup hidden">
     <h1>Fleet Chrono</h1>
-    <div class="step-row">
-      <span class="step-label">Multi-device</span>
-      <span class="step-rule"></span>
-      <span class="step-num mono">Step 1 / 2</span>
-    </div>
+    <p class="sub">Multi-device &middot; step 1 of 2</p>
 
     <div class="field">
       <label>You are</label>
@@ -535,14 +335,8 @@
 
   <!-- MULTI-DEVICE: LOBBY (creator waits) -->
   <div id="screen-lobby" class="setup hidden">
-    <div class="step-row">
-      <span class="step-label">Multi-device</span>
-      <span class="step-rule"></span>
-      <span class="step-num mono">Step 2 / 2</span>
-    </div>
+    <p class="sub">Multi-device &middot; step 2 of 2</p>
     <div class="code-card">
-      <div class="bracket tl sm"></div><div class="bracket tr sm"></div><div class="bracket bl sm"></div><div class="bracket br sm"></div>
-      <div class="micro-label">Game Code</div>
       <div id="lobbyCode" class="join-code mono">------</div>
       <div id="lobbyLink" class="join-link"></div>
     </div>
@@ -573,9 +367,8 @@
   <div id="screen-join-confirm" class="setup hidden">
     <p class="sub" id="joinConfirmTitle">Joining game</p>
     <div class="code-card">
-      <div class="bracket tl sm"></div><div class="bracket tr sm"></div><div class="bracket bl sm"></div><div class="bracket br sm"></div>
-      <div id="joinConfirmRole" class="role-text"></div>
-      <div id="joinConfirmDetails" class="role-detail"></div>
+      <div id="joinConfirmRole" style="font-size:15px; font-weight:600;"></div>
+      <div id="joinConfirmDetails" style="font-size:12px; color:var(--text-dim); margin-top:8px;"></div>
     </div>
     <div class="lobby-status waiting"><span class="spinner"></span> Waiting for host to start&hellip;</div>
 
@@ -589,57 +382,34 @@
     <div id="warningBanner" class="warning-banner hidden">15 MINUTES REMAINING</div>
     <div id="pausedBanner" class="paused-banner hidden">GAME PAUSED</div>
     <div class="strip">
-      <div class="clock-block">
-        <div class="clock-label">Game Clock</div>
-        <div id="gameClock" class="game-clock mono">2:15:00</div>
-      </div>
+      <div id="gameClock" class="game-clock mono">2:15:00</div>
       <div class="meta">
         <div id="roundLabelTop" class="round-label">Round 1 of 6</div>
-        <div class="phase-label-row">
-          <span class="lamp violet"></span>
-          <div id="phaseLabelTop" class="phase-label">Command Phase</div>
-        </div>
+        <div id="phaseLabelTop" class="phase-label">Command Phase</div>
       </div>
     </div>
 
     <div class="stage">
       <!-- shared phase view -->
       <div id="sharedPhaseView" class="shared-phase hidden">
-        <div class="pe-label">Phase Elapsed</div>
-        <div class="phase-clock-wrap">
-          <div class="bracket tl"></div><div class="bracket tr"></div><div class="bracket bl"></div><div class="bracket br"></div>
-          <div id="sharedPhaseClock" class="phase-clock mono">00:00</div>
-        </div>
-        <div id="phaseContext" class="pe-context"></div>
+        <div id="sharedPhaseClock" class="phase-clock mono">00:00</div>
       </div>
 
       <!-- between-rounds: continue or end the game here (never mid-round) -->
       <div id="betweenRoundsView" class="between-rounds hidden">
-        <div class="br-rule"></div>
         <div id="betweenRoundsTitle" class="br-title">Round 1 Complete</div>
-        <div class="br-rule"></div>
         <div class="br-sub">Continue to the next round, or end the game here.</div>
       </div>
 
       <!-- ship/squadron split view -->
       <div id="splitView" class="split hidden">
         <div id="panel1" class="player-panel">
-          <div class="bracket tl"></div><div class="bracket tr"></div><div class="bracket bl"></div><div class="bracket br"></div>
-          <div class="sweep"></div>
-          <div class="panel-idle-left">
-            <div class="header-row">
-              <div id="p1nameLive" class="p-name">First Player</div>
-              <div class="active-badge">Active</div>
-            </div>
+          <div>
+            <div id="p1nameLive" class="p-name">First Player</div>
             <div id="p1status" class="p-status">Idle</div>
-            <div class="standing-by">Standing By</div>
           </div>
           <div id="p1clockWrap" class="hidden">
             <div id="p1clock" class="p-clock mono">00:00</div>
-          </div>
-          <div class="panel-idle-right">
-            <div id="p1idleTotal" class="idle-total-num mono">00:00</div>
-            <div class="idle-total-label">On Clock</div>
           </div>
           <div id="p1controls" class="p-controls hidden">
             <button id="p1passBtn" class="btn btn-pass" onclick="tapPass(0)">Pass</button>
@@ -647,22 +417,12 @@
           </div>
         </div>
         <div id="panel2" class="player-panel">
-          <div class="bracket tl"></div><div class="bracket tr"></div><div class="bracket bl"></div><div class="bracket br"></div>
-          <div class="sweep"></div>
-          <div class="panel-idle-left">
-            <div class="header-row">
-              <div id="p2nameLive" class="p-name">Second Player</div>
-              <div class="active-badge">Active</div>
-            </div>
+          <div>
+            <div id="p2nameLive" class="p-name">Second Player</div>
             <div id="p2status" class="p-status">Idle</div>
-            <div class="standing-by">Standing By</div>
           </div>
           <div id="p2clockWrap" class="hidden">
             <div id="p2clock" class="p-clock mono">00:00</div>
-          </div>
-          <div class="panel-idle-right">
-            <div id="p2idleTotal" class="idle-total-num mono">00:00</div>
-            <div class="idle-total-label">On Clock</div>
           </div>
           <div id="p2controls" class="p-controls hidden">
             <button id="p2passBtn" class="btn btn-pass" onclick="tapPass(1)">Pass</button>
@@ -673,13 +433,8 @@
     </div>
 
     <div class="controls-bar">
-      <button id="undoBtn" class="icon-btn" onclick="undo()" title="Undo last action">
-        <svg class="icon-undo" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 15 4 10l5-5"/><path d="M4 10h11a5.5 5.5 0 0 1 0 11H12"/></svg>
-      </button>
-      <button id="pauseBtn" class="icon-btn" onclick="togglePause()" title="Pause">
-        <span class="icon-play"></span>
-        <span class="icon-pause"><span></span><span></span></span>
-      </button>
+      <button id="undoBtn" class="icon-btn" onclick="undo()" title="Undo last action">↶</button>
+      <button id="pauseBtn" class="icon-btn" onclick="togglePause()" title="Pause">⏸</button>
       <button id="advanceBtn" class="btn btn-primary" onclick="advancePhase()">Begin Ship Phase</button>
       <div id="roundEndControls" class="round-end-controls hidden">
         <button id="beginRoundBtn" class="btn btn-primary" onclick="beginNextRound()">Begin Round 2</button>
@@ -697,7 +452,7 @@
         <h2>Game complete</h2>
         <div id="finalTime" class="final-time"></div>
       </div>
-      <button class="btn btn-ghost btn-small" onclick="newGame()">New</button>
+      <button class="btn btn-ghost btn-small" onclick="newGame()">New game</button>
     </div>
 
     <div id="paceBlock" class="stat-block hidden">
@@ -768,17 +523,6 @@ const PHASE_SEQUENCE = ["command","ship","squadron","status"];
 const PHASE_LABELS = {
   obstacles:"Place Obstacles", deploy:"Deploy Fleets",
   command:"Command Phase", ship:"Ship Phase", squadron:"Squadron Phase", status:"Status Phase"
-};
-// Holo Tactical Violet restyle only: the shared-phase stage's small context
-// line under the clock. Purely decorative copy, no state/logic behind it —
-// mirrors PHASE_LABELS in spirit. Sourced from the actual design reference
-// for "command"; the others are placeholders in the same voice pending the
-// matching reference screens.
-const PHASE_CONTEXT = {
-  obstacles:"Both players — position obstacles",
-  deploy:"Both players — deploy ships and squadrons",
-  command:"Both players — dials assigned simultaneously",
-  status:"Both players — resolve end-of-round effects"
 };
 const ALL_PHASES_FOR_STATS = PREGAME_SEQUENCE.concat(PHASE_SEQUENCE);
 const PLAYER_TIMED_PHASES = ["ship","squadron"];
@@ -893,23 +637,6 @@ function currentActivePlayer(ps){
 function currentActivationStartTs(ps){
   const acts = activationsInPhase(ps);
   return acts.length ? acts[acts.length-1].ts : ps.ts;
-}
-// Holo Tactical Violet restyle only: the idle panel's live "time on clock"
-// figure. Mirrors renderStats()'s boundary-walking exactly (including
-// counting only 'done' activations, matching how that screen already
-// defines a player's total) but computed live, mid-game, for one player.
-function liveTotalOnClock(player){
-  let boundaryTs = null, total = 0;
-  for(const e of events){
-    if(e.type==='phase_start' || e.type==='phase_end'){
-      boundaryTs = e.ts;
-    } else if(e.type==='activation'){
-      const d = (e.ts - boundaryTs)/1000;
-      boundaryTs = e.ts;
-      if(e.player===player && e.outcome==='done') total += d;
-    }
-  }
-  return total;
 }
 function lastActivationForPlayer(ps, player){
   const acts = activationsInPhase(ps);
@@ -1229,7 +956,7 @@ function render(){
 
   document.getElementById('pausedBanner').classList.toggle('hidden', !paused);
   const pauseBtn = document.getElementById('pauseBtn');
-  pauseBtn.classList.toggle('is-paused', paused);
+  pauseBtn.textContent = paused ? '▶' : '⏸';
   pauseBtn.title = paused ? 'Resume' : 'Pause';
   // In multi-device mode, undoing a player-owned activation is exclusively
   // the acting player's own job (via their panel's Done→Undo toggle, with
@@ -1251,7 +978,7 @@ function render(){
     const finishedRound = events[events.length-1].round;
     document.getElementById('sharedPhaseView').classList.add('hidden');
     document.getElementById('splitView').classList.add('hidden');
-    document.getElementById('roundLabelTop').textContent = "Round "+finishedRound+" / "+roundLimit;
+    document.getElementById('roundLabelTop').textContent = "Round "+finishedRound+" of "+roundLimit;
     document.getElementById('phaseLabelTop').textContent = "Round Complete";
     document.getElementById('betweenRoundsTitle').textContent = "Round "+finishedRound+" Complete";
     document.getElementById('beginRoundBtn').textContent = "Begin Round "+(finishedRound+1);
@@ -1259,7 +986,7 @@ function render(){
   }
 
   const ps = currentPhaseEvent();
-  document.getElementById('roundLabelTop').textContent = ps.round===0 ? "Game Setup" : "Round "+ps.round+" / "+roundLimit;
+  document.getElementById('roundLabelTop').textContent = ps.round===0 ? "Game Setup" : "Round "+ps.round+" of "+roundLimit;
   document.getElementById('phaseLabelTop').textContent = PHASE_LABELS[ps.phase];
 
   const shared = PLAYER_TIMED_PHASES.indexOf(ps.phase)===-1;
@@ -1268,7 +995,6 @@ function render(){
 
   if(shared){
     document.getElementById('sharedPhaseClock').textContent = fmt((t-ps.ts)/1000);
-    document.getElementById('phaseContext').textContent = PHASE_CONTEXT[ps.phase] || '';
   } else {
     renderSplitView(ps, t, paused);
   }
@@ -1331,8 +1057,6 @@ function renderSplitView(ps, t, paused){
       doneBtn.textContent = "Undo";
     } else {
       statusEl.textContent = "Idle";
-      const idleTotalEl = document.getElementById('p'+(pi+1)+'idleTotal');
-      if(idleTotalEl) idleTotalEl.textContent = fmt(liveTotalOnClock(pi));
     }
   });
 }
@@ -1347,8 +1071,7 @@ function renderStats(){
       ? `${fmt(-diff)} under`
       : `right on time`;
   document.getElementById('finalTime').innerHTML =
-    `<div>Target ${fmt(targetDurationSec, true)} · ${roundLimit} rounds</div>` +
-    `<div>Actual ${fmt(totalElapsed, true)} · ${diffLabel}</div>`;
+    `Target ${fmt(targetDurationSec, true)} · Actual ${fmt(totalElapsed, true)} (${diffLabel}) · ${roundLimit} rounds`;
 
   // Walk the log in order, tracking the last phase/activation boundary so every
   // activation's (and pass's) duration is derived as the gap since the previous
@@ -1478,13 +1201,11 @@ function renderStats(){
       rowsHtml = [0,1].map(p=>{
         const over = avgs[p] > requiredAvg*PACE_TOLERANCE;
         return `<div class="pace-player">
-          <div class="pace-row">
-            <div>
-              <div class="pace-name"><span class="dot ${p===0?'amber':'cyan'}"></span>${players[p]}</div>
-              <div class="pace-detail">${counts[p]} activations, averaging ${fmt(avgs[p])} each.</div>
-            </div>
+          <div class="pace-name">
+            <span class="dot ${p===0?'amber':'cyan'}"></span>${players[p]}
             <span class="pace-status ${over?'over':'ontrack'}">${over?'Over pace':'On track'}</span>
           </div>
+          <div class="pace-detail">${counts[p]} activations, averaging ${fmt(avgs[p])} each.</div>
           ${typeRowsHtml(p, requiredAvg)}
         </div>`;
       }).join('');

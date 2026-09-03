@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=Saira:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Share+Tech+Mono&family=Azeret+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; background:#0a0c10; color:#e8ecf2; font-family:Archivo, system-ui, sans-serif; }
+  a { color:#5fd4d0; text-decoration:none; }
+  a:hover { color:#8fe6e3; }
+  @keyframes fc-blink { 0%,100%{opacity:1;} 50%{opacity:.25;} }
+  @keyframes fc-breathe { 0%,100%{opacity:.55;} 50%{opacity:1;} }
+  @keyframes fc-sweep { 0%{transform:translateX(-100%);} 100%{transform:translateX(220%);} }
+  @keyframes spin { to { transform:rotate(360deg); } }
+</style>
+</helmet>
+
+<section style="padding:56px 48px 40px; display:flex; flex-direction:column; gap:32px;">
+  <div style="display:flex; align-items:baseline; gap:16px; flex-wrap:wrap;">
+    <div style="font-size:13px; font-weight:700; letter-spacing:.22em; text-transform:uppercase; color:#c08cf5;">Turn 3</div>
+    <div style="font-size:26px; font-weight:600; letter-spacing:-0.01em;">Holo Tactical Violet — full screen set</div>
+    <div style="font-size:14px; color:#7d8798; max-width:600px; line-height:1.5;">Every screen in the flow, same order as the prototype, copy unchanged. Amber = First Player, violet = system and Second Player, red reserved for overtime. Nothing below 13px. Reference a screen as <a href="#3a">3a</a>–<a href="#3j">3j</a>.</div>
+  </div>
+
+  <div style="display:flex; flex-wrap:wrap; gap:40px; align-items:flex-start;">
+
+    <!-- 3A LANDING -->
+    <div id="3a" style="display:flex; flex-direction:column; gap:12px; width:420px;">
+      <div style="display:flex; align-items:center; gap:10px;"><div style="font-family:'Share Tech Mono',monospace; font-size:13px; color:#14071f; background:#c08cf5; padding:3px 9px; border-radius:4px;">3A</div><div style="font-size:16px; font-weight:600;">Landing</div></div>
+      <div style="width:420px; height:760px; border-radius:28px; overflow:hidden; background:#06040b; border:1px solid #2e1f42; box-shadow:0 30px 70px rgba(0,0,0,.7), inset 0 0 80px rgba(192,140,245,.07); display:flex; flex-direction:column; position:relative; font-family:Saira,sans-serif; color:#eee6f7;">
+        <div style="position:absolute; inset:0; background:radial-gradient(80% 45% at 50% 8%, rgba(192,140,245,.2), transparent 70%); pointer-events:none;"></div>
+        <div style="position:relative; flex:1; padding:64px 30px 34px; display:flex; flex-direction:column;">
+          <div style="position:relative; padding-top:8px;">
+            <div style="position:absolute; top:0; left:0; width:30px; height:30px; border-top:2px solid rgba(192,140,245,.7); border-left:2px solid rgba(192,140,245,.7);"></div>
+            <div style="font-family:'Share Tech Mono',monospace; font-size:44px; letter-spacing:.04em; color:#f3ebfd; text-shadow:0 0 30px rgba(192,140,245,.55); line-height:1.05; padding-left:18px;">FLEET<br>CHRONO</div>
+          </div>
+          <div style="font-size:14px; letter-spacing:.2em; text-transform:uppercase; color:rgba(192,140,245,.7); margin-top:18px; padding-left:18px;">Tournament chronometer</div>
+          <div style="height:1px; background:linear-gradient(90deg, rgba(192,140,245,.5), transparent); margin:28px 0 0;"></div>
+          <div style="flex:1;"></div>
+          <div style="font-size:17px; color:#b8a8cc; line-height:1.5; margin-bottom:22px;">How are you tracking this game?</div>
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <button style="padding:19px; font-family:Saira,sans-serif; font-size:16px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:#170a24; background:#c08cf5; border:1px solid #e2ccfd; cursor:pointer; box-shadow:0 0 28px rgba(192,140,245,.4);" style-active="box-shadow:0 0 10px rgba(192,140,245,.3)">Use on this device</button>
+            <button style="padding:19px; font-family:Saira,sans-serif; font-size:16px; font-weight:500; letter-spacing:.1em; text-transform:uppercase; color:#d9befa; background:transparent; border:1px solid rgba(192,140,245,.32); cursor:pointer;" style-active="background:rgba(192,140,245,.12)">Start a multi-device game</button>
+            <button style="padding:19px; font-family:Saira,sans-serif; font-size:16px; font-weight:500; letter-spacing:.1em; text-transform:uppercase; color:#d9befa; background:transparent; border:1px solid rgba(192,140,245,.32); cursor:pointer;" style-active="background:rgba(192,140,245,.12)">Join a game</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3B SETUP -->
+    <div id="3b" style="display:flex; flex-direction:column; gap:12px; width:420px;">
+      <div style="display:flex; align-items:center; gap:10px;"><div style="font-family:'Share Tech Mono',monospace; font-size:13px; color:#14071f; background:#c08cf5; padding:3px 9px; border-radius:4px;">3B</div><div style="font-size:16px; font-weight:600;">Setup — single device</div></div>
+      <div style="width:420px; height:760px; border-radius:28px; overflow:hidden; background:#06040b; border:1px solid #2e1f42; box-shadow:0 30px 70px rgba(0,0,0,.7), inset 0 0 80px rgba(192,140,245,.07); display:flex; flex-direction:column; position:relative; font-family:Saira,sans-serif; color:#eee6f7;">
+        <div style="position:absolute; inset:0; background:radial-gradient(80% 45% at 50% 100%, rgba(192,140,245,.14), transparent 70%); pointer-events:none;"></div>
+        <div style="position:relative; flex:1; padding:44px 30px 34px; display:flex; flex-direction:column;">
+          <div style="font-family:'Share Tech Mono',monospace; font-size:26px; letter-spacing:.06em; color:#f3ebfd; text-shadow:0 0 22px rgba(192,140,245,.45);">FLEET CHRONO</div>
+          <div style="font-size:15px; color:#a294b8; line-height:1.55; margin:14px 0 34px;">Tournament game timer for Star Wars: Armada. Tracks the round clock, phases, and each player's turn time.</div>
+
+          <div style="font-size:13px; letter-spacing:.24em; text-transform:uppercase; color:rgba(192,140,245,.75); margin-bottom:9px;">Round limit</div>
+          <input value="6" style="width:100%; box-sizing:border-box; background:rgba(192,140,245,.06); border:1px solid rgba(192,140,245,.3); padding:16px; color:#f3ebfd; font-family:'Share Tech Mono',monospace; font-size:22px; text-align:center; letter-spacing:.06em; outline:none;">
+
+          <div style="font-size:13px; letter-spacing:.24em; text-transform:uppercase; color:rgba(192,140,245,.75); margin:26px 0 9px;">Game clock — target duration</div>
+          <div style="display:flex; gap:12px;">
+            <div style="flex:1;">
+              <input value="2" style="width:100%; box-sizing:border-box; background:rgba(192,140,245,.06); border:1px solid rgba(192,140,245,.3); padding:16px; color:#f3ebfd; font-family:'Share Tech Mono',monospace; font-size:22px; text-align:center; outline:none;">
+              <div style="text-align:center; font-size:13px; letter-spacing:.2em; text-transform:uppercase; color:rgba(192,140,245,.55); margin-top:8px;">hours</div>
+            </div>
+            <div style="flex:1;">
+              <input value="15" style="width:100%; box-sizing:border-box; background:rgba(192,140,245,.06); border:1px solid rgba(192,140,245,.3); padding:16px; color:#f3ebfd; font-family:'Share Tech Mono',monospace; font-size:22px; text-align:center; outline:none;">
+              <div style="text-align:center; font-size:13px; letter-spacing:.2em; text-transform:uppercase; color:rgba(192,140,245,.55); margin-top:8px;">minutes</div>
+            </div>
+          </div>
+
+          <div style="flex:1;"></div>
+          <button style="padding:19px; font-family:Saira,sans-serif; font-size:16px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:#170a24; background:#c08cf5; border:1px solid #e2ccfd; cursor:pointer; box-shadow:0 0 28px rgba(192,140,245,.4);" style-active="box-shadow:0 0 10px rgba(192,140,245,.3)">Start game</button>
+          <button style="margin-top:12px; padding:17px; font-family:Saira,sans-serif; font-size:15px; font-weight:500; letter-spacing:.1em; text-transform:uppercase; color:#a294b8; background:transparent; border:1px solid rgba(192,140,245,.22); cursor:pointer;" style-active="background:rgba(192,140,245,.1)">← Back</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3C MULTI CREATE -->
+    <div id="3c" style="display:flex; flex-direction:column; gap:12px; width:420px;">
+      <div style="display:flex; align-items:center; gap:10px;"><div style="font-family:'Share Tech Mono',monospace; font-size:13px; color:#14071f; background:#c08cf5; padding:3px 9px; border-radius:4px;">3C</div><div style="font-size:16px; font-weight:600;">Multi-device — create</div></div>
+      <div style="width:420px; height:760px; border-radius:28px; overflow:hidden; background:#06040b; border:1px solid #2e1f42; box-shadow:0 30px 70px rgba(0,0,0,.7), inset 0 0 80px rgba(192,140,245,.07); display:flex; flex-direction:column; position:relative; font-family:Saira,sans-serif; color:#eee6f7;">
+        <div style="position:relative; flex:1; padding:44px 30px 34px; display:flex; flex-direction:column;">
+          <div style="font-family:'Share Tech Mono',monospace; font-size:26px; letter-spacing:.06em; color:#f3ebfd; text-shadow:0 0 22px rgba(192,140,245,.45);">FLEET CHRONO</div>
+          <div style="display:flex; align-items:center; gap:10px; margin:16px 0 32px;">
+            <div style="font-size:13px; letter-spacing:.2em; text-transform:uppercase; color:rgba(192,140,245,.75);">Multi-device</div>
+            <div style="flex:1; height:1px; background:rgba(192,140,245,.25);"></div>
+            <div style="font-family:'Share Tech Mono',monospace; font-size:13px; color:#c08cf5;">STEP 1 / 2</div>
+          </div>
+
+          <div style="font-size:13px; letter-spacing:.24em; text-transform:uppercase; color:rgba(192,140,245,.75); margin-bottom:9px;">You are</div>
+          <div style="display:flex; gap:10px;">
+            <button style="flex:1; padding:16px 8px; font-family:Saira,sans-serif; font-size:15px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:#2a1b04; background:#e8a33d; border:1px solid #ffd79a; cursor:pointer; box-shadow:0 0 20px rgba(232,163,61,.35);">First Player</button>
+            <button style="flex:1; padding:16px 8px; font-family:Saira,sans-serif; font-size:15px; font-weight:500; letter-spacing:.06em; text-transform:uppercase; color:#a294b8; background:transparent; border:1px solid rgba(192,140,245,.28); cursor:pointer;" style-active="background:rgba(192,140,245,.12)">Second Player</button>
+          </div>
+
+          <div style="font-size:13px; letter-spacing:.24em; text-transform:uppercase; color:rgba(192,140,245,.75); margin:26px 0 9px;">Round limit</div>
+          <input value="6" style="width:100%; box-sizing:border-box; background:rgba(192,140,245,.06); border:1px solid rgba(192,140,245,.3); padding:16px; color:#f3ebfd; font-family:'Share Tech Mono',monospace; font-size:22px; text-align:center; outline:none;">
+
+          <div style="font-size:13px; letter-spacing:.24em; text-transform:uppercase; color:rgba(192,140,245,.75); margin:26px 0 9px;">Game clock — target duration</div>
+          <div style="display:flex; gap:12px;">
+            <div style="flex:1;">
+              <input value="2" style="width:100%; box-sizing:border-box; background:rgba(192,140,245,.06); border:1px solid rgba(192,140,245,.3); padding:16px; color:#f3ebfd; font-family:'Share Tech Mono',monospace; font-size:22px; text-align:center; outline:none;">
+              <div style="text-align:center; font-size:13px; letter-spacing:.2em; text-transform:uppercase; color:rgba(192,140,245,.55); margin-top:8px;">hours</div>
+            </div>
+            <div style="flex:1;">
+              <input value="15" style="width:100%; box-sizing:border-box; background:rgba(192,140,245,.06); border:1px solid rgba(192,140,245,.3); padding:16px; color:#f3ebfd; font-family:'Share Tech Mono',monospace; font-size:22px; text-align:center; outline:none;">
+              <div style="text-align:center; font-size:13px; letter-spacing:.2em; text-transform:uppercase; color:rgba(192,140,245,.55); margin-top:8px;">minutes</div>
+            </div>
+          </div>
+
+          <div style="flex:1;"></div>
+          <button style="padding:19px; font-family:Saira,sans-serif; font-size:16px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:#170a24; background:#c08cf5; border:1px solid #e2ccfd; cursor:pointer; box-shadow:0 0 28px rgba(192,140,245,.4);">Create game</button>
+          <button style="margin-top:12px; padding:17px; font-family:Saira,sans-serif; font-size:15px; font-weight:500; letter-spacing:.1em; text-transform:uppercase; color:#a294b8; background:transparent; border:1px solid rgba(192,140,245,.22); cursor:pointer;">← Back</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3D LOBBY -->
+    <div id="3d" style="display:flex; flex-direction:column; gap:12px; width:420px;">
+      <div style="display:flex; align-items:center; gap:10px;"><div style="font-family:'Share Tech Mono',monospace; font-size:13px; color:#14071f; background:#c08cf5; padding:3px 9px; border-radius:4px;">3D</div><div style="font-size:16px; font-weight:600;">Lobby — waiting</div></div>
+      <div style="width:420px; height:760px; border-radius:28px; overflow:hidden; background:#06040b; border:1px solid #2e1f42; box-shadow:0 30px 70px rgba(0,0,0,.7), inset 0 0 80px rgba(192,140,245,.07); display:flex; flex-direction:column; position:relative; font-family:Saira,sans-serif; color:#eee6f7;">
+        <div style="position:absolute; inset:0; background:radial-gradient(70% 40% at 50% 30%, rgba(192,140,245,.16), transparent 70%); pointer-events:none;"></div>
+        <div style="position:relative; flex:1; padding:44px 30px 34px; display:flex; flex-direction:column;">
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:40px;">
+            <div style="font-size:13px; letter-spacing:.2em; text-transform:uppercase; color:rgba(192,140,245,.75);">Multi-device</div>
+            <div style="flex:1; height:1px; background:rgba(192,140,245,.25);"></div>
+            <div style="font-family:'Share Tech Mono',monospace; font-size:13px; color:#c08cf5;">STEP 2 / 2</div>
+          </div>
+
+          <div style="position:relative; padding:34px 20px; text-align:center; border:1px solid rgba(192,140,245,.3); background:linear-gradient(180deg, rgba(192,140,245,.1), rgba(192,140,245,.02));">
+            <div style="position:absolute; top:0; left:0; width:22px; height:22px; border-top:2px solid #c08cf5; border-left:2px solid #c08cf5;"></div>
+            <div style="position:absolute; top:0; right:0; width:22px; height:22px; border-top:2px solid #c08cf5; border-right:2px solid #c08cf5;"></div>
+            <div style="position:absolute; bottom:0; left:0; width:22px; height:22px; border-bottom:2px solid #c08cf5; border-left:2px solid #c08cf5;"></div>
+            <div style="position:absolute; bottom:0; right:0; width:22px; height:22px; border-bottom:2px solid #c08cf5; border-right:2px solid #c08cf5;"></div>
+            <div style="font-size:13px; letter-spacing:.24em; text-transform:uppercase; color:rgba(192,140,245,.75); margin-bottom:14px;">Game code</div>
+            <div style="font-family:'Share Tech Mono',monospace; font-size:44px; letter-spacing:.2em; color:#f3ebfd; text-shadow:0 0 26px rgba(192,140,245,.6);">AB3K9X</div>
+            <div style="font-size:13px; color:#8f81a6; margin-top:16px; word-break:break-all; letter-spacing:.02em;">fleetchrono.app/?join=AB3K9X</div>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:11px; margin-top:22px;">
+            <div style="width:14px; height:14px; border-radius:50%; border:2px solid #e8a33d; border-top-color:transparent; animation:spin .8s linear infinite;"></div>
+            <div style="font-size:15px; color:#e8a33d; letter-spacing:.06em;">Waiting for Second Player…</div>
+          </div>
+
+          <div style="flex:1;"></div>
+          <button style="padding:19px; font-family:Saira,sans-serif; font-size:16px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:rgba(216,190,250,.5); background:rgba(192,140,245,.1); border:1px solid rgba(192,140,245,.22); cursor:not-allowed;">Start game</button>
+          <button style="margin-top:12px; padding:17px; font-family:Saira,sans-serif; font-size:15px; font-weight:500; letter-spacing:.1em; text-transform:uppercase; color:#a294b8; background:transparent; border:1px solid rgba(192,140,245,.22); cursor:pointer;">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3E JOIN -->
+    <div id="3e" style="display:flex; flex-direction:column; gap:12px; width:420px;">
+      <div style="display:flex; align-items:center; gap:10px;"><div style="font-family:'Share Tech Mono',monospace; font-size:13px; color:#14071f; background:#c08cf5; padding:3px 9px; border-radius:4px;">3E</div><div style="font-size:16px; font-weight:600;">Join a game</div></div>
+      <div style="width:420px; height:760px; border-radius:28px; overflow:hidden; background:#06040b; border:1px solid #2e1f42; box-shadow:0 30px 70px rgba(0,0,0,.7), inset 0 0 80px rgba(192,140,245,.07); display:flex; flex-direction:column; position:relative; font-family:Saira,sans-serif; color:#eee6f7;">
+        <div style="position:relative; flex:1; padding:44px 30px 34px; display:flex; flex-direction:column;">
+          <div style="font-family:'Share Tech Mono',monospace; font-size:26px; letter-spacing:.06em; color:#f3ebfd; text-shadow:0 0 22px rgba(192,140,245,.45);">FLEET CHRONO</div>
+          <div style="font-size:15px; color:#a294b8; line-height:1.55; margin:14px 0 40px;">Enter the code the other player shared with you.</div>
+
+          <div style="font-size:13px; letter-spacing:.24em; text-transform:uppercase; color:rgba(192,140,245,.75); margin-bottom:9px;">Game code</div>
+          <input value="AB3K9X" style="width:100%; box-sizing:border-box; background:rgba(192,140,245,.06); border:1px solid rgba(192,140,245,.45); padding:20px; color:#f3ebfd; font-family:'Share Tech Mono',monospace; font-size:32px; text-align:center; letter-spacing:.22em; outline:none; box-shadow:0 0 24px rgba(192,140,245,.2) inset;">
+
+          <div style="flex:1;"></div>
+          <button style="padding:19px; font-family:Saira,sans-serif; font-size:16px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:#170a24; background:#c08cf5; border:1px solid #e2ccfd; cursor:pointer; box-shadow:0 0 28px rgba(192,140,245,.4);">Join game</button>
+          <button style="margin-top:12px; padding:17px; font-family:Saira,sans-serif; font-size:15px; font-weight:500; letter-spacing:.1em; text-transform:uppercase; color:#a294b8; background:transparent; border:1px solid rgba(192,140,245,.22); cursor:pointer;">← Back</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3F COMMAND PHASE (shared) -->
+    <div id="3f" style="display:flex; flex-direction:column; gap:12px; width:420px;">
+      <div style="display:flex; align-items:center; gap:10px;"><div style="font-family:'Share Tech Mono',monospace; font-size:13px; color:#14071f; background:#c08cf5; padding:3px 9px; border-radius:4px;">3F</div><div style="font-size:16px; font-weight:600;">Shared phase — Command</div></div>
+      <div style="width:420px; height:760px; border-radius:28px; overflow:hidden; background:#06040b; border:1px solid #2e1f42; box-shadow:0 30px 70px rgba(0,0,0,.7), inset 0 0 80px rgba(192,140,245,.07); display:flex; flex-direction:column; position:relative; font-family:Saira,sans-serif; color:#eee6f7;">
+        <div style="position:absolute; inset:0; background:radial-gradient(75% 45% at 50% 50%, rgba(192,140,245,.16), transparent 72%); pointer-events:none;"></div>
+        <div style="position:relative; padding:22px 24px 18px; display:flex; align-items:flex-start; justify-content:space-between; border-bottom:1px solid rgba(192,140,245,.24);">
+          <div>
+            <div style="font-size:13px; letter-spacing:.24em; color:rgba(192,140,245,.75); text-transform:uppercase; margin-bottom:6px;">Game Clock</div>
+            <div style="font-family:'Share Tech Mono',monospace; font-size:38px; color:#f1e6fc; font-variant-numeric:tabular-nums; text-shadow:0 0 22px rgba(192,140,245,.6);">1:44:31</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:13px; letter-spacing:.22em; color:rgba(192,140,245,.75); text-transform:uppercase; margin-bottom:6px;">Round 3 / 6</div>
+            <div style="display:flex; align-items:center; justify-content:flex-end; gap:8px;">
+              <div style="width:7px; height:7px; border-radius:50%; background:#c08cf5; box-shadow:0 0 10px #c08cf5; animation:fc-breathe 2s ease-in-out infinite;"></div>
+              <div style="font-size:21px; color:#d9befa; letter-spacing:.05em;">Command Phase</div>
+            </div>
+          </div>
+        </div>
+        <div style="position:relative; flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px;">
+          <div style="font-size:14px; letter-spacing:.3em; text-transform:uppercase; color:rgba(192,140,245,.65);">Phase elapsed</div>
+          <div style="position:relative; padding:8px 34px;">
+            <div style="position:absolute; top:0; left:0; width:26px; height:26px; border-top:2px solid rgba(192,140,245,.8); border-left:2px solid rgba(192,140,245,.8);"></div>
+            <div style="position:absolute; top:0; right:0; width:26px; height:26px; border-top:2px solid rgba(192,140,245,.8); border-right:2px solid rgba(192,140,245,.8);"></div>
+            <div style="position:absolute; bottom:0; left:0; width:26px; height:26px; border-bottom:2px solid rgba(192,140,245,.8); border-left:2px solid rgba(192,140,245,.8);"></div>
+            <div style="position:absolute; bottom:0; right:0; width:26px; height:26px; border-bottom:2px solid rgba(192,140,245,.8); border-right:2px solid rgba(192,140,245,.8);"></div>
+            <div style="font-family:'Share Tech Mono',monospace; font-size:82px; color:#f1e6fc; font-variant-numeric:tabular-nums; line-height:1.1; text-shadow:0 0 40px rgba(192,140,245,.7), 0 0 80px rgba(192,140,245,.35);">00:47</div>
+          </div>
+          <div style="font-size:15px; color:#8f81a6; letter-spacing:.04em;">Both players — dials assigned simultaneously</div>
+        </div>
+        <div style="position:relative; padding:18px 20px 24px; border-top:1px solid rgba(192,140,245,.24); display:flex; gap:12px;">
+          <button style="width:54px; flex:none; display:flex; align-items:center; justify-content:center; font-size:22px; color:rgba(216,190,250,.85); background:transparent; border:1px solid rgba(192,140,245,.3); cursor:pointer;">↶</button>
+          <button style="width:54px; flex:none; display:flex; align-items:center; justify-content:center; font-size:17px; color:rgba(216,190,250,.85); background:transparent; border:1px solid rgba(192,140,245,.3); cursor:pointer;">⏸</button>
+          <button style="flex:1; padding:18px 10px; font-family:Saira,sans-serif; font-size:16px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:#170a24; background:#c08cf5; border:1px solid #e2ccfd; cursor:pointer; box-shadow:0 0 28px rgba(192,140,245,.45);">Begin Ship Phase</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3G SHIP PHASE -->
+    <div id="3g" style="display:flex; flex-direction:column; gap:12px; width:420px;">
+      <div style="display:flex; align-items:center; gap:10px;"><div style="font-family:'Share Tech Mono',monospace; font-size:13px; color:#14071f; background:#c08cf5; padding:3px 9px; border-radius:4px;">3G</div><div style="font-size:16px; font-weight:600;">Ship Phase — chosen direction</div></div>
+      <div style="width:420px; height:760px; border-radius:28px; overflow:hidden; background:#06040b; border:1px solid #2e1f42; box-shadow:0 30px 70px rgba(0,0,0,.7), inset 0 0 80px rgba(192,140,245,.07); display:flex; flex-direction:column; position:relative; font-family:Saira,sans-serif; color:#eee6f7;">
+        <div style="position:absolute; inset:0; background:radial-gradient(90% 55% at 50% 105%, rgba(192,140,245,.18), transparent 70%); pointer-events:none;"></div>
+        <div style="position:relative; padding:22px 24px 18px; display:flex; align-items:flex-start; justify-content:space-between; border-bottom:1px solid rgba(192,140,245,.24);">
+          <div>
+            <div style="font-size:13px; letter-spacing:.24em; color:rgba(192,140,245,.75); text-transform:uppercase; margin-bottom:6px;">Game Clock</div>
+            <div style="font-family:'Share Tech Mono',monospace; font-size:38px; color:#f1e6fc; font-variant-numeric:tabular-nums; text-shadow:0 0 22px rgba(192,140,245,.6);">1:42:08</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:13px; letter-spacing:.22em; color:rgba(192,140,245,.75); text-transform:uppercase; margin-bottom:6px;">Round 3 / 6</div>
+            <div style="display:flex; align-items:center; justify-content:flex-end; gap:8px;">
+              <div style="width:7px; height:7px; border-radius:50%; background:#c08cf5; box-shadow:0 0 10px #c08cf5; animation:fc-breathe 2s ease-in-out infinite;"></div>
+              <div style="font-size:21px; color:#d9befa; letter-spacing:.05em;">Ship Phase</div>
+            </div>
+          </div>
+        </div>
+        <div style="position:relative; flex:1; padding:22px 20px; display:flex; flex-direction:column; gap:16px;">
+          <div style="flex:1; position:relative; padding:24px; background:linear-gradient(180deg, rgba(232,163,61,.1), rgba(232,163,61,.02)); display:flex; flex-direction:column; justify-content:space-between; overflow:hidden;">
+            <div style="position:absolute; top:0; left:0; width:26px; height:26px; border-top:2px solid #e8a33d; border-left:2px solid #e8a33d;"></div>
+            <div style="position:absolute; top:0; right:0; width:26px; height:26px; border-top:2px solid #e8a33d; border-right:2px solid #e8a33d;"></div>
+            <div style="position:absolute; bottom:0; left:0; width:26px; height:26px; border-bottom:2px solid #e8a33d; border-left:2px solid #e8a33d;"></div>
+            <div style="position:absolute; bottom:0; right:0; width:26px; height:26px; border-bottom:2px solid #e8a33d; border-right:2px solid #e8a33d;"></div>
+            <div style="position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg, transparent, rgba(255,214,153,.9), transparent); width:45%; animation:fc-sweep 3.4s linear infinite;"></div>
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+              <div style="font-size:20px; font-weight:500; color:#ffe6bf; letter-spacing:.03em;">First Player</div>
+              <div style="font-family:'Share Tech Mono',monospace; font-size:13px; letter-spacing:.14em; color:#ffce7d; border:1px solid rgba(232,163,61,.55); padding:4px 10px;">ACTIVE</div>
+            </div>
+            <div style="font-family:'Share Tech Mono',monospace; font-size:68px; color:#ffd79a; font-variant-numeric:tabular-nums; line-height:1; text-shadow:0 0 34px rgba(232,163,61,.65), 0 0 70px rgba(232,163,61,.3);">01:18</div>
+            <div style="display:flex; gap:12px;">
+              <button style="flex:1; padding:17px; font-family:Saira,sans-serif; font-size:16px; font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:#f0c98a; background:transparent; border:1px solid rgba(232,163,61,.45); cursor:pointer;" style-active="background:rgba(232,163,61,.14)">Pass</button>
+              <button style="flex:1.4; padding:17px; font-family:Saira,sans-serif; font-size:16px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:#2a1b04; background:#e8a33d; border:1px solid #ffd79a; cursor:pointer; box-shadow:0 0 24px rgba(232,163,61,.5);" style-active="box-shadow:0 0 8px rgba(232,163,61,.4)">Done</button>
+            </div>
+          </div>
+          <div style="flex:.6; padding:20px 22px; border:1px solid rgba(192,140,245,.2); display:flex; align-items:center; justify-content:space-between;">
+            <div>
+              <div style="font-size:19px; color:#9c8ab0; letter-spacing:.03em;">Second Player</div>
+              <div style="font-size:13px; letter-spacing:.2em; text-transform:uppercase; color:rgba(192,140,245,.5); margin-top:7px;">Standing by</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-family:'Share Tech Mono',monospace; font-size:26px; color:#7d6a94; font-variant-numeric:tabular-nums;">14:02</div>
+              <div style="font-size:13px; letter-spacing:.18em; text-transform:uppercase; color:rgba(192,140,245,.55); margin-top:4px;">on clock</div>
+            </div>
+          </div>
+        </div>
+        <div style="position:relative; padding:18px 20px 24px; border-top:1px solid rgba(192,140,245,.24); display:flex; gap:12px;">
+          <button style="width:54px; flex:none; display:flex; align-items:center; justify-content:center; font-size:22px; color:rgba(216,190,250,.85); background:transparent; border:1px solid rgba(192,140,245,.3); cursor:pointer;">↶</button>
+          <button style="width:54px; flex:none; display:flex; align-items:center; justify-content:center; font-size:17px; color:rgba(216,190,250,.85); background:transparent; border:1px solid rgba(192,140,245,.3); cursor:pointer;">⏸</button>
+          <button style="flex:1; padding:18px 10px; font-family:Saira,sans-serif; font-size:16px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:#170a24; background:#c08cf5; border:1px solid #e2ccfd; cursor:pointer; box-shadow:0 0 28px rgba(192,140,245,.45);">Begin Squadron Phase</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3H ROUND COMPLETE + WARNING -->
+    <div id="3h" style="display:flex; flex-direction:column; gap:12px; width:420px;">
+      <div style="display:flex; align-items:center; gap:10px;"><div style="font-family:'Share Tech Mono',monospace; font-size:13px; color:#14071f; background:#c08cf5; padding:3px 9px; border-radius:4px;">3H</div><div style="font-size:16px; font-weight:600;">Round complete + 15-min warning</div></div>
+      <div style="width:420px; height:760px; border-radius:28px; overflow:hidden; background:#06040b; border:1px solid #2e1f42; box-shadow:0 30px 70px rgba(0,0,0,.7), inset 0 0 80px rgba(232,163,61,.06); display:flex; flex-direction:column; position:relative; font-family:Saira,sans-serif; color:#eee6f7;">
+        <div style="position:relative; padding:11px; text-align:center; background:rgba(232,163,61,.16); border-bottom:1px solid rgba(232,163,61,.5); font-size:14px; font-weight:600; letter-spacing:.22em; text-transform:uppercase; color:#ffce7d; animation:fc-breathe 1.4s ease-in-out infinite;">15 minutes remaining</div>
+        <div style="position:relative; padding:22px 24px 18px; display:flex; align-items:flex-start; justify-content:space-between; border-bottom:1px solid rgba(192,140,245,.24);">
+          <div>
+            <div style="font-size:13px; letter-spacing:.24em; color:rgba(232,163,61,.8); text-transform:uppercase; margin-bottom:6px;">Game Clock</div>
+            <div style="font-family:'Share Tech Mono',monospace; font-size:38px; color:#ffd79a; font-variant-numeric:tabular-nums; text-shadow:0 0 24px rgba(232,163,61,.6);">0:14:22</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:13px; letter-spacing:.22em; color:rgba(192,140,245,.75); text-transform:uppercase; margin-bottom:6px;">Round 4 / 6</div>
+            <div style="font-size:21px; color:#d9befa; letter-spacing:.05em;">Round Complete</div>
+          </div>
+        </div>
+        <div style="position:relative; flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 40px; gap:18px; text-align:center;">
+          <div style="width:100%; height:1px; background:linear-gradient(90deg, transparent, rgba(192,140,245,.6), transparent);"></div>
+          <div style="font-family:'Share Tech Mono',monospace; font-size:30px; letter-spacing:.06em; color:#f1e6fc; text-shadow:0 0 26px rgba(192,140,245,.5);">ROUND 4 COMPLETE</div>
+          <div style="width:100%; height:1px; background:linear-gradient(90deg, transparent, rgba(192,140,245,.6), transparent);"></div>
+          <div style="font-size:16px; color:#a294b8; line-height:1.6; max-width:280px;">Continue to the next round, or end the game here.</div>
+        </div>
+        <div style="position:relative; padding:18px 20px 24px; border-top:1px solid rgba(192,140,245,.24); display:flex; gap:12px;">
+          <button style="flex:1.5; padding:18px 10px; font-family:Saira,sans-serif; font-size:16px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:#170a24; background:#c08cf5; border:1px solid #e2ccfd; cursor:pointer; box-shadow:0 0 28px rgba(192,140,245,.45);">Begin Round 5</button>
+          <button style="flex:1; padding:18px 10px; font-family:Saira,sans-serif; font-size:16px; font-weight:500; letter-spacing:.1em; text-transform:uppercase; color:#f08a94; background:transparent; border:1px solid rgba(240,90,110,.45); cursor:pointer;" style-active="background:rgba(240,90,110,.14)">End Game</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3I STATS -->
+    <div id="3i" style="display:flex; flex-direction:column; gap:12px; width:420px;">
+      <div style="display:flex; align-items:center; gap:10px;"><div style="font-family:'Share Tech Mono',monospace; font-size:13px; color:#14071f; background:#c08cf5; padding:3px 9px; border-radius:4px;">3I</div><div style="font-size:16px; font-weight:600;">Stats — game complete</div></div>
+      <div style="width:420px; height:760px; border-radius:28px; overflow:hidden; background:#06040b; border:1px solid #2e1f42; box-shadow:0 30px 70px rgba(0,0,0,.7); display:flex; flex-direction:column; position:relative; font-family:Saira,sans-serif; color:#eee6f7;">
+        <div style="position:absolute; inset:0; background:radial-gradient(80% 40% at 50% 0%, rgba(192,140,245,.16), transparent 70%); pointer-events:none;"></div>
+        <div style="position:relative; padding:26px 22px 20px; border-bottom:1px solid rgba(192,140,245,.24); display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
+          <div>
+            <div style="font-family:'Share Tech Mono',monospace; font-size:26px; letter-spacing:.05em; color:#f3ebfd; text-shadow:0 0 22px rgba(192,140,245,.5);">GAME COMPLETE</div>
+            <div style="font-size:13px; color:#8f81a6; margin-top:8px; line-height:1.5;">Target 2:15:00 · Actual 2:23:41 · <span style="color:#f08a94;">8:41 over</span> · 6 rounds</div>
+          </div>
+          <button style="flex:none; padding:12px 14px; font-family:Saira,sans-serif; font-size:13px; font-weight:500; letter-spacing:.1em; text-transform:uppercase; color:#d9befa; background:transparent; border:1px solid rgba(192,140,245,.3); cursor:pointer;">New</button>
+        </div>
+
+        <div style="position:relative; flex:1; overflow:hidden; padding:22px 22px 0;">
+          <div style="font-size:13px; letter-spacing:.26em; text-transform:uppercase; color:rgba(192,140,245,.75); margin-bottom:12px;">Pace analysis</div>
+          <div style="font-size:14px; color:#a294b8; line-height:1.6; margin-bottom:14px;">All 6 rounds finished, 8:41 over target. Activations needed to average about <span style="font-family:'Share Tech Mono',monospace; color:#f1e6fc;">01:04</span> each.</div>
+
+          <div style="border:1px solid rgba(232,163,61,.35); background:linear-gradient(180deg, rgba(232,163,61,.09), transparent); padding:15px 16px; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="width:8px; height:8px; border-radius:50%; background:#e8a33d; box-shadow:0 0 8px #e8a33d;"></div>
+              <div>
+                <div style="font-size:17px; color:#ffe6bf;">First Player</div>
+                <div style="font-size:13px; color:#a58a63; margin-top:3px;">31 activations · 01:14 avg</div>
+              </div>
+            </div>
+            <div style="font-family:'Share Tech Mono',monospace; font-size:13px; letter-spacing:.12em; color:#f08a94; border:1px solid rgba(240,90,110,.5); padding:4px 9px;">OVER PACE</div>
+          </div>
+
+          <div style="border:1px solid rgba(192,140,245,.28); padding:15px 16px; margin-bottom:22px; display:flex; align-items:center; justify-content:space-between;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="width:8px; height:8px; border-radius:50%; background:#c08cf5; box-shadow:0 0 8px #c08cf5;"></div>
+              <div>
+                <div style="font-size:17px; color:#e2d3f5;">Second Player</div>
+                <div style="font-size:13px; color:#8f81a6; margin-top:3px;">29 activations · 00:58 avg</div>
+              </div>
+            </div>
+            <div style="font-family:'Share Tech Mono',monospace; font-size:13px; letter-spacing:.12em; color:#9ee0b0; border:1px solid rgba(158,224,176,.45); padding:4px 9px;">ON TRACK</div>
+          </div>
+
+          <div style="font-size:13px; letter-spacing:.26em; text-transform:uppercase; color:rgba(192,140,245,.75); margin-bottom:12px;">Total time on clock</div>
+          <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:10px;">
+            <div style="display:flex; align-items:center; gap:10px; font-size:16px; color:#ffe6bf;"><div style="width:8px; height:8px; border-radius:50%; background:#e8a33d; box-shadow:0 0 8px #e8a33d;"></div>First Player</div>
+            <div style="font-family:'Share Tech Mono',monospace; font-size:19px; color:#ffd79a;">38:24</div>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:12px; border-top:1px solid rgba(192,140,245,.14); padding-top:10px;">
+            <div style="display:flex; align-items:center; gap:10px; font-size:16px; color:#e2d3f5;"><div style="width:8px; height:8px; border-radius:50%; background:#c08cf5; box-shadow:0 0 8px #c08cf5;"></div>Second Player</div>
+            <div style="font-family:'Share Tech Mono',monospace; font-size:19px; color:#d9befa;">28:02</div>
+          </div>
+          <div style="height:10px; display:flex; background:rgba(192,140,245,.08);">
+            <div style="width:58%; background:#e8a33d; box-shadow:0 0 16px rgba(232,163,61,.7);"></div>
+            <div style="width:42%; background:#c08cf5; box-shadow:0 0 16px rgba(192,140,245,.7);"></div>
+          </div>
+
+          <div style="font-size:13px; letter-spacing:.26em; text-transform:uppercase; color:rgba(192,140,245,.75); margin:24px 0 12px;">Time by phase</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <div style="border:1px solid rgba(192,140,245,.2); padding:13px 14px;"><div style="font-size:13px; color:#8f81a6; letter-spacing:.06em;">Ship Phase</div><div style="font-family:'Share Tech Mono',monospace; font-size:21px; color:#f1e6fc; margin-top:4px;">52:11</div></div>
+            <div style="border:1px solid rgba(192,140,245,.2); padding:13px 14px;"><div style="font-size:13px; color:#8f81a6; letter-spacing:.06em;">Squadron Phase</div><div style="font-family:'Share Tech Mono',monospace; font-size:21px; color:#f1e6fc; margin-top:4px;">14:15</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3J ACTIVITY -->
+    <div id="3j" style="display:flex; flex-direction:column; gap:12px; width:420px;">
+      <div style="display:flex; align-items:center; gap:10px;"><div style="font-family:'Share Tech Mono',monospace; font-size:13px; color:#14071f; background:#c08cf5; padding:3px 9px; border-radius:4px;">3J</div><div style="font-size:16px; font-weight:600;">Activity log</div></div>
+      <div style="width:420px; height:760px; border-radius:28px; overflow:hidden; background:#06040b; border:1px solid #2e1f42; box-shadow:0 30px 70px rgba(0,0,0,.7); display:flex; flex-direction:column; position:relative; font-family:Saira,sans-serif; color:#eee6f7;">
+        <div style="position:relative; padding:26px 22px 20px; border-bottom:1px solid rgba(192,140,245,.24); display:flex; align-items:center; justify-content:space-between; gap:12px;">
+          <div style="font-family:'Share Tech Mono',monospace; font-size:24px; letter-spacing:.05em; color:#f3ebfd; text-shadow:0 0 20px rgba(192,140,245,.45);">ALL ACTIVATIONS</div>
+          <button style="flex:none; padding:12px 14px; font-family:Saira,sans-serif; font-size:13px; font-weight:500; letter-spacing:.1em; text-transform:uppercase; color:#d9befa; background:transparent; border:1px solid rgba(192,140,245,.3); cursor:pointer;">Back</button>
+        </div>
+        <div style="position:relative; flex:1; overflow:hidden; padding:20px 22px;">
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+            <div style="font-family:'Share Tech Mono',monospace; font-size:19px; color:#f1e6fc; letter-spacing:.08em;">ROUND 3</div>
+            <div style="flex:1; height:1px; background:rgba(192,140,245,.3);"></div>
+          </div>
+          <div style="font-size:13px; letter-spacing:.24em; text-transform:uppercase; color:rgba(192,140,245,.65); margin:0 0 8px;">Ship Phase</div>
+
+          <div style="display:flex; align-items:center; gap:11px; padding:12px 0; border-bottom:1px solid rgba(192,140,245,.14);">
+            <div style="width:8px; height:8px; border-radius:50%; background:#e8a33d; box-shadow:0 0 8px #e8a33d;"></div>
+            <div style="flex:1; font-size:16px; color:#ffe6bf;">First Player</div>
+            <div style="font-size:14px; color:#8f81a6;">Done</div>
+            <div style="font-family:'Share Tech Mono',monospace; font-size:17px; color:#f1e6fc; min-width:56px; text-align:right;">01:02</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:11px; padding:12px 0; border-bottom:1px solid rgba(192,140,245,.14);">
+            <div style="width:8px; height:8px; border-radius:50%; background:#c08cf5; box-shadow:0 0 8px #c08cf5;"></div>
+            <div style="flex:1; font-size:16px; color:#e2d3f5;">Second Player</div>
+            <div style="font-size:14px; color:#8f81a6;">Done</div>
+            <div style="font-family:'Share Tech Mono',monospace; font-size:17px; color:#f1e6fc; min-width:56px; text-align:right;">00:54</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:11px; padding:12px 10px; margin:0 -10px; border:1px solid rgba(240,90,110,.45); background:rgba(240,90,110,.1);">
+            <div style="width:8px; height:8px; border-radius:50%; background:#e8a33d; box-shadow:0 0 8px #e8a33d;"></div>
+            <div style="flex:1; font-size:16px; color:#ffe6bf;">First Player</div>
+            <div style="font-family:'Share Tech Mono',monospace; font-size:13px; letter-spacing:.14em; color:#f08a94; border:1px solid rgba(240,90,110,.5); padding:3px 8px;">SLOW</div>
+            <div style="font-family:'Share Tech Mono',monospace; font-size:17px; color:#ffb8c0; min-width:56px; text-align:right;">03:47</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:11px; padding:12px 0; border-bottom:1px solid rgba(192,140,245,.14); margin-top:8px;">
+            <div style="width:8px; height:8px; border-radius:50%; background:#c08cf5; box-shadow:0 0 8px #c08cf5;"></div>
+            <div style="flex:1; font-size:16px; color:#e2d3f5;">Second Player</div>
+            <div style="font-size:14px; color:#8f81a6;">Passed</div>
+            <div style="font-family:'Share Tech Mono',monospace; font-size:17px; color:#f1e6fc; min-width:56px; text-align:right;">00:06</div>
+          </div>
+          <div style="font-size:13px; letter-spacing:.24em; text-transform:uppercase; color:rgba(192,140,245,.65); margin:20px 0 8px;">Status Phase</div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; font-size:15px; color:#8f81a6;">
+            <div>Status Phase (shared)</div>
+            <div style="font-family:'Share Tech Mono',monospace; font-size:17px; color:#c9bad9;">00:22</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section style="padding:20px 48px 40px; display:flex; flex-direction:column; gap:28px; border-top:1px solid #1a1f28;">
+  <div style="display:flex; align-items:baseline; gap:16px; flex-wrap:wrap;">
+    <div style="font-size:13px; font-weight:700; letter-spacing:.22em; text-transform:uppercase; color:#c08cf5;">Turn 2</div>
+    <div style="font-size:26px; font-weight:600; letter-spacing:-0.01em;">Holo Tactical — accent pass, larger type</div>
+    <div style="font-size:14px; color:#7d8798; max-width:560px; line-height:1.5;">Cyan swapped for a cool accent, all micro-labels raised to three-foot legibility, "activation in progress" copy dropped. Two accents to choose between: <a href="#2a">2a</a> violet, <a href="#2b">2b</a> reddish-magenta.</div>
+  </div>
+
+  <div style="display:flex; flex-wrap:wrap; gap:44px; align-items:flex-start;">
+
+    <!-- ================= 2A — VIOLET ================= -->
+    <div id="2a" style="display:flex; flex-direction:column; gap:14px; width:420px;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="font-family:'Share Tech Mono',monospace; font-size:13px; color:#14071f; background:#c08cf5; padding:3px 9px; border-radius:4px; letter-spacing:.12em;">2A</div>
+        <div style="font-size:16px; font-weight:600;">Holo Tactical · Violet</div>
+      </div>
+      <div style="font-size:13px; color:#7d8798; line-height:1.55; min-height:40px;">Cooler and calmer against the amber. Reads clearly as "the system" rather than "a warning".</div>
+
+      <div style="width:420px; height:760px; border-radius:28px; overflow:hidden; background:#06040b; border:1px solid #2e1f42; box-shadow:0 30px 70px rgba(0,0,0,.7), inset 0 0 80px rgba(192,140,245,.07); display:flex; flex-direction:column; position:relative; font-family:Saira, sans-serif;">
+        <div style="position:absolute; inset:0; background:radial-gradient(90% 55% at 50% 105%, rgba(192,140,245,.18), transparent 70%); pointer-events:none;"></div>
+
+        <div style="position:relative; padding:22px 24px 18px; display:flex; align-items:flex-start; justify-content:space-between; border-bottom:1px solid rgba(192,140,245,.24);">
+          <div>
+            <div style="font-size:13px; font-weight:500; letter-spacing:.24em; color:rgba(192,140,245,.75); text-transform:uppercase; margin-bottom:6px;">Game Clock</div>
+            <div style="font-family:'Share Tech Mono',monospace; font-size:38px; color:#f1e6fc; letter-spacing:.02em; font-variant-numeric:tabular-nums; text-shadow:0 0 22px rgba(192,140,245,.6);">1:42:08</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:13px; font-weight:500; letter-spacing:.22em; color:rgba(192,140,245,.75); text-transform:uppercase; margin-bottom:6px;">Round 3 / 6</div>
+            <div style="display:flex; align-items:center; justify-content:flex-end; gap:8px;">
+              <div style="width:7px; height:7px; border-radius:50%; background:#c08cf5; box-shadow:0 0 10px #c08cf5; animation:fc-breathe 2s ease-in-out infinite;"></div>
+              <div style="font-size:21px; font-weight:400; color:#d9befa; letter-spacing:.05em;">Ship Phase</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="position:relative; flex:1; padding:22px 20px; display:flex; flex-direction:column; gap:16px;">
+          <div style="flex:1; position:relative; padding:24px; background:linear-gradient(180deg, rgba(232,163,61,.1), rgba(232,163,61,.02)); display:flex; flex-direction:column; justify-content:space-between; overflow:hidden;">
+            <div style="position:absolute; top:0; left:0; width:26px; height:26px; border-top:2px solid #e8a33d; border-left:2px solid #e8a33d;"></div>
+            <div style="position:absolute; top:0; right:0; width:26px; height:26px; border-top:2px solid #e8a33d; border-right:2px solid #e8a33d;"></div>
+            <div style="position:absolute; bottom:0; left:0; width:26px; height:26px; border-bottom:2px solid #e8a33d; border-left:2px solid #e8a33d;"></div>
+            <div style="position:absolute; bottom:0; right:0; width:26px; height:26px; border-bottom:2px solid #e8a33d; border-right:2px solid #e8a33d;"></div>
+            <div style="position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg, transparent, rgba(255,214,153,.9), transparent); width:45%; animation:fc-sweep 3.4s linear infinite;"></div>
+
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+              <div style="font-size:20px; font-weight:500; color:#ffe6bf; letter-spacing:.03em;">First Player</div>
+              <div style="font-family:'Share Tech Mono',monospace; font-size:13px; letter-spacing:.14em; color:#ffce7d; border:1px solid rgba(232,163,61,.55); padding:4px 10px;">ACTIVE</div>
+            </div>
+            <div style="font-family:'Share Tech Mono',monospace; font-size:68px; color:#ffd79a; font-variant-numeric:tabular-nums; letter-spacing:.01em; line-height:1; text-shadow:0 0 34px rgba(232,163,61,.65), 0 0 70px rgba(232,163,61,.3);">01:18</div>
+            <div style="display:flex; gap:12px;">
+              <button style="flex:1; padding:17px; font-family:Saira,sans-serif; font-size:16px; font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:#f0c98a; background:transparent; border:1px solid rgba(232,163,61,.45); cursor:pointer;" style-active="background:rgba(232,163,61,.14)">Pass</button>
+              <button style="flex:1.4; padding:17px; font-family:Saira,sans-serif; font-size:16px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:#2a1b04; background:#e8a33d; border:1px solid #ffd79a; cursor:pointer; box-shadow:0 0 24px rgba(232,163,61,.5);" style-active="box-shadow:0 0 8px rgba(232,163,61,.4)">Done</button>
+            </div>
+          </div>
+
+          <div style="flex:.6; padding:20px 22px; border:1px solid rgba(192,140,245,.2); display:flex; align-items:center; justify-content:space-between;">
+            <div>
+              <div style="font-size:19px; font-weight:400; color:#9c8ab0; letter-spacing:.03em;">Second Player</div>
+              <div style="font-size:13px; font-weight:400; letter-spacing:.2em; text-transform:uppercase; color:rgba(192,140,245,.5); margin-top:7px;">Standing by</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-family:'Share Tech Mono',monospace; font-size:26px; color:#7d6a94; font-variant-numeric:tabular-nums;">14:02</div>
+              <div style="font-size:13px; letter-spacing:.18em; text-transform:uppercase; color:rgba(192,140,245,.55); margin-top:4px;">on clock</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="position:relative; padding:18px 20px 24px; border-top:1px solid rgba(192,140,245,.24); display:flex; gap:12px;">
+          <button style="width:54px; flex:none; display:flex; align-items:center; justify-content:center; font-size:22px; color:rgba(216,190,250,.85); background:transparent; border:1px solid rgba(192,140,245,.3); cursor:pointer;" style-active="background:rgba(192,140,245,.12)">↶</button>
+          <button style="width:54px; flex:none; display:flex; align-items:center; justify-content:center; font-size:17px; color:rgba(216,190,250,.85); background:transparent; border:1px solid rgba(192,140,245,.3); cursor:pointer;" style-active="background:rgba(192,140,245,.12)">⏸</button>
+          <button style="flex:1; padding:18px 10px; font-family:Saira,sans-serif; font-size:16px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:#170a24; background:#c08cf5; border:1px solid #e2ccfd; cursor:pointer; box-shadow:0 0 28px rgba(192,140,245,.45);" style-active="box-shadow:0 0 10px rgba(192,140,245,.35)">Begin Squadron Phase</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= 2B — MAGENTA ================= -->
+    <div id="2b" style="display:flex; flex-direction:column; gap:14px; width:420px;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="font-family:'Share Tech Mono',monospace; font-size:13px; color:#1f0512; background:#f0559a; padding:3px 9px; border-radius:4px; letter-spacing:.12em;">2B</div>
+        <div style="font-size:16px; font-weight:600;">Holo Tactical · Magenta</div>
+      </div>
+      <div style="font-size:13px; color:#7d8798; line-height:1.55; min-height:40px;">Hotter, more urgent. Higher separation from amber at a glance, but carries more alarm.</div>
+
+      <div style="width:420px; height:760px; border-radius:28px; overflow:hidden; background:#0a0407; border:1px solid #431f33; box-shadow:0 30px 70px rgba(0,0,0,.7), inset 0 0 80px rgba(240,85,154,.07); display:flex; flex-direction:column; position:relative; font-family:Saira, sans-serif;">
+        <div style="position:absolute; inset:0; background:radial-gradient(90% 55% at 50% 105%, rgba(240,85,154,.17), transparent 70%); pointer-events:none;"></div>
+
+        <div style="position:relative; padding:22px 24px 18px; display:flex; align-items:flex-start; justify-content:space-between; border-bottom:1px solid rgba(240,85,154,.26);">
+          <div>
+            <div style="font-size:13px; font-weight:500; letter-spacing:.24em; color:rgba(247,150,190,.85); text-transform:uppercase; margin-bottom:6px;">Game Clock</div>
+            <div style="font-family:'Share Tech Mono',monospace; font-size:38px; color:#fde7f0; letter-spacing:.02em; font-variant-numeric:tabular-nums; text-shadow:0 0 22px rgba(240,85,154,.55);">1:42:08</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:13px; font-weight:500; letter-spacing:.22em; color:rgba(247,150,190,.85); text-transform:uppercase; margin-bottom:6px;">Round 3 / 6</div>
+            <div style="display:flex; align-items:center; justify-content:flex-end; gap:8px;">
+              <div style="width:7px; height:7px; border-radius:50%; background:#f0559a; box-shadow:0 0 10px #f0559a; animation:fc-breathe 2s ease-in-out infinite;"></div>
+              <div style="font-size:21px; font-weight:400; color:#f9b9d3; letter-spacing:.05em;">Ship Phase</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="position:relative; flex:1; padding:22px 20px; display:flex; flex-direction:column; gap:16px;">
+          <div style="flex:1; position:relative; padding:24px; background:linear-gradient(180deg, rgba(232,163,61,.1), rgba(232,163,61,.02)); display:flex; flex-direction:column; justify-content:space-between; overflow:hidden;">
+            <div style="position:absolute; top:0; left:0; width:26px; height:26px; border-top:2px solid #e8a33d; border-left:2px solid #e8a33d;"></div>
+            <div style="position:absolute; top:0; right:0; width:26px; height:26px; border-top:2px solid #e8a33d; border-right:2px solid #e8a33d;"></div>
+            <div style="position:absolute; bottom:0; left:0; width:26px; height:26px; border-bottom:2px solid #e8a33d; border-left:2px solid #e8a33d;"></div>
+            <div style="position:absolute; bottom:0; right:0; width:26px; height:26px; border-bottom:2px solid #e8a33d; border-right:2px solid #e8a33d;"></div>
+            <div style="position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg, transparent, rgba(255,214,153,.9), transparent); width:45%; animation:fc-sweep 3.4s linear infinite;"></div>
+
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+              <div style="font-size:20px; font-weight:500; color:#ffe6bf; letter-spacing:.03em;">First Player</div>
+              <div style="font-family:'Share Tech Mono',monospace; font-size:13px; letter-spacing:.14em; color:#ffce7d; border:1px solid rgba(232,163,61,.55); padding:4px 10px;">ACTIVE</div>
+            </div>
+            <div style="font-family:'Share Tech Mono',monospace; font-size:68px; color:#ffd79a; font-variant-numeric:tabular-nums; letter-spacing:.01em; line-height:1; text-shadow:0 0 34px rgba(232,163,61,.65), 0 0 70px rgba(232,163,61,.3);">01:18</div>
+            <div style="display:flex; gap:12px;">
+              <button style="flex:1; padding:17px; font-family:Saira,sans-serif; font-size:16px; font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:#f0c98a; background:transparent; border:1px solid rgba(232,163,61,.45); cursor:pointer;" style-active="background:rgba(232,163,61,.14)">Pass</button>
+              <button style="flex:1.4; padding:17px; font-family:Saira,sans-serif; font-size:16px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:#2a1b04; background:#e8a33d; border:1px solid #ffd79a; cursor:pointer; box-shadow:0 0 24px rgba(232,163,61,.5);" style-active="box-shadow:0 0 8px rgba(232,163,61,.4)">Done</button>
+            </div>
+          </div>
+
+          <div style="flex:.6; padding:20px 22px; border:1px solid rgba(240,85,154,.22); display:flex; align-items:center; justify-content:space-between;">
+            <div>
+              <div style="font-size:19px; font-weight:400; color:#ad8496; letter-spacing:.03em;">Second Player</div>
+              <div style="font-size:13px; font-weight:400; letter-spacing:.2em; text-transform:uppercase; color:rgba(247,150,190,.55); margin-top:7px;">Standing by</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-family:'Share Tech Mono',monospace; font-size:26px; color:#96637c; font-variant-numeric:tabular-nums;">14:02</div>
+              <div style="font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:rgba(247,150,190,.45); margin-top:4px;">on clock</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="position:relative; padding:18px 20px 24px; border-top:1px solid rgba(240,85,154,.26); display:flex; gap:12px;">
+          <button style="width:54px; flex:none; display:flex; align-items:center; justify-content:center; font-size:22px; color:rgba(249,185,211,.9); background:transparent; border:1px solid rgba(240,85,154,.32); cursor:pointer;" style-active="background:rgba(240,85,154,.12)">↶</button>
+          <button style="width:54px; flex:none; display:flex; align-items:center; justify-content:center; font-size:17px; color:rgba(249,185,211,.9); background:transparent; border:1px solid rgba(240,85,154,.32); cursor:pointer;" style-active="background:rgba(240,85,154,.12)">⏸</button>
+          <button style="flex:1; padding:18px 10px; font-family:Saira,sans-serif; font-size:16px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:#2a0413; background:#f0559a; border:1px solid #fbc0d8; cursor:pointer; box-shadow:0 0 28px rgba(240,85,154,.45);" style-active="box-shadow:0 0 10px rgba(240,85,154,.35)">Begin Squadron Phase</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section style="padding:20px 48px 80px; display:flex; flex-direction:column; gap:28px; border-top:1px solid #1a1f28;">
+  <div style="display:flex; align-items:baseline; gap:16px; flex-wrap:wrap;">
+    <div style="font-size:13px; font-weight:700; letter-spacing:.22em; text-transform:uppercase; color:#5fd4d0;">Turn 1</div>
+    <div style="font-size:26px; font-weight:600; letter-spacing:-0.01em;">Ship Phase — three in-universe directions</div>
+    <div style="font-size:14px; color:#7d8798; max-width:520px; line-height:1.5;">Same screen, same flow, same content. Mono for numbers, grotesk for labels. Comment by id: <a href="#1a">1a</a>, <a href="#1b">1b</a>, <a href="#1c">1c</a>.</div>
+  </div>
+
+  <div style="display:flex; flex-wrap:wrap; gap:44px; align-items:flex-start;">
+
+    <!-- ================= 1A — BRIDGE CONSOLE ================= -->
+    <div id="1a" style="display:flex; flex-direction:column; gap:14px; width:420px;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; color:#0a0c10; background:#e8a33d; padding:3px 9px; border-radius:4px; letter-spacing:.08em;">1A</div>
+        <div style="font-size:16px; font-weight:600;">Bridge Console</div>
+      </div>
+      <div style="font-size:13px; color:#7d8798; line-height:1.55; min-height:56px;">Milled hardware. Beveled plates, seams, angled corner cuts, indicator lamps. Feels like a panel bolted into a Star Destroyer bridge — physical, weighty, warm-lit.</div>
+
+      <div style="width:420px; height:760px; border-radius:28px; overflow:hidden; background:#151a22; border:1px solid #333d4d; box-shadow:0 30px 70px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.06); display:flex; flex-direction:column; position:relative;">
+        <!-- top strip -->
+        <div style="padding:20px 22px 16px; background:linear-gradient(180deg,#1e242e,#171c25); border-bottom:1px solid #3a4552; box-shadow:inset 0 1px 0 rgba(255,255,255,.07), 0 2px 0 rgba(0,0,0,.4); display:flex; align-items:flex-start; justify-content:space-between;">
+          <div>
+            <div style="font-size:9px; font-weight:700; letter-spacing:.24em; color:#6b7788; text-transform:uppercase; margin-bottom:5px;">Game Clock</div>
+            <div style="font-family:'JetBrains Mono',monospace; font-size:33px; font-weight:700; color:#f0f3f8; letter-spacing:-.01em; font-variant-numeric:tabular-nums; text-shadow:0 0 18px rgba(232,163,61,.18);">1:42:08</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="display:flex; align-items:center; justify-content:flex-end; gap:7px; margin-bottom:5px;">
+              <div style="width:6px; height:6px; border-radius:50%; background:#5fd4d0; box-shadow:0 0 8px #5fd4d0; animation:fc-breathe 2.4s ease-in-out infinite;"></div>
+              <div style="font-size:9px; font-weight:700; letter-spacing:.2em; color:#6b7788; text-transform:uppercase;">Round 3 / 6</div>
+            </div>
+            <div style="font-size:17px; font-weight:600; color:#e8a33d; letter-spacing:.02em;">Ship Phase</div>
+          </div>
+        </div>
+
+        <!-- stage -->
+        <div style="flex:1; padding:20px 18px; display:flex; flex-direction:column; gap:14px; background:radial-gradient(120% 70% at 50% 0%, #1b212b 0%, #10141a 100%);">
+
+          <!-- active panel -->
+          <div style="flex:1; position:relative; padding:20px; background:linear-gradient(165deg, rgba(232,163,61,.16), rgba(232,163,61,.05) 60%, rgba(0,0,0,.15)); border:1px solid #e8a33d; box-shadow:inset 0 1px 0 rgba(255,255,255,.12), 0 0 34px rgba(232,163,61,.16); clip-path:polygon(0 14px, 14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%); display:flex; flex-direction:column; justify-content:space-between;">
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
+              <div>
+                <div style="display:flex; align-items:center; gap:9px;">
+                  <div style="width:7px; height:7px; background:#e8a33d; box-shadow:0 0 10px #e8a33d; border-radius:1px; animation:fc-blink 1.4s steps(1,end) infinite;"></div>
+                  <div style="font-size:16px; font-weight:700; letter-spacing:.01em; color:#fbf3e6;">First Player</div>
+                </div>
+                <div style="font-size:11px; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:#e8a33d; margin-top:6px;">Activation in progress</div>
+              </div>
+              <div style="font-size:9px; font-family:'JetBrains Mono',monospace; color:#a8814a; letter-spacing:.1em;">ACT 04</div>
+            </div>
+            <div style="font-family:'JetBrains Mono',monospace; font-size:52px; font-weight:700; color:#ffd79a; font-variant-numeric:tabular-nums; letter-spacing:-.02em; text-shadow:0 0 26px rgba(232,163,61,.45); line-height:1;">01:18</div>
+            <div style="display:flex; gap:10px;">
+              <button style="flex:1; padding:15px; font-family:Archivo,sans-serif; font-size:14px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#c9a165; background:rgba(0,0,0,.32); border:1px solid #6d5a38; border-radius:3px; cursor:pointer;" style-active="background:rgba(0,0,0,.5); transform:translateY(1px)">Pass</button>
+              <button style="flex:1.4; padding:15px; font-family:Archivo,sans-serif; font-size:14px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#2a1b04; background:linear-gradient(180deg,#f5bf5c,#e39a2c); border:none; border-radius:3px; cursor:pointer; box-shadow:inset 0 1px 0 rgba(255,255,255,.5), 0 3px 0 #96631a, 0 6px 16px rgba(232,163,61,.3);" style-active="transform:translateY(3px); box-shadow:inset 0 1px 0 rgba(255,255,255,.4), 0 0 0 #96631a">Done</button>
+            </div>
+          </div>
+
+          <!-- idle panel -->
+          <div style="flex:1; padding:20px; background:linear-gradient(165deg,#1c222c,#161b23); border:1px solid #2f3846; box-shadow:inset 0 1px 0 rgba(255,255,255,.05); clip-path:polygon(0 14px, 14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%); display:flex; flex-direction:column; justify-content:space-between;">
+            <div>
+              <div style="display:flex; align-items:center; gap:9px;">
+                <div style="width:7px; height:7px; background:#2a3f47; border:1px solid #3d5760; border-radius:1px;"></div>
+                <div style="font-size:16px; font-weight:700; color:#8a94a4;">Second Player</div>
+              </div>
+              <div style="font-size:11px; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:#5b6473; margin-top:6px;">Standing by</div>
+            </div>
+            <div style="display:flex; align-items:baseline; gap:10px;">
+              <div style="font-family:'JetBrains Mono',monospace; font-size:20px; color:#4e5766; font-variant-numeric:tabular-nums;">14:02</div>
+              <div style="font-size:9px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:#3f4856;">total on clock</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- controls -->
+        <div style="padding:16px 18px 22px; background:linear-gradient(180deg,#171c25,#12161d); border-top:1px solid #3a4552; box-shadow:inset 0 1px 0 rgba(255,255,255,.06); display:flex; gap:10px;">
+          <button style="width:52px; flex:none; display:flex; align-items:center; justify-content:center; font-size:19px; color:#7d8798; background:#1d232d; border:1px solid #333d4d; border-radius:3px; box-shadow:inset 0 1px 0 rgba(255,255,255,.06); cursor:pointer;" style-active="background:#151a22">↶</button>
+          <button style="width:52px; flex:none; display:flex; align-items:center; justify-content:center; font-size:15px; color:#7d8798; background:#1d232d; border:1px solid #333d4d; border-radius:3px; box-shadow:inset 0 1px 0 rgba(255,255,255,.06); cursor:pointer;" style-active="background:#151a22">⏸</button>
+          <button style="flex:1; padding:16px 12px; font-family:Archivo,sans-serif; font-size:14px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#062626; background:linear-gradient(180deg,#7fe2de,#4fc7c3); border:none; border-radius:3px; cursor:pointer; box-shadow:inset 0 1px 0 rgba(255,255,255,.5), 0 3px 0 #2c8481, 0 6px 16px rgba(95,212,208,.25);" style-active="transform:translateY(3px); box-shadow:inset 0 1px 0 rgba(255,255,255,.4), 0 0 0 #2c8481">Begin Squadron Phase</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= 1B — HOLO TACTICAL ================= -->
+    <div id="1b" style="display:flex; flex-direction:column; gap:14px; width:420px;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="font-family:'Share Tech Mono',monospace; font-size:13px; color:#04121a; background:#5fd4d0; padding:3px 9px; border-radius:4px; letter-spacing:.12em;">1B</div>
+        <div style="font-size:16px; font-weight:600;">Holo Tactical</div>
+      </div>
+      <div style="font-size:13px; color:#7d8798; line-height:1.55; min-height:56px;">Weightless projection. No filled panels — luminous hairlines, targeting brackets, bloom on live numbers. Reads as a hologram floating above the table.</div>
+
+      <div style="width:420px; height:760px; border-radius:28px; overflow:hidden; background:#04070b; border:1px solid #16323a; box-shadow:0 30px 70px rgba(0,0,0,.7), inset 0 0 80px rgba(95,212,208,.07); display:flex; flex-direction:column; position:relative; font-family:Saira, sans-serif;">
+        <div style="position:absolute; inset:0; background:radial-gradient(90% 55% at 50% 105%, rgba(95,212,208,.16), transparent 70%); pointer-events:none;"></div>
+
+        <!-- top strip -->
+        <div style="position:relative; padding:22px 24px 18px; display:flex; align-items:flex-start; justify-content:space-between; border-bottom:1px solid rgba(95,212,208,.22);">
+          <div>
+            <div style="font-size:9px; font-weight:500; letter-spacing:.32em; color:rgba(95,212,208,.6); text-transform:uppercase; margin-bottom:6px;">Game Clock</div>
+            <div style="font-family:'Share Tech Mono',monospace; font-size:35px; color:#d8fbfa; letter-spacing:.02em; font-variant-numeric:tabular-nums; text-shadow:0 0 22px rgba(95,212,208,.6);">1:42:08</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:9px; font-weight:500; letter-spacing:.3em; color:rgba(95,212,208,.6); text-transform:uppercase; margin-bottom:6px;">Round 3 / 6</div>
+            <div style="display:flex; align-items:center; justify-content:flex-end; gap:8px;">
+              <div style="width:5px; height:5px; border-radius:50%; background:#5fd4d0; box-shadow:0 0 10px #5fd4d0; animation:fc-breathe 2s ease-in-out infinite;"></div>
+              <div style="font-size:17px; font-weight:400; color:#8fe6e3; letter-spacing:.06em;">Ship Phase</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="position:relative; flex:1; padding:22px 20px; display:flex; flex-direction:column; gap:16px;">
+
+          <!-- active -->
+          <div style="flex:1; position:relative; padding:22px; background:linear-gradient(180deg, rgba(232,163,61,.09), rgba(232,163,61,.02)); display:flex; flex-direction:column; justify-content:space-between; overflow:hidden;">
+            <div style="position:absolute; top:0; left:0; width:26px; height:26px; border-top:2px solid #e8a33d; border-left:2px solid #e8a33d;"></div>
+            <div style="position:absolute; top:0; right:0; width:26px; height:26px; border-top:2px solid #e8a33d; border-right:2px solid #e8a33d;"></div>
+            <div style="position:absolute; bottom:0; left:0; width:26px; height:26px; border-bottom:2px solid #e8a33d; border-left:2px solid #e8a33d;"></div>
+            <div style="position:absolute; bottom:0; right:0; width:26px; height:26px; border-bottom:2px solid #e8a33d; border-right:2px solid #e8a33d;"></div>
+            <div style="position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg, transparent, rgba(255,214,153,.9), transparent); width:45%; animation:fc-sweep 3.4s linear infinite;"></div>
+
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+              <div style="font-size:16px; font-weight:500; color:#ffe6bf; letter-spacing:.04em;">First Player</div>
+              <div style="font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:.18em; color:#e8a33d; border:1px solid rgba(232,163,61,.5); padding:3px 8px;">ACTIVE</div>
+            </div>
+            <div>
+              <div style="font-family:'Share Tech Mono',monospace; font-size:60px; color:#ffd79a; font-variant-numeric:tabular-nums; letter-spacing:.01em; line-height:1; text-shadow:0 0 34px rgba(232,163,61,.65), 0 0 70px rgba(232,163,61,.3);">01:18</div>
+              <div style="font-size:10px; font-weight:400; letter-spacing:.26em; text-transform:uppercase; color:rgba(232,163,61,.7); margin-top:8px;">Activation 04 · in progress</div>
+            </div>
+            <div style="display:flex; gap:12px;">
+              <button style="flex:1; padding:15px; font-family:Saira,sans-serif; font-size:13px; font-weight:500; letter-spacing:.18em; text-transform:uppercase; color:rgba(232,163,61,.8); background:transparent; border:1px solid rgba(232,163,61,.4); cursor:pointer;" style-active="background:rgba(232,163,61,.14)">Pass</button>
+              <button style="flex:1.4; padding:15px; font-family:Saira,sans-serif; font-size:13px; font-weight:600; letter-spacing:.18em; text-transform:uppercase; color:#2a1b04; background:#e8a33d; border:1px solid #ffd79a; cursor:pointer; box-shadow:0 0 24px rgba(232,163,61,.5);" style-active="box-shadow:0 0 8px rgba(232,163,61,.4)">Done</button>
+            </div>
+          </div>
+
+          <!-- idle -->
+          <div style="flex:.62; padding:20px 22px; border:1px solid rgba(95,212,208,.18); display:flex; align-items:center; justify-content:space-between;">
+            <div>
+              <div style="font-size:15px; font-weight:400; color:#6f8f92; letter-spacing:.04em;">Second Player</div>
+              <div style="font-size:10px; font-weight:400; letter-spacing:.26em; text-transform:uppercase; color:rgba(95,212,208,.4); margin-top:7px;">Standing by</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-family:'Share Tech Mono',monospace; font-size:22px; color:#4d7376; font-variant-numeric:tabular-nums;">14:02</div>
+              <div style="font-size:9px; letter-spacing:.22em; text-transform:uppercase; color:rgba(95,212,208,.32); margin-top:4px;">on clock</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="position:relative; padding:18px 20px 24px; border-top:1px solid rgba(95,212,208,.22); display:flex; gap:12px;">
+          <button style="width:50px; flex:none; display:flex; align-items:center; justify-content:center; font-size:18px; color:rgba(95,212,208,.7); background:transparent; border:1px solid rgba(95,212,208,.28); cursor:pointer;" style-active="background:rgba(95,212,208,.12)">↶</button>
+          <button style="width:50px; flex:none; display:flex; align-items:center; justify-content:center; font-size:14px; color:rgba(95,212,208,.7); background:transparent; border:1px solid rgba(95,212,208,.28); cursor:pointer;" style-active="background:rgba(95,212,208,.12)">⏸</button>
+          <button style="flex:1; padding:16px 10px; font-family:Saira,sans-serif; font-size:13px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:#04191a; background:#5fd4d0; border:1px solid #b6f2f0; cursor:pointer; box-shadow:0 0 28px rgba(95,212,208,.45);" style-active="box-shadow:0 0 10px rgba(95,212,208,.35)">Begin Squadron Phase</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= 1C — FLEET COMMAND ================= -->
+    <div id="1c" style="display:flex; flex-direction:column; gap:14px; width:420px;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="font-family:'Azeret Mono',monospace; font-size:12px; font-weight:700; color:#f2f4f7; background:#3d4655; padding:3px 9px; border-radius:4px; letter-spacing:.08em;">1C</div>
+        <div style="font-size:16px; font-weight:600;">Fleet Command</div>
+      </div>
+      <div style="font-size:13px; color:#7d8798; line-height:1.55; min-height:56px;">Stenciled, high-contrast, built for a lit table. Solid signal blocks instead of glow, plate seams and rivets, technical caps. Loudest at arm's length.</div>
+
+      <div style="width:420px; height:760px; border-radius:28px; overflow:hidden; background:#0e1114; border:1px solid #3c4450; box-shadow:0 30px 70px rgba(0,0,0,.6); display:flex; flex-direction:column;">
+        <!-- top strip -->
+        <div style="padding:0; background:#1a1f25; border-bottom:3px solid #e8a33d;">
+          <div style="display:flex; align-items:stretch;">
+            <div style="flex:1; padding:16px 18px 14px; border-right:1px solid #2b323b;">
+              <div style="font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:600; letter-spacing:.28em; color:#8e99a8; text-transform:uppercase;">Game Clock</div>
+              <div style="font-family:'Azeret Mono',monospace; font-size:30px; font-weight:700; color:#f4f7fa; font-variant-numeric:tabular-nums; letter-spacing:-.03em; margin-top:2px;">1:42:08</div>
+            </div>
+            <div style="width:150px; padding:16px 18px 14px; display:flex; flex-direction:column; justify-content:center; gap:4px; background:#20262e;">
+              <div style="font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:600; letter-spacing:.22em; color:#8e99a8; text-transform:uppercase;">Round 3 / 6</div>
+              <div style="font-family:'Barlow Condensed',sans-serif; font-size:21px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#e8a33d; line-height:1;">Ship Phase</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="flex:1; padding:16px; display:flex; flex-direction:column; gap:12px; background:#0e1114;">
+          <!-- active -->
+          <div style="flex:1; background:#e8a33d; padding:18px 20px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:inset 0 0 0 1px rgba(0,0,0,.2);">
+            <div style="display:flex; align-items:center; justify-content:space-between; padding-bottom:12px; border-bottom:2px solid rgba(42,27,4,.25);">
+              <div style="font-family:'Barlow Condensed',sans-serif; font-size:24px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:#241804; line-height:1;">First Player</div>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <div style="width:8px; height:8px; border-radius:50%; background:#241804; animation:fc-blink 1.2s steps(1,end) infinite;"></div>
+                <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:.16em; color:#3d2a08;">ACTIVE</div>
+              </div>
+            </div>
+            <div>
+              <div style="font-family:'Azeret Mono',monospace; font-size:56px; font-weight:700; color:#241804; font-variant-numeric:tabular-nums; letter-spacing:-.045em; line-height:1;">01:18</div>
+              <div style="font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:600; letter-spacing:.2em; text-transform:uppercase; color:#5a3f0d; margin-top:6px;">Activation 04 · in progress</div>
+            </div>
+            <div style="display:flex; gap:10px;">
+              <button style="flex:1; padding:15px; font-family:'Barlow Condensed',sans-serif; font-size:17px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:#241804; background:transparent; border:2px solid rgba(36,24,4,.55); cursor:pointer;" style-active="background:rgba(36,24,4,.12)">Pass</button>
+              <button style="flex:1.4; padding:15px; font-family:'Barlow Condensed',sans-serif; font-size:17px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:#ffd79a; background:#241804; border:2px solid #241804; cursor:pointer;" style-active="background:#3d2a08">Done</button>
+            </div>
+          </div>
+
+          <!-- idle -->
+          <div style="flex:.5; background:#1a1f25; border-left:5px solid #2f5b5c; padding:16px 18px; display:flex; align-items:center; justify-content:space-between;">
+            <div>
+              <div style="font-family:'Barlow Condensed',sans-serif; font-size:22px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:#93a0b0; line-height:1;">Second Player</div>
+              <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:600; letter-spacing:.2em; text-transform:uppercase; color:#5d6877; margin-top:6px;">Standing by</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-family:'Azeret Mono',monospace; font-size:22px; font-weight:500; color:#5fd4d0; font-variant-numeric:tabular-nums; letter-spacing:-.03em;">14:02</div>
+              <div style="font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:600; letter-spacing:.2em; text-transform:uppercase; color:#4e5867;">on clock</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="padding:14px 16px 22px; background:#1a1f25; border-top:1px solid #2b323b; display:flex; gap:10px;">
+          <button style="width:52px; flex:none; display:flex; align-items:center; justify-content:center; font-size:19px; color:#93a0b0; background:#252c34; border:1px solid #39424e; cursor:pointer;" style-active="background:#1d232a">↶</button>
+          <button style="width:52px; flex:none; display:flex; align-items:center; justify-content:center; font-size:15px; color:#93a0b0; background:#252c34; border:1px solid #39424e; cursor:pointer;" style-active="background:#1d232a">⏸</button>
+          <button style="flex:1; padding:16px 10px; font-family:'Barlow Condensed',sans-serif; font-size:18px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:#062626; background:#5fd4d0; border:none; cursor:pointer;" style-active="background:#4bbdb9">Begin Squadron Phase</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</x-dc>
+</body>
+</html>
