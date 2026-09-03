@@ -64,3 +64,43 @@ Ideas, needs, and open questions we've noted but decided not to pursue immediate
   `renderSplitView`'s "just acted" control visibility wasn't gated by device ownership at all — it
   just happened to never matter before, since undo was always unavailable in multi-device. Fixed
   alongside this.)
+
+## Scaling & security, for wider release (raised 2026-09-03)
+
+Prompted by "what would I need to do to open this up to dozens/hundreds of players." None of this
+blocks a beta with people you know; it matters once the audience is wide enough to include
+strangers or scripted traffic.
+
+- **Supabase plan/tier.** Currently on whatever tier the project started on. "Hundreds of people
+  trying it over time" is fine; "hundreds of concurrent multi-device games" (each device holds a
+  couple of open Realtime channels) could approach free-tier connection/DB-size limits. Check the
+  usage dashboard once real beta traffic shows up and upgrade if needed — a config change, not a
+  code change.
+- **No rate limiting on the public RPCs.** `create_game`, `join_game`, `append_event`, and
+  `retract_last_event` are all callable by anyone with the (intentionally public) anon key, with no
+  throttling. Fine for a beta shared directly with real players; before a wide-open audience, add
+  rate limiting (Supabase supports this at the project level) so scripted traffic can't spam game
+  creation or flood the event log.
+- **No cleanup job for old games.** `games`/`game_players`/`game_events` rows are never deleted —
+  a finished (or abandoned) game just sits in the database forever. Not urgent at dozens/hundreds
+  of games, but worth a periodic job (e.g. delete games older than 30 days) before this has been
+  running for months.
+- **`games`/`game_players`/`game_events` are fully publicly *listable*, not just readable if you
+  know the code.** Migration `0001_init.sql`'s RLS policies are `for select using (true)` on all
+  three tables — i.e. `select * from games` returns every game ever created, not just the one
+  matching a code someone was given. A stranger doesn't need to guess a 6-character code; they can
+  just list the table directly. Worth scoping reads (e.g. through a lookup RPC keyed by code,
+  instead of direct table SELECT) before wide release, even though the data itself is low-stakes
+  (no names beyond "First/Second Player", no PII).
+- **No game-membership check on the write RPCs.** `append_event` and `retract_last_event` only
+  check that the game exists (and, for retract, that the race guard matches) — neither checks that
+  the caller's `device_id` actually has a slot in that game via `game_players`. Combined with the
+  point above, anyone who can enumerate or guess a game_id can write to or retract from a game
+  they're not part of. Low risk today (small trusted beta), but worth closing — check
+  `game_players` for a matching `(game_id, device_id)` row — before opening this to strangers.
+- **`device_id` still isn't an authentication boundary** (documented as a deliberate tradeoff when
+  it was introduced — see `getDeviceId()`'s comment in `armada-clock.html`): it's a client-generated
+  UUID passed as a plain parameter, so anyone who learns another device's ID can act as that device
+  (rejoin their slot, undo their moves, etc.). Fine for two people who agreed to play together in
+  the same room; worth revisiting (e.g. a per-game secret token instead of a reusable per-device ID)
+  if the audience broadens past "people who trust each other enough to share a game code."
