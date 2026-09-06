@@ -139,7 +139,18 @@
     background:linear-gradient(180deg, rgba(192,140,245,.1), rgba(192,140,245,.02));
   }
   .join-code{ font-size:44px; letter-spacing:.2em; color:var(--violet-hi); text-shadow:0 0 26px rgba(192,140,245,.6); font-weight:400; }
-  .join-link{ font-size:13px; color:var(--violet-muted); margin-top:10px; word-break:break-all; }
+  .qr-wrap{ display:flex; justify-content:center; margin-bottom:20px; }
+  .qr-frame{
+    display:inline-block; padding:12px; line-height:0;
+    background:#f3ebfd; border:1px solid rgba(192,140,245,.4); box-shadow:0 0 20px rgba(192,140,245,.25);
+  }
+  .join-link-row{ display:flex; align-items:center; justify-content:center; gap:10px; margin-top:10px; }
+  .join-link{ font-size:14px; color:var(--violet-text); word-break:break-all; text-align:left; }
+  .copy-btn{
+    flex:none; width:32px; height:32px; display:flex; align-items:center; justify-content:center;
+    background:transparent; border:1px solid rgba(192,140,245,.4); color:var(--violet-text); cursor:pointer;
+  }
+  .copy-btn.copied{ border-color:var(--green); color:var(--green); }
   .role-text{ font-size:17px; font-weight:500; color:var(--violet-hi); }
   .role-detail{ font-size:13px; color:var(--violet-muted); margin-top:8px; }
   .lobby-status{ display:flex; align-items:center; gap:8px; font-size:15px; margin-bottom:8px; }
@@ -542,9 +553,15 @@
     </div>
     <div class="code-card">
       <div class="bracket tl sm"></div><div class="bracket tr sm"></div><div class="bracket bl sm"></div><div class="bracket br sm"></div>
+      <div class="qr-wrap"><div id="lobbyQr" class="qr-frame"></div></div>
       <div class="micro-label">Game Code</div>
       <div id="lobbyCode" class="join-code mono">------</div>
-      <div id="lobbyLink" class="join-link"></div>
+      <div class="join-link-row">
+        <div id="lobbyLink" class="join-link"></div>
+        <button id="lobbyCopyBtn" class="copy-btn" onclick="copyJoinLink()" title="Copy link" aria-label="Copy link">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12"/><path d="M6 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v2"/></svg>
+        </button>
+      </div>
     </div>
     <div id="lobbyStatus" class="lobby-status waiting"><span class="spinner"></span> Waiting&hellip;</div>
 
@@ -742,6 +759,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 /* ---------------- STATE: flat event log is the source of truth ----------------
    Two timestamp regimes coexist in the log:
@@ -1774,8 +1792,15 @@ function enterLobby(mySlot){
   const otherLabel = otherSlot===0 ? 'First Player' : 'Second Player';
 
   document.getElementById('lobbyCode').textContent = currentGameCode;
-  document.getElementById('lobbyLink').textContent =
-    location.href.replace(/[?#].*$/, '') + '?join=' + currentGameCode;
+  const joinUrl = location.href.replace(/[?#].*$/, '') + '?join=' + currentGameCode;
+  document.getElementById('lobbyLink').textContent = joinUrl;
+
+  const qrEl = document.getElementById('lobbyQr');
+  qrEl.innerHTML = ''; // re-entering the lobby (new game, or a resume) must not stack QR codes
+  new QRCode(qrEl, {
+    text: joinUrl, width: 160, height: 160,
+    colorDark: '#170a24', colorLight: '#f3ebfd', correctLevel: QRCode.CorrectLevel.M
+  });
 
   const statusEl = document.getElementById('lobbyStatus');
   statusEl.className = 'lobby-status waiting';
@@ -1795,6 +1820,16 @@ function enterLobby(mySlot){
   // while this device was away — there's no live INSERT to catch for that,
   // since it already happened.
   checkOtherPlayerJoined(currentGameCode, onOtherJoined);
+}
+
+async function copyJoinLink(){
+  const btn = document.getElementById('lobbyCopyBtn');
+  const text = document.getElementById('lobbyLink').textContent;
+  try{
+    await navigator.clipboard.writeText(text);
+  }catch(e){ return; } // no clipboard permission/API — the link is still selectable by hand
+  btn.classList.add('copied');
+  setTimeout(() => btn.classList.remove('copied'), 1500);
 }
 
 function subscribeToPlayers(code, onOtherJoined){
@@ -1981,8 +2016,27 @@ function leaveJoinConfirm(){
   checkLandingState();
 }
 
-show('screen-landing');
-checkLandingState();
+// A join link (from the lobby's QR code or shared URL) should actually land
+// the scanner in the join flow, not just sit unused in the address bar.
+// Shows the join screen with the code already filled in, then immediately
+// attempts it — enterJoinConfirm() takes over on success, or the normal
+// field-error path on screen-join handles a bad/full code. The query param
+// is stripped right away so a later refresh (e.g. mid-game) goes through
+// the ordinary resume flow instead of re-attempting this join.
+function tryAutoJoinFromUrl(){
+  const code = new URLSearchParams(location.search).get('join');
+  if(!code) return false;
+  history.replaceState(null, '', location.pathname);
+  document.getElementById('joinCodeInput').value = code.toUpperCase();
+  show('screen-join');
+  attemptJoin();
+  return true;
+}
+
+if(!tryAutoJoinFromUrl()){
+  show('screen-landing');
+  checkLandingState();
+}
 </script>
 </body>
 </html>
