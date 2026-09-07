@@ -1,0 +1,2043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Fleet Chrono — Holo Tactical Violet</title>
+<link href="https://fonts.googleapis.com/css2?family=Saira:wght@300;400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  /* Holo Tactical Violet -- design/design_handoff_fleet_chrono_holo_tactical/README.md
+     Pure visual restyle: zero script changes. Per-player card/row treatments
+     that the README calls for (amber vs violet card border, tinted names)
+     are derived with :has() from the .dot.amber/.dot.cyan markup render()
+     already emits -- no new classes needed from the script. */
+  :root{
+    --void:#06040b;
+    --frame-border:#2e1f42;
+    --violet:#c08cf5;
+    --violet-bright:#e2ccfd;
+    --violet-text:#d9befa;
+    --violet-hi:#f1e6fc;
+    --violet-mid:#e2d3f5;
+    --violet-body:#a294b8;
+    --violet-muted:#8f81a6;
+    --violet-idle:#9c8ab0;
+    --violet-idle-num:#7d6a94;
+    --violet-cta-ink:#170a24;
+    --amber:#e8a33d;
+    --amber-hi:#ffd79a;
+    --amber-label:#ffe6bf;
+    --amber-badge:#ffce7d;
+    --amber-ghost-text:#f0c98a;
+    --amber-ink:#2a1b04;
+    --red:#f08a94;
+    --red-line:rgba(240,90,110,.45);
+    --red-wash:rgba(240,90,110,.10);
+    --green:#9ee0b0;
+    /* legacy aliases -- keep any un-migrated selector resolving sensibly */
+    --panel:var(--void);
+    --panel-raised:rgba(192,140,245,.06);
+    --hairline:rgba(192,140,245,.24);
+    --cyan:var(--violet);
+    --cyan-dim:rgba(192,140,245,.1);
+    --amber-dim:rgba(232,163,61,.16);
+    --red-dim:rgba(240,90,110,.16);
+    --text:var(--violet-hi);
+    --text-dim:var(--violet-muted);
+  }
+
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--void);
+    color:var(--violet-body);
+    font-family:'Saira',sans-serif;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+    padding:24px 12px;
+  }
+  .device{
+    position:relative;
+    width:100%;
+    max-width:420px;
+    height:760px;
+    background:var(--void);
+    border-radius:28px;
+    border:1px solid var(--frame-border);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    box-shadow:0 30px 70px rgba(0,0,0,.7), inset 0 0 80px rgba(192,140,245,.07);
+  }
+  .mono{ font-family:'Share Tech Mono',monospace; font-variant-numeric:tabular-nums; }
+
+  /* Ambient floor glow -- one per screen. A single consistent position
+     (bottom-ish) rather than the README's per-screen-tuned variants, to
+     keep this pass bounded; every screen family gets it via ::before so no
+     extra markup is needed anywhere. */
+  .setup::before, .live::before, .stats::before{
+    content:''; position:absolute; inset:0; pointer-events:none; z-index:0;
+    background:radial-gradient(90% 55% at 50% 105%, rgba(192,140,245,.18), transparent 70%);
+  }
+
+  /* Corner brackets -- absolutely positioned on a `position:relative` parent */
+  .bracket{ position:absolute; width:26px; height:26px; pointer-events:none; z-index:1; }
+  .bracket.tl{ top:0; left:0; border-top:2px solid var(--violet); border-left:2px solid var(--violet); }
+  .bracket.tr{ top:0; right:0; border-top:2px solid var(--violet); border-right:2px solid var(--violet); }
+  .bracket.bl{ bottom:0; left:0; border-bottom:2px solid var(--violet); border-left:2px solid var(--violet); }
+  .bracket.br{ bottom:0; right:0; border-bottom:2px solid var(--violet); border-right:2px solid var(--violet); }
+  .bracket.sm{ width:22px; height:22px; }
+  .bracket.lg{ width:30px; height:30px; }
+
+  .micro-label{ font-size:13px; letter-spacing:.24em; text-transform:uppercase; color:rgba(192,140,245,.75); margin-bottom:10px; }
+
+  @keyframes fc-blink   { 0%,100%{opacity:1} 50%{opacity:.25} }
+  @keyframes fc-breathe { 0%,100%{opacity:.55} 50%{opacity:1} }
+  @keyframes fc-sweep   { 0%{transform:translateX(-100%)} 100%{transform:translateX(220%)} }
+
+  /* ---------- SETUP / LANDING SCREENS ---------- */
+  .setup{ position:relative; padding:44px 30px 34px; display:flex; flex-direction:column; height:100%; z-index:1; }
+  .setup-form, .resume-prompt{ display:flex; flex-direction:column; flex:1; }
+  .landing-options{ display:flex; flex-direction:column; gap:12px; }
+  #landingOptions{ display:flex; flex-direction:column; flex:1; }
+
+  .setup h1{
+    font-family:'Share Tech Mono',monospace; font-size:26px; font-weight:400; letter-spacing:.06em;
+    color:var(--violet-hi); margin:0 0 4px; text-transform:uppercase;
+  }
+  .wordmark{ position:relative; padding:18px 0 0 22px; margin-bottom:8px; }
+  .wordmark .bracket{ width:30px; height:30px; }
+  .wordmark h1{ font-size:44px; line-height:1.05; margin:0; }
+  .wordmark .tagline{ font-size:13px; letter-spacing:.20em; text-transform:uppercase; color:var(--violet-muted); margin-top:8px; }
+  .wordmark .rule{ height:1px; margin-top:14px; background:linear-gradient(90deg, rgba(192,140,245,.5), transparent); }
+
+  .setup .sub{ color:var(--violet-body); font-size:15px; margin:0 0 30px; line-height:1.55; }
+
+  .step-row{ display:flex; align-items:center; gap:10px; margin-bottom:30px; }
+  .step-row .step-label{ font-size:13px; letter-spacing:.20em; text-transform:uppercase; color:var(--violet-text); }
+  .step-row .step-rule{ flex:1; height:1px; background:rgba(192,140,245,.3); }
+  .step-row .step-num{ font-size:13px; color:var(--violet); letter-spacing:.05em; }
+
+  .slot-picker{ display:flex; gap:8px; }
+  .slot-btn{
+    flex:1; padding:14px; border-radius:0; font-size:13px; font-weight:600; letter-spacing:.05em; cursor:pointer;
+    background:transparent; border:1px solid rgba(192,140,245,.32); color:var(--violet-text); font-family:'Saira',sans-serif;
+    text-transform:uppercase;
+  }
+  .slot-btn.active{ background:var(--amber); border-color:var(--amber); color:var(--amber-ink); box-shadow:0 0 20px rgba(232,163,61,.4); }
+
+  .code-card{
+    position:relative; padding:34px 20px; text-align:center; margin-bottom:16px;
+    border:1px solid rgba(192,140,245,.3);
+    background:linear-gradient(180deg, rgba(192,140,245,.1), rgba(192,140,245,.02));
+  }
+  .join-code{ font-size:44px; letter-spacing:.2em; color:var(--violet-hi); text-shadow:0 0 26px rgba(192,140,245,.6); font-weight:400; }
+  .qr-wrap{ display:flex; justify-content:center; margin-bottom:20px; }
+  .qr-frame{
+    display:inline-block; padding:12px; line-height:0;
+    background:#f3ebfd; border:1px solid rgba(192,140,245,.4); box-shadow:0 0 20px rgba(192,140,245,.25);
+  }
+  .join-link-row{ display:flex; align-items:center; justify-content:center; gap:10px; margin-top:10px; }
+  .join-link{ font-size:14px; color:var(--violet-text); word-break:break-all; text-align:left; }
+  .copy-btn{
+    flex:none; width:32px; height:32px; display:flex; align-items:center; justify-content:center;
+    background:transparent; border:1px solid rgba(192,140,245,.4); color:var(--violet-text); cursor:pointer;
+  }
+  .copy-btn.copied{ border-color:var(--green); color:var(--green); }
+  .role-text{ font-size:17px; font-weight:500; color:var(--violet-hi); }
+  .role-detail{ font-size:13px; color:var(--violet-muted); margin-top:8px; }
+  .lobby-status{ display:flex; align-items:center; gap:8px; font-size:15px; margin-bottom:8px; }
+  .lobby-status.waiting{ color:var(--amber); }
+  .lobby-status.ready{ color:var(--violet); }
+  .spinner{
+    width:14px; height:14px; border-radius:50%; border:2px solid var(--amber); border-top-color:transparent;
+    display:inline-block; animation:spin .8s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .field-error{ font-size:13px; color:var(--red); margin:-10px 0 16px; }
+  .code-input{
+    width:100%; background:rgba(192,140,245,.06); border:1px solid rgba(192,140,245,.45); border-radius:0;
+    padding:20px; color:var(--violet-hi); font-size:32px; font-family:'Share Tech Mono',monospace;
+    text-align:center; letter-spacing:.22em; text-transform:uppercase; outline:none;
+    box-shadow:inset 0 0 24px rgba(192,140,245,.2);
+  }
+  .field{ margin-bottom:20px; }
+  .field label{
+    display:block; font-size:13px; letter-spacing:.24em; text-transform:uppercase; color:var(--violet-text);
+    margin-bottom:10px; font-weight:400;
+  }
+  .field input{
+    width:100%; background:rgba(192,140,245,.06); border:1px solid rgba(192,140,245,.3); border-radius:0;
+    padding:16px; color:var(--violet-hi); font-size:22px; font-family:'Share Tech Mono',monospace; text-align:center;
+    outline:none;
+  }
+  .field input:focus{ border-color:var(--violet-bright); }
+  .duration-row{ display:flex; gap:12px; }
+  .duration-row .field{ flex:1; }
+  .duration-row input{ font-family:'Share Tech Mono',monospace; text-align:center; }
+  .spacer{ flex:1; }
+  .btn{
+    border:none; border-radius:0; padding:18px 16px; font-size:16px; font-weight:600; letter-spacing:.10em;
+    font-family:'Saira',sans-serif; cursor:pointer; text-align:center; text-transform:uppercase;
+  }
+  .btn-primary{ background:var(--violet); color:var(--violet-cta-ink); box-shadow:0 0 28px rgba(192,140,245,.4); }
+  .btn-primary:active{ box-shadow:0 0 10px rgba(192,140,245,.4); }
+  .btn-primary:disabled{ background:rgba(192,140,245,.1); color:rgba(216,190,250,.5); box-shadow:none; cursor:not-allowed; }
+  .btn-ghost{ background:transparent; border:1px solid rgba(192,140,245,.32); color:var(--violet-text); }
+  .btn-ghost:active{ background:rgba(192,140,245,.12); }
+  .btn-danger{ background:transparent; border:1px solid var(--red-line); color:var(--red); }
+  .btn-danger:active{ background:var(--red-wash); }
+
+  /* ---------- LIVE GAME SCREEN ---------- */
+  .live{ position:relative; display:flex; flex-direction:column; height:100%; z-index:1; }
+  .strip{
+    position:relative; padding:22px 24px 18px; border-bottom:1px solid rgba(192,140,245,.24);
+    display:flex; flex-direction:column; align-items:center; text-align:center;
+  }
+  .strip .clock-label{ font-size:13px; letter-spacing:.20em; text-transform:uppercase; color:rgba(192,140,245,.75); margin-bottom:6px; }
+  .strip .game-clock{ font-size:46px; font-weight:400; color:var(--violet-hi); text-shadow:0 0 22px rgba(192,140,245,.6); }
+  .strip .game-clock.overtime{ color:var(--red); text-shadow:none; }
+  .strip .game-clock.warning{ color:var(--amber-hi); text-shadow:0 0 22px rgba(232,163,61,.6); }
+  .show-code-btn{
+    position:absolute; top:16px; right:16px;
+    width:30px; height:30px; display:flex; align-items:center; justify-content:center;
+    background:transparent; border:1px solid rgba(192,140,245,.32); color:var(--violet-text); cursor:pointer;
+  }
+  .code-overlay{
+    position:absolute; inset:0; z-index:20; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:16px; padding:30px; background:rgba(6,4,11,.94);
+  }
+  .code-overlay .code-card{ width:100%; margin-bottom:0; }
+  .confirm-card{ padding:34px 26px; }
+  .confirm-title{ font-size:20px; font-weight:500; color:var(--violet-hi); margin-bottom:10px; }
+  .confirm-sub{ font-size:14px; color:var(--violet-body); line-height:1.5; }
+  .confirm-actions{ display:flex; gap:12px; width:100%; margin-top:22px; }
+  .confirm-actions .btn{ flex:1; }
+
+  .overtime-banner, .warning-banner, .paused-banner{
+    padding:11px; text-align:center; font-size:14px; font-weight:600; letter-spacing:.22em; text-transform:uppercase;
+  }
+  .warning-banner, .paused-banner{ background:rgba(232,163,61,.16); color:var(--amber-badge); border-bottom:1px solid rgba(232,163,61,.5); }
+  .warning-banner{ animation:fc-breathe 1.4s ease-in-out infinite; }
+  .overtime-banner{ background:rgba(240,90,110,.16); color:var(--red); border-bottom:1px solid var(--red-line); }
+
+  .stage{ position:relative; flex:1; padding:22px 20px; display:flex; flex-direction:column; z-index:1; }
+
+  /* The phase name now lives here, big and prominent, instead of tucked into
+     the header strip -- it's the one thing that changes moment to moment,
+     so it gets the most prominent line on the screen. Round # sits above it,
+     small, same spot the header strip used to show it. */
+  .round-heading{ font-size:13px; letter-spacing:.20em; text-transform:uppercase; color:rgba(192,140,245,.75); text-align:center; margin-bottom:8px; }
+  .phase-heading{ font-size:26px; font-weight:500; color:var(--violet-hi); text-align:center; margin-bottom:18px; }
+
+  /* Holds the one bracketed panel (or the waiting view) and centers it in
+     whatever vertical space the stage has -- the panel sizes to its own
+     content rather than stretching to fill the screen. */
+  .stage-body{ flex:1; display:flex; flex-direction:column; justify-content:center; min-height:0; }
+
+  /* One bracketed panel for every phase. Shared/setup phases show "Both
+     Players" plus a context line; Ship/Squadron shows whoever's turn it is
+     plus Pass/All Activated. Done always lives inside it, at the bottom,
+     styled bigger/bolder than the secondary actions above it. Amber by
+     default (First Player's turn); .active-cyan covers both Second Player's
+     turn and the shared/setup phases, which aren't tied to one player. */
+  .player-panel{
+    position:relative; padding:26px 24px; display:flex; flex-direction:column; gap:18px;
+    overflow:hidden; background:linear-gradient(180deg, rgba(232,163,61,.1), rgba(232,163,61,.02));
+  }
+  .player-panel.active-cyan{ background:linear-gradient(180deg, rgba(192,140,245,.1), rgba(192,140,245,.02)); }
+  .player-panel .bracket{ border-color:var(--amber); }
+  .player-panel.active-cyan .bracket{ border-color:var(--violet); }
+  .player-panel .sweep{
+    position:absolute; top:0; left:0; height:1px; width:45%;
+    background:linear-gradient(90deg, transparent, var(--amber), transparent); animation:fc-sweep 3.4s linear infinite;
+  }
+  .player-panel.active-cyan .sweep{ background:linear-gradient(90deg, transparent, var(--violet), transparent); }
+
+  .player-panel .p-name{ font-size:24px; font-weight:500; color:var(--amber-label); }
+  .player-panel.active-cyan .p-name{ color:var(--violet-mid); }
+  .player-panel .pe-context{ font-size:16px; color:var(--violet-body); line-height:1.5; }
+
+  .p-controls-secondary{ display:flex; gap:10px; }
+  .p-controls-secondary .btn{ flex:1; padding:15px; font-size:13px; letter-spacing:.08em; }
+  .btn-pass{ background:transparent; border:1px solid rgba(232,163,61,.35); color:var(--amber-ghost-text); font-weight:500; }
+  .player-panel.active-cyan .btn-pass{ border-color:rgba(192,140,245,.35); color:var(--violet-text); }
+  .btn-all-activated{ background:transparent; border:1px solid rgba(232,163,61,.35); color:var(--amber-ghost-text); font-weight:500; }
+  .player-panel.active-cyan .btn-all-activated{ border-color:rgba(192,140,245,.35); color:var(--violet-text); }
+
+  .btn-done{
+    padding:19px; font-size:17px; letter-spacing:.14em; font-weight:600;
+    background:var(--amber); color:var(--amber-ink); border:1px solid var(--amber-hi); box-shadow:0 0 24px rgba(232,163,61,.5);
+  }
+  .player-panel.active-cyan .btn-done{
+    background:var(--violet); color:var(--violet-cta-ink); border:1px solid var(--violet-bright); box-shadow:0 0 24px rgba(192,140,245,.5);
+  }
+
+  /* ship/squadron, multi-device, not my turn: no controls, nothing ticking --
+     just a plain statement of whose turn it is. Pause/Undo/End Game stay
+     reachable via the always-on controls-bar below. */
+  .waiting-view{
+    flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
+    background:rgba(46,31,66,.35);
+  }
+  .waiting-text{ font-size:22px; font-weight:500; color:var(--violet-idle); margin-bottom:10px; }
+  .waiting-sub{ font-size:14px; color:var(--violet-muted); }
+
+  /* Utility row -- Undo / Pause / End Game. Now that the primary action
+     lives up in the stage, these are the only things down here, so they can
+     be full text buttons instead of a cramped icon row. */
+  .controls-bar{ position:relative; padding:18px 20px 24px; border-top:1px solid rgba(192,140,245,.24); display:flex; gap:12px; z-index:1; }
+  .controls-bar .btn{ flex:1; padding:18px 12px; font-size:14px; }
+  .btn:disabled{ opacity:.4; cursor:not-allowed; }
+
+  /* ---------- STATS SCREEN ---------- */
+  .stats{ position:relative; padding:28px 22px 22px; overflow-y:auto; height:100%; z-index:1; }
+  .stats-header{
+    display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:24px;
+    padding-bottom:20px; border-bottom:1px solid rgba(192,140,245,.24);
+  }
+  .stats-header h2{
+    font-family:'Share Tech Mono',monospace; font-size:26px; font-weight:400; letter-spacing:.05em; margin:0 0 6px;
+    color:var(--violet-hi); text-shadow:0 0 22px rgba(192,140,245,.6); text-transform:uppercase;
+  }
+  .btn-small{ padding:10px 16px; font-size:13px; flex:none; }
+  .stats .final-time{ color:var(--violet-muted); font-size:15px; line-height:1.5; }
+  .stats .final-time > div + div{ margin-top:2px; }
+  .stat-block{ margin-bottom:28px; }
+  .stat-block h3{ font-size:13px; letter-spacing:.26em; text-transform:uppercase; color:rgba(192,140,245,.75); font-weight:400; margin:0 0 12px; }
+  .player-stat-row{ display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid rgba(192,140,245,.14); }
+  .player-stat-row:last-child{ border-bottom:none; }
+  .dot{ width:8px; height:8px; border-radius:50%; flex:none; }
+  .dot.amber{ background:var(--amber); box-shadow:0 0 8px var(--amber); }
+  .dot.cyan{ background:var(--violet); box-shadow:0 0 8px var(--violet); }
+  .player-stat-row .stat-row-body{ flex:1; }
+  .player-stat-row .name{ font-size:17px; font-weight:400; color:var(--violet-hi); }
+  .player-stat-row .sub{ font-size:13px; color:var(--violet-muted); margin-top:2px; }
+  .player-stat-row .num{ font-size:17px; color:var(--violet-hi); }
+  .link-btn{
+    display:block; margin-top:12px; background:none; border:none; padding:0;
+    color:var(--violet-text); font-size:13px; font-weight:600; letter-spacing:.10em; text-transform:uppercase;
+    cursor:pointer; font-family:'Saira',sans-serif;
+  }
+  .bar-row{ margin-bottom:16px; }
+  .bar-row .bar-label{ display:flex; justify-content:space-between; font-size:13px; color:var(--violet-muted); margin-bottom:8px; }
+  .bar-track{ height:10px; border-radius:0; background:rgba(192,140,245,.08); overflow:hidden; display:flex; }
+  .bar-fill.amber{ background:var(--amber); box-shadow:0 0 16px rgba(232,163,61,.7); }
+  .bar-fill.cyan{ background:var(--violet); box-shadow:0 0 16px rgba(192,140,245,.7); }
+  .round-split-text{ font-size:13px; color:var(--violet-muted); margin-top:8px; margin-bottom:16px; }
+  .round-split-text .amber-text{ color:var(--amber); }
+  .round-split-text .cyan-text{ color:var(--violet); }
+  .phase-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .phase-cell{ background:transparent; border:1px solid rgba(192,140,245,.2); border-radius:0; padding:13px 14px; }
+  .phase-cell .pc-label{ font-size:13px; color:var(--violet-muted); margin-bottom:4px; }
+  .phase-cell .pc-val{ font-size:21px; font-weight:400; color:var(--violet-hi); }
+
+  /* ---------- PACE ANALYSIS ---------- */
+  .pace-summary{ font-size:14px; color:var(--violet-body); line-height:1.5; margin-bottom:16px; }
+  .pace-summary strong{ color:var(--violet-hi); font-weight:400; }
+  .pace-player{ border:1px solid rgba(192,140,245,.28); border-radius:0; padding:14px; margin-bottom:10px; background:transparent; }
+  /* amber vs violet card treatment, derived from the .dot color render() already emits -- no script change needed */
+  .pace-player:has(.dot.amber){ border-color:rgba(232,163,61,.35); background:linear-gradient(180deg, rgba(232,163,61,.08), transparent); }
+  .pace-player:has(.dot.cyan){ border-color:rgba(192,140,245,.28); background:transparent; }
+  .pace-player:last-child{ margin-bottom:0; }
+  .pace-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .pace-player .pace-name{ display:flex; align-items:center; gap:8px; font-size:17px; font-weight:400; color:var(--violet-hi); }
+  .pace-player .pace-status{
+    font-size:13px; font-family:'Share Tech Mono',monospace; font-weight:400; padding:3px 9px; border-radius:0;
+    letter-spacing:.06em; flex:none; text-transform:uppercase;
+  }
+  .pace-status.ontrack{ background:transparent; color:var(--green); border:1px solid rgba(158,224,176,.5); }
+  .pace-status.over{ background:transparent; color:var(--red); border:1px solid var(--red-line); }
+  .pace-player .pace-detail{ font-size:13px; color:var(--violet-muted); margin:4px 0 0; }
+  .pace-type-row{ display:flex; justify-content:space-between; font-size:13px; color:var(--violet-muted); margin-top:4px; }
+  .pace-type-row.flagged{ color:var(--red); font-weight:600; }
+
+  /* ---------- ACTIVITY LOG ---------- */
+  .activity-round{ margin-bottom:22px; }
+  .activity-round h4{
+    display:flex; align-items:center; gap:12px; font-family:'Share Tech Mono',monospace; font-size:19px; font-weight:400;
+    letter-spacing:.08em; margin:0; color:var(--violet-hi); text-transform:uppercase;
+  }
+  .activity-round h4::after{ content:''; flex:1; height:1px; background:rgba(192,140,245,.3); }
+  .activity-phase-label{
+    font-size:13px; color:rgba(192,140,245,.65); font-weight:400; margin:14px 0 6px; text-transform:uppercase; letter-spacing:.24em;
+  }
+  .activity-row{ display:flex; align-items:center; padding:12px 0; border-bottom:1px solid rgba(192,140,245,.14); font-size:16px; }
+  .activity-row:last-child{ border-bottom:none; }
+  .activity-row .dot{ margin-right:10px; }
+  .activity-row .a-name{ flex:1; }
+  /* tint the player's name to their color, derived from the .dot already in the row */
+  .activity-row:has(.dot.amber) .a-name{ color:var(--amber-label); }
+  .activity-row:has(.dot.cyan) .a-name{ color:var(--violet-mid); }
+  .activity-row .a-outcome{ color:var(--violet-muted); margin-right:10px; font-size:14px; }
+  .activity-row .mono{ min-width:56px; text-align:right; font-size:17px; color:var(--violet-hi); }
+  .activity-row.slow{
+    border:1px solid rgba(240,90,110,.45); background:rgba(240,90,110,.1); border-radius:0;
+    margin:0 -10px; padding:12px 10px;
+  }
+  .activity-row.slow .mono{ color:#ffb8c0; }
+  .slow-tag{
+    font-size:13px; font-weight:400; font-family:'Share Tech Mono',monospace; color:var(--red);
+    border:1px solid var(--red-line); background:transparent; padding:3px 8px; border-radius:0;
+    letter-spacing:.14em; margin-right:10px; text-transform:uppercase;
+  }
+  .activity-shared-row{
+    display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(192,140,245,.14);
+    font-size:13px; color:var(--violet-muted);
+  }
+  .activity-shared-row .mono{ font-size:17px; color:var(--violet-hi); }
+
+  .hidden{ display:none !important; }
+</style>
+</head>
+<body>
+
+<div class="device">
+
+  <!-- LANDING -->
+  <div id="screen-landing" class="setup">
+    <div class="wordmark">
+      <div class="bracket tl"></div>
+      <h1>Fleet<br>Chrono</h1>
+      <div class="tagline">Tournament Chronometer</div>
+      <div class="rule"></div>
+    </div>
+
+    <div id="multiResumePrompt" class="resume-prompt hidden">
+      <p class="sub" id="multiResumeSummary">A multi-device game was in progress.</p>
+      <div class="spacer"></div>
+      <button id="multiResumeBtn" class="btn btn-primary" onclick="resumeMultiSession()">Resume Game</button>
+      <button class="btn btn-ghost" style="margin-top:10px;" onclick="discardMultiSession()">Discard &amp; Start New</button>
+    </div>
+
+    <div id="landingOptions">
+      <div class="spacer"></div>
+      <p class="sub">How are you tracking this game?</p>
+      <div class="landing-options">
+        <button class="btn btn-primary" onclick="enterSingleDevice()">Just me, on this device</button>
+        <button class="btn btn-ghost" onclick="show('screen-multi-setup')">Tandem, on two devices</button>
+        <button class="btn btn-ghost" onclick="show('screen-join')">I'm joining a game</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETUP (single device) -->
+  <div id="screen-setup" class="setup hidden">
+    <h1>Fleet Chrono</h1>
+
+    <div id="resumePrompt" class="resume-prompt hidden">
+      <p class="sub" id="resumeSummary">A game was in progress.</p>
+      <div class="spacer"></div>
+      <button id="resumeBtn" class="btn btn-primary" onclick="resumeSavedGame()">Resume Game</button>
+      <button class="btn btn-ghost" style="margin-top:10px;" onclick="discardSavedGame()">Discard &amp; Start New</button>
+    </div>
+
+    <div id="setupForm" class="setup-form">
+      <p class="sub">Tournament game timer for Star Wars: Armada. Tracks the round clock, phases, and each player's turn time.</p>
+
+      <div class="field">
+        <label>Round limit</label>
+        <input id="roundLimit" type="text" inputmode="numeric" value="6">
+      </div>
+      <div class="field">
+        <label>Game clock (target duration)</label>
+        <div class="duration-row">
+          <div class="field"><input id="durH" type="text" inputmode="numeric" value="2"></div>
+          <div class="field"><input id="durM" type="text" inputmode="numeric" value="15"></div>
+        </div>
+        <div style="display:flex; gap:10px; font-size:11px; color:var(--text-dim); margin-top:-14px;">
+          <div style="flex:1; text-align:center;">hours</div>
+          <div style="flex:1; text-align:center;">minutes</div>
+        </div>
+      </div>
+
+      <div class="spacer"></div>
+      <button class="btn btn-primary" onclick="startGame()">Start game</button>
+      <button class="btn btn-ghost" style="margin-top:10px;" onclick="show('screen-landing')">&larr; Back</button>
+    </div>
+  </div>
+
+  <!-- MULTI-DEVICE: CREATE -->
+  <div id="screen-multi-setup" class="setup hidden">
+    <h1>Fleet Chrono</h1>
+    <div class="step-row">
+      <span class="step-label">Multi-device</span>
+      <span class="step-rule"></span>
+      <span class="step-num mono">Step 1 / 2</span>
+    </div>
+
+    <div class="field">
+      <label>You are</label>
+      <div class="slot-picker">
+        <button id="slotBtn0" class="slot-btn active" onclick="selectCreatorSlot(0)">First Player</button>
+        <button id="slotBtn1" class="slot-btn" onclick="selectCreatorSlot(1)">Second Player</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Round limit</label>
+      <input id="multiRoundLimit" type="text" inputmode="numeric" value="6">
+    </div>
+    <div class="field">
+      <label>Game clock (target duration)</label>
+      <div class="duration-row">
+        <div class="field"><input id="multiDurH" type="text" inputmode="numeric" value="2"></div>
+        <div class="field"><input id="multiDurM" type="text" inputmode="numeric" value="15"></div>
+      </div>
+      <div style="display:flex; gap:10px; font-size:11px; color:var(--text-dim); margin-top:-14px;">
+        <div style="flex:1; text-align:center;">hours</div>
+        <div style="flex:1; text-align:center;">minutes</div>
+      </div>
+    </div>
+    <div id="multiSetupError" class="field-error hidden"></div>
+
+    <div class="spacer"></div>
+    <button id="createGameBtn" class="btn btn-primary" onclick="createMultiGame()">Create game</button>
+    <button class="btn btn-ghost" style="margin-top:10px;" onclick="show('screen-landing')">&larr; Back</button>
+  </div>
+
+  <!-- MULTI-DEVICE: LOBBY (creator waits) -->
+  <div id="screen-lobby" class="setup hidden">
+    <div class="step-row">
+      <span class="step-label">Multi-device</span>
+      <span class="step-rule"></span>
+      <span class="step-num mono">Step 2 / 2</span>
+    </div>
+    <div class="code-card">
+      <div class="bracket tl sm"></div><div class="bracket tr sm"></div><div class="bracket bl sm"></div><div class="bracket br sm"></div>
+      <div class="qr-wrap"><div id="lobbyQr" class="qr-frame"></div></div>
+      <div class="micro-label">Game Code</div>
+      <div id="lobbyCode" class="join-code mono">------</div>
+      <div class="join-link-row">
+        <div id="lobbyLink" class="join-link"></div>
+        <button id="lobbyCopyBtn" class="copy-btn" onclick="copyLinkFrom('lobbyLink','lobbyCopyBtn')" title="Copy link" aria-label="Copy link">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12"/><path d="M6 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v2"/></svg>
+        </button>
+      </div>
+    </div>
+    <div id="lobbyStatus" class="lobby-status waiting"><span class="spinner"></span> Waiting&hellip;</div>
+
+    <div class="spacer"></div>
+    <button id="lobbyStartBtn" class="btn btn-primary" onclick="startFromLobby()" disabled>Start game</button>
+    <button class="btn btn-ghost" style="margin-top:10px;" onclick="leaveLobby()">Cancel</button>
+  </div>
+
+  <!-- MULTI-DEVICE: JOIN -->
+  <div id="screen-join" class="setup hidden">
+    <h1>Fleet Chrono</h1>
+    <p class="sub">Enter the code the other player shared with you.</p>
+    <div class="field">
+      <label>Game code</label>
+      <input id="joinCodeInput" class="code-input" placeholder="e.g. AB3K9X" maxlength="6"
+        oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter') attemptJoin()">
+    </div>
+    <div id="joinError" class="field-error hidden"></div>
+
+    <div class="spacer"></div>
+    <button id="joinBtn" class="btn btn-primary" onclick="attemptJoin()">Join game</button>
+    <button class="btn btn-ghost" style="margin-top:10px;" onclick="show('screen-landing')">&larr; Back</button>
+  </div>
+
+  <!-- MULTI-DEVICE: JOIN CONFIRM (joiner waits) -->
+  <div id="screen-join-confirm" class="setup hidden">
+    <p class="sub" id="joinConfirmTitle">Joining game</p>
+    <div class="code-card">
+      <div class="bracket tl sm"></div><div class="bracket tr sm"></div><div class="bracket bl sm"></div><div class="bracket br sm"></div>
+      <div id="joinConfirmRole" class="role-text"></div>
+      <div id="joinConfirmDetails" class="role-detail"></div>
+    </div>
+    <div class="lobby-status waiting"><span class="spinner"></span> Waiting for host to start&hellip;</div>
+
+    <div class="spacer"></div>
+    <button class="btn btn-ghost" onclick="leaveJoinConfirm()">&larr; Leave</button>
+  </div>
+
+  <!-- LIVE GAME -->
+  <div id="screen-live" class="live hidden">
+    <div id="overtimeBanner" class="overtime-banner hidden">GAME CLOCK EXPIRED — IN OVERTIME</div>
+    <div id="warningBanner" class="warning-banner hidden">15 MINUTES REMAINING</div>
+    <div id="pausedBanner" class="paused-banner hidden">GAME PAUSED</div>
+    <div class="strip">
+      <button id="showCodeBtn" class="show-code-btn hidden" onclick="showCodeOverlay()" title="Show join code">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><rect x="2" y="2" width="7" height="7"/><rect x="15" y="2" width="7" height="7"/><rect x="2" y="15" width="7" height="7"/><rect x="15" y="15" width="3" height="3"/><rect x="19" y="15" width="3" height="3"/><rect x="15" y="19" width="3" height="3"/><rect x="19" y="19" width="3" height="3"/></svg>
+      </button>
+      <div class="clock-block">
+        <div class="clock-label">Game Clock</div>
+        <div id="gameClock" class="game-clock mono">2:15:00</div>
+      </div>
+    </div>
+
+    <div id="codeOverlay" class="code-overlay hidden">
+      <div class="code-card">
+        <div class="bracket tl sm"></div><div class="bracket tr sm"></div><div class="bracket bl sm"></div><div class="bracket br sm"></div>
+        <div class="qr-wrap"><div id="overlayQr" class="qr-frame"></div></div>
+        <div class="micro-label">Game Code</div>
+        <div id="overlayCode" class="join-code mono">------</div>
+        <div class="join-link-row">
+          <div id="overlayLink" class="join-link"></div>
+          <button id="overlayCopyBtn" class="copy-btn" onclick="copyLinkFrom('overlayLink','overlayCopyBtn')" title="Copy link" aria-label="Copy link">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12"/><path d="M6 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v2"/></svg>
+          </button>
+        </div>
+      </div>
+      <button class="btn btn-ghost" onclick="hideCodeOverlay()">Close</button>
+    </div>
+
+    <!-- Custom confirm, not the browser's native confirm() -- some embedded/
+         webview browser contexts silently block or auto-dismiss blocking
+         dialogs, which made End Game appear to do nothing. -->
+    <div id="endGameConfirm" class="code-overlay hidden">
+      <div class="code-card confirm-card">
+        <div class="bracket tl sm"></div><div class="bracket tr sm"></div><div class="bracket bl sm"></div><div class="bracket br sm"></div>
+        <div class="confirm-title">End the game now?</div>
+        <div class="confirm-sub">This stops tracking for both players and can't be undone.</div>
+        <div class="confirm-actions">
+          <button class="btn btn-ghost" onclick="hideEndGameConfirm()">Cancel</button>
+          <button class="btn btn-danger" onclick="confirmEndGame()">End Game</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div id="roundLabelTop" class="round-heading">Round 1 of 6</div>
+      <div id="phaseLabelTop" class="phase-heading">Command Phase</div>
+
+      <div class="stage-body">
+        <!-- One bracketed panel for every phase -- shared phases show "Both
+             Players" plus the phase context; Ship/Squadron shows whoever's
+             turn it is plus Pass/All Activated. Done always lives inside it,
+             right below whatever else is there. -->
+        <div id="mainPanel" class="player-panel">
+          <div class="bracket tl"></div><div class="bracket tr"></div><div class="bracket bl"></div><div class="bracket br"></div>
+          <div class="sweep"></div>
+          <div id="panelName" class="p-name">Both Players</div>
+          <div id="panelContext" class="pe-context"></div>
+          <div id="panelSecondary" class="p-controls-secondary hidden">
+            <button id="turnPassBtn" class="btn btn-pass" onclick="tapPassActive()">Pass</button>
+            <button id="turnAllBtn" class="btn btn-all-activated" onclick="tapAllActivatedActive()">All Activated</button>
+          </div>
+          <button id="advanceBtn" class="btn btn-done" onclick="advancePhase()">Done</button>
+        </div>
+
+        <!-- ship/squadron, multi-device, not my turn: nothing to act on here -->
+        <div id="waitingView" class="waiting-view hidden">
+          <div id="waitingText" class="waiting-text">Waiting for First Player</div>
+          <div class="waiting-sub">Nothing to do until it's your turn</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls-bar">
+      <button id="undoBtn" class="btn btn-ghost" onclick="handleUndoIconTap()" title="Undo last action">Undo</button>
+      <button id="pauseBtn" class="btn btn-ghost" onclick="togglePause()" title="Pause">Pause</button>
+      <button id="endGameBtn" class="btn btn-danger" onclick="handleEndGameTap()" title="End Game">End Game</button>
+    </div>
+  </div>
+
+  <!-- END GAME CONFIRM (simple inline in live screen controls swap) -->
+
+  <!-- STATS -->
+  <div id="screen-stats" class="stats hidden">
+    <div class="stats-header">
+      <div>
+        <h2>Game complete</h2>
+        <div id="finalTime" class="final-time"></div>
+      </div>
+      <button class="btn btn-ghost btn-small" onclick="newGame()">New</button>
+    </div>
+
+    <div id="paceBlock" class="stat-block hidden">
+      <h3>PACE ANALYSIS</h3>
+      <div id="paceSummary" class="pace-summary"></div>
+      <div id="paceRows"></div>
+      <button class="link-btn" onclick="show('screen-activity')">View highlighted activations →</button>
+    </div>
+
+    <div class="stat-block">
+      <h3>TOTAL TIME ON CLOCK</h3>
+      <div id="totalRows"></div>
+      <div id="totalBar" class="bar-track" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="stat-block">
+      <h3>AVERAGE PER ACTIVATION</h3>
+      <div id="avgRows"></div>
+      <button class="link-btn" onclick="show('screen-activity')">View all activations →</button>
+    </div>
+
+    <div class="stat-block">
+      <h3>TIME BY PHASE</h3>
+      <div class="phase-grid" id="phaseGrid"></div>
+    </div>
+
+    <div class="stat-block">
+      <h3>SHARE OF TURN TIME PER ROUND</h3>
+      <div id="roundBars"></div>
+    </div>
+  </div>
+
+  <!-- ACTIVITY LOG -->
+  <div id="screen-activity" class="stats hidden">
+    <div class="stats-header">
+      <h2>All Activations</h2>
+      <button class="btn btn-ghost btn-small" onclick="show('screen-stats')">Back</button>
+    </div>
+    <div id="activityLog"></div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+/* ---------------- STATE: flat event log is the source of truth ----------------
+   Two timestamp regimes coexist in the log:
+   - pause/resume events carry REAL Date.now() timestamps (needed to measure
+     actual wall-clock paused duration).
+   - every other event carries an effectiveNow() timestamp (real time minus
+     total paused duration), so all the existing "duration = tsB - tsA" math
+     elsewhere never has to know pausing exists. */
+let players = ["First Player","Second Player"];
+let roundLimit = 6;
+let targetDurationSec = 8100;
+let gameStartTs = null;
+let events = []; // {type, player(0/1 or null), phase, round, ts, outcome}
+let tickHandle = null;
+let lastActionWasUndo = false; // undo is single-step: armed only until the next event
+let lastPushCount = 0; // how many events the most recent action pushed, so undo reverts all of them
+let warningSoundPlayed = false; // the 15-minute warning chime fires once per game
+let overtimeSoundPlayed = false; // the clock-expired chime also fires once per game
+let audioCtx = null;
+
+// One-time setup phases, played once before Round 1 (round:0) — never repeated per round.
+const PREGAME_SEQUENCE = ["obstacles","deploy"];
+const PHASE_SEQUENCE = ["command","ship","squadron","status"];
+const PHASE_LABELS = {
+  obstacles:"Place Obstacles", deploy:"Deploy Fleets",
+  command:"Command Phase", ship:"Ship Phase", squadron:"Squadron Phase", status:"Status Phase"
+};
+// Holo Tactical Violet restyle only: the shared-phase stage's small context
+// line under the clock. Purely decorative copy, no state/logic behind it —
+// mirrors PHASE_LABELS in spirit. Sourced from the actual design reference
+// for "command"; the others are placeholders in the same voice pending the
+// matching reference screens.
+const PHASE_CONTEXT = {
+  obstacles:"Position obstacles",
+  deploy:"Deploy ships and squadrons",
+  command:"Dials assigned simultaneously",
+  status:"Resolve end-of-round effects"
+};
+const ALL_PHASES_FOR_STATS = PREGAME_SEQUENCE.concat(PHASE_SEQUENCE);
+const PLAYER_TIMED_PHASES = ["ship","squadron"];
+const ALL_ACTIVATED_LABELS = { ship:"All Ships Activated", squadron:"All Squadrons Activated" };
+const FIRST_PLAYER = 0;
+
+function fmt(sec, forceHours){
+  sec = Math.max(0, Math.round(sec));
+  const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = sec%60;
+  if(h>0 || forceHours) return h+":"+String(m).padStart(2,'0')+":"+String(s).padStart(2,'0');
+  return String(m).padStart(2,'0')+":"+String(s).padStart(2,'0');
+}
+
+/* ---------------- local persistence ----------------
+   Single-device games have no server, so an accidental refresh or a mobile
+   swipe-back gesture would otherwise silently wipe an in-progress game. The
+   event log (the app's single source of truth) is auto-saved to
+   localStorage on every change and offered back on load — this is pure
+   client-side resilience, not a step toward server-backed state. */
+const STORAGE_KEY = 'fleetChronoGame';
+function persistState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({players, roundLimit, targetDurationSec, gameStartTs, events}));
+  }catch(e){}
+}
+function clearPersistedState(){
+  try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+}
+function loadPersistedState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return null;
+    const data = JSON.parse(raw);
+    if(!data || !Array.isArray(data.events) || data.events.length<2) return null;
+    return data;
+  }catch(e){ return null; }
+}
+
+/* ---------------- pause-aware clock ---------------- */
+function isPaused(){
+  for(let i=events.length-1;i>=0;i--){
+    const e = events[i];
+    if(e.type==='resume') return false;
+    if(e.type==='pause') return true;
+  }
+  return false;
+}
+function totalPausedMs(uptoRealTs){
+  let total = 0, openPause = null;
+  for(const e of events){
+    if(e.type==='pause') openPause = e;
+    else if(e.type==='resume' && openPause){ total += e.ts - openPause.ts; openPause = null; }
+  }
+  if(openPause) total += uptoRealTs - openPause.ts;
+  return total;
+}
+function effectiveNow(){
+  const real = Date.now();
+  return real - totalPausedMs(real);
+}
+
+/* ---------------- SETUP ---------------- */
+function startGame(){
+  isMultiDevice = false;
+  myPlayerSlot = null;
+  roundLimit = parseInt(document.getElementById('roundLimit').value) || 6;
+  const h = parseInt(document.getElementById('durH').value) || 0;
+  const m = parseInt(document.getElementById('durM').value) || 0;
+  targetDurationSec = h*3600 + m*60;
+
+  gameStartTs = Date.now();
+  events = [{type:'game_start', ts:gameStartTs, round:0, phase:'obstacles'}];
+  events.push({type:'phase_start', phase:'obstacles', round:0, ts:gameStartTs});
+  lastActionWasUndo = false;
+  lastPushCount = 0;
+  warningSoundPlayed = false;
+  overtimeSoundPlayed = false;
+  try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ audioCtx = null; }
+  persistState();
+
+  show('screen-live');
+  tickHandle = setInterval(render, 250);
+  render();
+}
+
+/* ---------------- derive current state from log ---------------- */
+function currentPhaseEvent(){
+  for(let i=events.length-1;i>=0;i--){ if(events[i].type==='phase_start') return events[i]; }
+  return null;
+}
+function isGameEnded(){ return events.some(e=>e.type==='game_end'); }
+
+// Activations are not stored as separate start/end events — each completed
+// activation (Done or Pass) is a single log entry, and the active player /
+// their activation's start time are always derived from the sequence so far
+// this phase. This is what makes single-step undo fully correct: popping
+// one event always fully reverts exactly one player action.
+function activationsInPhase(ps){
+  return events.slice(events.indexOf(ps)+1).filter(e=>e.type==='activation');
+}
+// Once a player declares "All Activated" for this phase, they never become
+// active again this phase -- every remaining turn just stays with whoever
+// hasn't declared yet, instead of the old strict alternation. Both declared
+// is a transient state: it's always immediately followed by an auto phase
+// advance (see maybeAutoAdvanceSplitPhase()), so which value this returns in
+// that instant doesn't matter for real interaction.
+function playerDeclaredAllActivated(ps, player){
+  return events.slice(events.indexOf(ps)+1).some(e=>e.type==='all_activated' && e.player===player);
+}
+function currentActivePlayer(ps){
+  const p0Done = playerDeclaredAllActivated(ps, 0), p1Done = playerDeclaredAllActivated(ps, 1);
+  if(p0Done && !p1Done) return 1;
+  if(p1Done && !p0Done) return 0;
+  const acts = activationsInPhase(ps);
+  if(acts.length===0) return FIRST_PLAYER; // First Player's activation auto-starts
+  return acts[acts.length-1].player===0 ? 1 : 0;
+}
+function currentActivationStartTs(ps){
+  const acts = activationsInPhase(ps);
+  return acts.length ? acts[acts.length-1].ts : ps.ts;
+}
+function lastActivationForPlayer(ps, player){
+  const acts = activationsInPhase(ps);
+  for(let i=acts.length-1;i>=0;i--){ if(acts[i].player===player) return acts[i]; }
+  return null;
+}
+function canPass(ps, player){
+  if(ps.phase!=='ship') return false; // passing only exists in Ship Phase
+  const last = lastActivationForPlayer(ps, player);
+  if(!last) return player!==FIRST_PLAYER; // First Player can never pass their first activation
+  return last.outcome!=='pass'; // no two consecutive passes by the same player
+}
+// How many trailing events belong to the same action as the current last
+// event, derived purely from the shared log's own actionId tags — not from
+// any locally-cached count. That means any device (including one that just
+// resumed, with no memory of what it or the other device just did) computes
+// the exact same answer, since it's reading the same shared source of truth.
+function currentActionEventCount(){
+  if(events.length===0) return 0;
+  const id = events[events.length-1].actionId;
+  let count = 0;
+  for(let i=events.length-1;i>=0;i--){
+    if(events[i].actionId!==id) break;
+    count++;
+  }
+  return count;
+}
+function canUndo(){
+  // Always keep game_start + the first phase_start; undo is single-step
+  // (armed once per action) and reverts the *entire* last action, however
+  // many events it pushed — see markAction() below. Multi-device uses a
+  // differently-mechanized but equivalent single-step lock — see
+  // multiUndoUnlocked's declaration comment.
+  if(isMultiDevice) return multiDeviceReady && multiUndoUnlocked && (events.length-currentActionEventCount())>=2;
+  return !lastActionWasUndo && lastPushCount>0 && (events.length-lastPushCount)>=2;
+}
+
+/* ---------------- actions ----------------
+   Every action funnels its event(s) through pushEvent(), so there is exactly
+   one thing that varies between single-device and multi-device: where an
+   event actually lands. In single-device mode pushEvent() mutates `events`
+   directly, same as always. In multi-device mode it writes through the
+   append_event RPC and does NOT touch `events` locally — the realtime
+   subscription is the only thing that ever mutates `events` in that mode,
+   so both devices are always rendering the same confirmed log, never a
+   local guess. markAction() takes an explicit count (how many events this
+   action just pushed) rather than inferring it from array-length, since in
+   multi-device mode the array hasn't changed yet when markAction() runs.
+   Every event also carries an actionId — the single-device splice-based
+   undo doesn't need it (lastPushCount already knows the count), but it's
+   what lets multi-device undo correctly revert an action that pushed more
+   than one event (see currentActionEventCount() above) regardless of which
+   device — or neither, after a resume — actually pushed it. */
+async function pushEvent(eventObj, actionId){
+  eventObj.actionId = actionId;
+  if(isMultiDevice){
+    const { error } = await sb.rpc('append_event', { p_game_id: currentGameCode, p_event: eventObj });
+    if(error) console.error('append_event failed', error);
+  } else {
+    events.push(eventObj);
+  }
+}
+function markAction(count){
+  lastPushCount = count;
+  lastActionWasUndo = false;
+  if(!isMultiDevice) persistState();
+}
+// A burst of queued taps (the classic case: a phone wakes from sleep with
+// several taps already buffered) must not fire more than one action, since
+// in multi-device mode a second tap would read the same stale local state
+// the first tap hasn't heard back about yet and push a redundant/incorrect
+// transition on top of it. Guards only the actual tap entry points below —
+// never the functions they call internally — so nesting (e.g. tapDoneActive
+// calling tapDone) can't accidentally lock itself out.
+let actionPending = false;
+function beginAction(){
+  if(actionPending) return false;
+  actionPending = true;
+  return true;
+}
+function endAction(){ actionPending = false; }
+async function tapDone(playerIdx){
+  if(isGameEnded() || isPaused()) return;
+  if(isMultiDevice && playerIdx!==myPlayerSlot) return;
+  const ps = currentPhaseEvent();
+  if(currentActivePlayer(ps)!==playerIdx) return;
+  await pushEvent({type:'activation', phase:ps.phase, round:ps.round, player:playerIdx, outcome:'done', ts:effectiveNow()}, generateId());
+  markAction(1);
+  if(!isMultiDevice) render();
+}
+// The single active-turn panel's Done button -- always guarded here, since
+// (unlike tapDone) this is now a direct onclick entry point rather than
+// something only ever reached through an already-guarded caller.
+async function tapDoneActive(){
+  if(!beginAction()) return;
+  try{ await tapDone(currentActivePlayer(currentPhaseEvent())); } finally{ endAction(); }
+}
+async function tapPass(playerIdx){
+  if(!beginAction()) return;
+  try{
+    if(isGameEnded() || isPaused()) return;
+    if(isMultiDevice && playerIdx!==myPlayerSlot) return;
+    const ps = currentPhaseEvent();
+    if(currentActivePlayer(ps)!==playerIdx || !canPass(ps, playerIdx)) return;
+    await pushEvent({type:'activation', phase:ps.phase, round:ps.round, player:playerIdx, outcome:'pass', ts:effectiveNow()}, generateId());
+    markAction(1);
+    if(!isMultiDevice) render();
+  } finally{ endAction(); }
+}
+function tapPassActive(){ tapPass(currentActivePlayer(currentPhaseEvent())); }
+// "All Ships/Squadrons Activated": a permanent opt-out of the rest of this
+// phase for the declaring player -- once logged, currentActivePlayer() never
+// returns them again this phase (see its declaration comment), so turns just
+// stay with whoever hasn't declared instead of bouncing back. It's a normal
+// logged event like any other, so the standard single-step undo already
+// reverts it with no special-casing.
+async function tapAllActivated(playerIdx){
+  if(!beginAction()) return;
+  try{
+    if(isGameEnded() || isPaused()) return;
+    if(isMultiDevice && playerIdx!==myPlayerSlot) return;
+    const ps = currentPhaseEvent();
+    if(PLAYER_TIMED_PHASES.indexOf(ps.phase)===-1) return;
+    if(currentActivePlayer(ps)!==playerIdx) return;
+    await pushEvent({type:'all_activated', phase:ps.phase, round:ps.round, player:playerIdx, ts:effectiveNow()}, generateId());
+    markAction(1);
+    if(!isMultiDevice){
+      render();
+      maybeAutoAdvanceSplitPhase();
+    }
+    // multi-device: the auto-advance check runs once this event's own
+    // realtime echo lands, in applyIncomingEvent() -- see its comment.
+  } finally{ endAction(); }
+}
+function tapAllActivatedActive(){ tapAllActivated(currentActivePlayer(currentPhaseEvent())); }
+async function handleUndoIconTap(){
+  if(!beginAction()) return;
+  try{ await undo(); } finally{ endAction(); }
+}
+async function undo(){
+  if(!canUndo()) return;
+  if(isMultiDevice){
+    if(topEventSeq==null) return;
+    // No local mutation here — same pattern as pushEvent(): the realtime
+    // DELETE notification (handled by resyncEventLog(), since Supabase
+    // Realtime's DELETE payloads don't carry which row) is what actually
+    // removes it, so both devices' logs can never diverge. If the RPC's
+    // expected-seq guard refuses (a race — the other device acted a moment
+    // earlier), nothing happens locally either; the button just goes back
+    // to normal once whatever they did arrives.
+    const count = currentActionEventCount();
+    await sb.rpc('retract_last_event', { p_game_id: currentGameCode, p_expected_seq: topEventSeq, p_count: count });
+    return;
+  }
+  events.splice(events.length-lastPushCount, lastPushCount);
+  lastActionWasUndo = true;
+  lastPushCount = 0;
+  persistState();
+  render();
+}
+async function pauseGame(){
+  if(isGameEnded() || isPaused()) return;
+  await pushEvent({type:'pause', ts:Date.now()}, generateId());
+  markAction(1);
+  if(!isMultiDevice) render();
+}
+async function resumeGame(){
+  if(!isPaused()) return;
+  await pushEvent({type:'resume', ts:Date.now()}, generateId());
+  markAction(1);
+  if(!isMultiDevice) render();
+}
+async function togglePause(){
+  if(!beginAction()) return;
+  try{
+    if(isGameEnded()) return;
+    await (isPaused() ? resumeGame() : pauseGame());
+  } finally{ endAction(); }
+}
+// Manual "Done" -- only ever reachable for the shared/setup phases now
+// (obstacles, deploy, command, status). Ship/Squadron no longer have a
+// manual advance at all: they end automatically once both players declare
+// All Activated (see maybeAutoAdvanceSplitPhase() below), so this bails
+// defensively if somehow called during one of those.
+async function advancePhase(){
+  if(!beginAction()) return;
+  try{
+    if(isPaused()) return;
+    const ps = currentPhaseEvent();
+    if(PLAYER_TIMED_PHASES.indexOf(ps.phase)!==-1) return;
+    const t = effectiveNow();
+    const actionId = generateId(); // shared across every event this call pushes, so undo reverts all of them together
+    let count = 0;
+
+    await pushEvent({type:'phase_end', phase:ps.phase, round:ps.round, ts:t}, actionId);
+    count++;
+
+    const pregameIdx = PREGAME_SEQUENCE.indexOf(ps.phase);
+    if(pregameIdx!==-1){
+      // One-time setup: Place Obstacles -> Deploy Fleets -> Round 1 Command Phase.
+      const nextPhase = pregameIdx < PREGAME_SEQUENCE.length-1 ? PREGAME_SEQUENCE[pregameIdx+1] : 'command';
+      const nextRound = pregameIdx < PREGAME_SEQUENCE.length-1 ? 0 : 1;
+      await pushEvent({type:'phase_start', phase:nextPhase, round:nextRound, ts:t}, actionId);
+      count++;
+      markAction(count);
+      if(!isMultiDevice) render();
+      return;
+    }
+
+    const idx = PHASE_SEQUENCE.indexOf(ps.phase);
+    if(idx < PHASE_SEQUENCE.length-1){
+      // command -> ship
+      const nextPhase = PHASE_SEQUENCE[idx+1];
+      await pushEvent({type:'phase_start', phase:nextPhase, round:ps.round, ts:t}, actionId);
+      count++;
+      markAction(count);
+      if(!isMultiDevice) render();
+    } else if(ps.round < roundLimit){
+      // status phase, not the final round: no between-rounds stop -- go
+      // straight into the next round's Command Phase in the same action.
+      await pushEvent({type:'round_end', round:ps.round, ts:t}, actionId);
+      count++;
+      await pushEvent({type:'phase_start', phase:'command', round:ps.round+1, ts:t}, actionId);
+      count++;
+      markAction(count);
+      if(!isMultiDevice) render();
+    } else {
+      // status phase, final round: game over.
+      await pushEvent({type:'round_end', round:ps.round, ts:t}, actionId);
+      count++;
+      await pushEvent({type:'game_end', ts:t}, actionId);
+      count++;
+      markAction(count);
+      if(!isMultiDevice) endGame();
+    }
+  } finally{ endAction(); }
+}
+// Ship/Squadron auto-advance: fires once both players have declared All
+// Activated. Only one device may ever actually push the transition, or two
+// devices racing on the same realtime notification would both try to close
+// the phase and double up the log -- slot 0 is the arbitrary, deterministic
+// tie-break (irrelevant in single-device mode, where there's only one
+// "device" anyway). Ship and Squadron are never the last phase in
+// PHASE_SEQUENCE, so this never needs the round/game-end branches
+// advancePhase() above still handles for the shared phases.
+function maybeAutoAdvanceSplitPhase(){
+  const ps = currentPhaseEvent();
+  if(!ps || PLAYER_TIMED_PHASES.indexOf(ps.phase)===-1 || isGameEnded()) return;
+  if(!(playerDeclaredAllActivated(ps,0) && playerDeclaredAllActivated(ps,1))) return;
+  if(isMultiDevice && myPlayerSlot!==FIRST_PLAYER) return;
+  advanceSplitPhase(ps);
+}
+async function advanceSplitPhase(ps){
+  const t = effectiveNow();
+  const actionId = generateId();
+  const nextPhase = PHASE_SEQUENCE[PHASE_SEQUENCE.indexOf(ps.phase)+1];
+  await pushEvent({type:'phase_end', phase:ps.phase, round:ps.round, ts:t}, actionId);
+  await pushEvent({type:'phase_start', phase:nextPhase, round:ps.round, ts:t}, actionId);
+  markAction(2);
+  if(!isMultiDevice) render();
+}
+// Persistent "end the game early" control -- reachable during any phase
+// (not just between rounds, since there's no longer a between-rounds screen
+// to host it) via the header's icon row. handleEndGameTap() owns the
+// confirmation prompt; this is the actual guarded action.
+async function endGameNow(){
+  if(!beginAction()) return;
+  try{
+    if(isGameEnded()) return;
+    await pushEvent({type:'game_end', ts:effectiveNow()}, generateId());
+    markAction(1);
+    if(!isMultiDevice) endGame();
+  } finally{ endAction(); }
+}
+function handleEndGameTap(){
+  if(isGameEnded()) return;
+  document.getElementById('endGameConfirm').classList.remove('hidden');
+}
+function hideEndGameConfirm(){
+  document.getElementById('endGameConfirm').classList.add('hidden');
+}
+async function confirmEndGame(){
+  hideEndGameConfirm();
+  await endGameNow();
+}
+function endGame(){
+  clearInterval(tickHandle);
+  if(eventsChannel){ sb.removeChannel(eventsChannel); eventsChannel = null; }
+  if(isMultiDevice) clearMultiSession();
+  onVisibleResync = null;
+  renderStats();
+  show('screen-stats');
+}
+function newGame(){
+  clearInterval(tickHandle);
+  isMultiDevice = false;
+  myPlayerSlot = null;
+  onVisibleResync = null;
+  events = [];
+  gameStartTs = null;
+  lastActionWasUndo = false;
+  lastPushCount = 0;
+  clearPersistedState();
+  document.getElementById('resumePrompt').classList.add('hidden');
+  document.getElementById('setupForm').classList.remove('hidden');
+  show('screen-setup');
+}
+function resumeSavedGame(){
+  const data = loadPersistedState();
+  if(!data) return;
+  players = data.players;
+  roundLimit = data.roundLimit;
+  targetDurationSec = data.targetDurationSec;
+  gameStartTs = data.gameStartTs;
+  events = data.events;
+  // Conservative on resume: never allow undoing something from before the
+  // reload — the precise boundary of "the last action" is gone with the
+  // page state, so undo simply starts disarmed until a new action happens.
+  lastActionWasUndo = true;
+  lastPushCount = 0;
+  try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ audioCtx = null; }
+
+  if(isGameEnded(events)){
+    renderStats();
+    show('screen-stats');
+  } else {
+    // Don't replay an alert tone for a threshold already passed before the reload.
+    const remaining = targetDurationSec - (effectiveNow()-gameStartTs)/1000;
+    warningSoundPlayed = remaining <= WARNING_THRESHOLD_SEC;
+    overtimeSoundPlayed = remaining <= 0;
+    show('screen-live');
+    tickHandle = setInterval(render, 250);
+    render();
+  }
+}
+function discardSavedGame(){
+  clearPersistedState();
+  document.getElementById('resumePrompt').classList.add('hidden');
+  document.getElementById('setupForm').classList.remove('hidden');
+}
+
+/* ---------------- render loop ---------------- */
+function show(id){
+  ['screen-landing','screen-setup','screen-multi-setup','screen-lobby','screen-join','screen-join-confirm',
+   'screen-live','screen-stats','screen-activity'].forEach(s=>{
+    document.getElementById(s).classList.toggle('hidden', s!==id);
+  });
+}
+
+const WARNING_THRESHOLD_SEC = 15*60;
+const ALERT_TONE_FREQ_HZ = 880; // change this (or the envelope below) to use a different alert sound
+const PACE_TOLERANCE = 1.1;      // a player/type must exceed the pace target by >10% to count as "over"
+const OUTLIER_MULTIPLIER = 1.75; // an activation is highlighted as slow at 1.75x the relevant baseline
+
+function playAlertTone(){
+  if(!audioCtx) return;
+  try{
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.frequency.value = ALERT_TONE_FREQ_HZ;
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    const now = audioCtx.currentTime;
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.2, now+0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now+0.5);
+    osc.start(now);
+    osc.stop(now+0.55);
+  }catch(e){}
+}
+
+function render(){
+  const t = effectiveNow();
+  const paused = isPaused();
+
+  const elapsed = (t - gameStartTs)/1000;
+  const remaining = targetDurationSec - elapsed;
+  const gc = document.getElementById('gameClock');
+  const overtimeBanner = document.getElementById('overtimeBanner');
+  const warningBanner = document.getElementById('warningBanner');
+  const inWarningWindow = remaining>0 && remaining<=WARNING_THRESHOLD_SEC;
+  if(remaining <= 0){
+    gc.textContent = "+"+fmt(-remaining, true);
+    gc.classList.add('overtime');
+    gc.classList.remove('warning');
+    overtimeBanner.classList.remove('hidden');
+    warningBanner.classList.add('hidden');
+    if(!overtimeSoundPlayed && !paused){
+      overtimeSoundPlayed = true;
+      playAlertTone();
+    }
+  } else {
+    gc.textContent = fmt(remaining, true);
+    gc.classList.remove('overtime');
+    overtimeBanner.classList.add('hidden');
+    gc.classList.toggle('warning', inWarningWindow);
+    warningBanner.classList.toggle('hidden', !inWarningWindow);
+    if(inWarningWindow && !warningSoundPlayed && !paused){
+      warningSoundPlayed = true;
+      playAlertTone();
+    }
+  }
+
+  document.getElementById('pausedBanner').classList.toggle('hidden', !paused);
+  const pauseBtn = document.getElementById('pauseBtn');
+  pauseBtn.textContent = paused ? 'Resume' : 'Pause';
+
+  const ps = currentPhaseEvent();
+  document.getElementById('roundLabelTop').textContent = ps.round===0 ? "Game Setup" : "Round "+ps.round+" / "+roundLimit;
+  document.getElementById('phaseLabelTop').textContent = PHASE_LABELS[ps.phase];
+
+  const isSplitPhase = PLAYER_TIMED_PHASES.indexOf(ps.phase)!==-1;
+  const activePlayer = isSplitPhase ? currentActivePlayer(ps) : null;
+  // In multi-device mode, only the active player's own device shows the
+  // panel -- the other device shows the waiting view instead, since there's
+  // nothing for it to do right now. Single-device mode always shows the
+  // panel directly (both players share the one screen).
+  const iAmWaiting = isSplitPhase && isMultiDevice && myPlayerSlot!=null && activePlayer!==myPlayerSlot;
+
+  document.getElementById('mainPanel').classList.toggle('hidden', iAmWaiting);
+  document.getElementById('waitingView').classList.toggle('hidden', !iAmWaiting);
+
+  const panel = document.getElementById('mainPanel');
+  const advanceBtn = document.getElementById('advanceBtn');
+  if(iAmWaiting){
+    document.getElementById('waitingText').textContent = "Waiting for " + players[activePlayer];
+  } else if(!isSplitPhase){
+    // Shared/setup phases: "Both Players" plus the phase's context line,
+    // no Pass/All Activated -- just the one Done action.
+    panel.classList.add('active-cyan'); // neutral violet, not tied to a player
+    document.getElementById('panelName').textContent = 'Both Players';
+    document.getElementById('panelContext').textContent = PHASE_CONTEXT[ps.phase] || '';
+    document.getElementById('panelContext').classList.remove('hidden');
+    document.getElementById('panelSecondary').classList.add('hidden');
+    advanceBtn.onclick = advancePhase;
+  } else {
+    // Ship/Squadron: whoever's turn it is, plus Pass/All Activated.
+    panel.classList.toggle('active-cyan', activePlayer===1);
+    document.getElementById('panelName').textContent = players[activePlayer];
+    document.getElementById('panelContext').classList.add('hidden');
+    document.getElementById('panelSecondary').classList.remove('hidden');
+
+    const passBtn = document.getElementById('turnPassBtn');
+    passBtn.classList.toggle('hidden', ps.phase!=='ship');
+    passBtn.disabled = paused || !canPass(ps, activePlayer);
+
+    const allBtn = document.getElementById('turnAllBtn');
+    allBtn.textContent = ALL_ACTIVATED_LABELS[ps.phase];
+    allBtn.disabled = paused;
+
+    advanceBtn.onclick = tapDoneActive;
+  }
+
+  // Undo ownership: in multi-device mode, a device may only undo its own
+  // last activation or All-Activated declaration -- never reach across and
+  // undo the other player's. Events with no owning player (phase/pause
+  // transitions) stay undoable from either device, same as always.
+  const topEvt = events[events.length-1];
+  const topHasOwner = !!topEvt && (topEvt.type==='activation' || topEvt.type==='all_activated');
+  const topIsOthersOwned = topHasOwner && isMultiDevice && topEvt.player!==myPlayerSlot;
+  document.getElementById('undoBtn').classList.toggle('hidden', topIsOthersOwned);
+  document.getElementById('undoBtn').disabled = !canUndo();
+  document.getElementById('endGameBtn').disabled = isGameEnded();
+  advanceBtn.disabled = paused;
+  document.getElementById('showCodeBtn').classList.toggle('hidden', !isMultiDevice);
+}
+
+/* ---------------- stats derivation ---------------- */
+function renderStats(){
+  const totalElapsed = (events[events.length-1].ts - gameStartTs)/1000;
+  const diff = totalElapsed - targetDurationSec;
+  const diffLabel = diff > 0.5
+    ? `<span style="color:var(--red)">${fmt(diff)} over</span>`
+    : diff < -0.5
+      ? `${fmt(-diff)} under`
+      : `right on time`;
+  document.getElementById('finalTime').innerHTML =
+    `<div>Target ${fmt(targetDurationSec, true)} · ${roundLimit} rounds</div>` +
+    `<div>Actual ${fmt(totalElapsed, true)} · ${diffLabel}</div>`;
+
+  // Walk the log in order, tracking the last phase/activation boundary so every
+  // activation's (and pass's) duration is derived as the gap since the previous
+  // one — this fully accounts for all elapsed time within a phase, in sequence.
+  // The same walk also builds the chronological activity log grouped by round.
+  const durations = {0:[], 1:[]}; // completed ("done") activations only, {sec, phase}
+  const phaseTotals = {obstacles:0, deploy:0, command:0, ship:0, squadron:0, status:0};
+  const roundPlayerTotals = {}; // round -> {0:sec,1:sec}
+  const activityByRound = {}; // round -> ordered list of {kind, ...}
+  let boundaryTs = null;
+  events.forEach(e=>{
+    if(e.type==='phase_start'){
+      boundaryTs = e.ts;
+      (activityByRound[e.round] = activityByRound[e.round] || []).push({kind:'phase-start', phase:e.phase});
+    } else if(e.type==='phase_end'){
+      const d = (e.ts-boundaryTs)/1000;
+      if(PLAYER_TIMED_PHASES.indexOf(e.phase)===-1){
+        phaseTotals[e.phase] += d;
+        activityByRound[e.round].push({kind:'shared', phase:e.phase, sec:d});
+      }
+      boundaryTs = e.ts;
+    } else if(e.type==='activation'){
+      const d = (e.ts-boundaryTs)/1000;
+      boundaryTs = e.ts;
+      phaseTotals[e.phase] += d;
+      if(e.outcome==='done') durations[e.player].push({sec:d, phase:e.phase});
+      roundPlayerTotals[e.round] = roundPlayerTotals[e.round] || {0:0,1:0};
+      roundPlayerTotals[e.round][e.player] += d;
+      activityByRound[e.round].push({kind:'activation', phase:e.phase, player:e.player, outcome:e.outcome, sec:d});
+    }
+  });
+
+  const totals = [0,1].map(p=>durations[p].reduce((a,b)=>a+b.sec,0));
+  const counts = [0,1].map(p=>durations[p].length);
+  const avgs = [0,1].map(p=>counts[p]?totals[p]/counts[p]:0);
+  const longest = [0,1].map(p=>durations[p].reduce((best,cur)=>(!best||cur.sec>best.sec)?cur:best, null));
+
+  document.getElementById('totalRows').innerHTML = [0,1].map(p=>`
+    <div class="player-stat-row">
+      <span class="dot ${p===0?'amber':'cyan'}"></span>
+      <span class="name">${players[p]}</span>
+      <span class="num mono">${fmt(totals[p])}</span>
+    </div>`).join('');
+  const totalSum = totals[0]+totals[1] || 1;
+  document.getElementById('totalBar').innerHTML =
+    `<div class="bar-fill amber" style="width:${(totals[0]/totalSum*100).toFixed(0)}%"></div>` +
+    `<div class="bar-fill cyan" style="width:${(totals[1]/totalSum*100).toFixed(0)}%"></div>`;
+
+  document.getElementById('avgRows').innerHTML = [0,1].map(p=>`
+    <div class="player-stat-row">
+      <span class="dot ${p===0?'amber':'cyan'}"></span>
+      <div class="stat-row-body">
+        <div class="name">${players[p]} (${counts[p]} activations)</div>
+        <div class="sub">${longest[p] ? `Longest: ${fmt(longest[p].sec)} (${PHASE_LABELS[longest[p].phase]})` : 'No activations'}</div>
+      </div>
+      <span class="num mono">${fmt(avgs[p])}</span>
+    </div>`).join('');
+
+  document.getElementById('phaseGrid').innerHTML = ALL_PHASES_FOR_STATS.map(p=>`
+    <div class="phase-cell">
+      <div class="pc-label">${PHASE_LABELS[p]}</div>
+      <div class="pc-val mono">${fmt(phaseTotals[p])}</div>
+    </div>
+  `).join('');
+
+  const roundBarsHtml = Object.keys(roundPlayerTotals).sort((a,b)=>a-b).map(r=>{
+    const rp = roundPlayerTotals[r];
+    const total = rp[0]+rp[1] || 1;
+    const pct0 = (rp[0]/total*100).toFixed(0);
+    const pct1 = (rp[1]/total*100).toFixed(0);
+    return `
+      <div class="bar-row">
+        <div class="bar-label"><span>Round ${r}</span><span>${fmt(rp[0]+rp[1])} on clock</span></div>
+        <div class="bar-track">
+          <div class="bar-fill amber" style="width:${pct0}%"></div>
+          <div class="bar-fill cyan" style="width:${pct1}%"></div>
+        </div>
+        <div class="round-split-text"><span class="amber-text">${players[0]}</span> ${fmt(rp[0])} · <span class="cyan-text">${players[1]}</span> ${fmt(rp[1])}</div>
+      </div>`;
+  }).join('');
+  document.getElementById('roundBars').innerHTML = roundBarsHtml || '<div style="color:var(--text-dim); font-size:13px;">No timed activations recorded.</div>';
+
+  /* ---------------- pace analysis ----------------
+     Only shown when the game actually ran over its configured target. The
+     baseline is never "vs. the other player" — it's the target duration and
+     activation count doing the math, per the design discussion. */
+  const byType = {0:{ship:[], squadron:[]}, 1:{ship:[], squadron:[]}};
+  [0,1].forEach(p=>durations[p].forEach(d=>{ if(byType[p][d.phase]) byType[p][d.phase].push(d.sec); }));
+  function avgOf(arr){ return arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null; }
+
+  const lastRoundEnd = events.slice().reverse().find(e=>e.type==='round_end');
+  const roundsCompleted = lastRoundEnd ? lastRoundEnd.round : 0;
+  const fullyCompleted = roundsCompleted>=roundLimit;
+  const overBudget = diff>0;
+
+  const paceBlock = document.getElementById('paceBlock');
+  let isSlowActivation = ()=>false;
+
+  if(!overBudget){
+    paceBlock.classList.add('hidden');
+  } else {
+    paceBlock.classList.remove('hidden');
+    const overhead = phaseTotals.obstacles + phaseTotals.deploy + phaseTotals.command + phaseTotals.status;
+    const activationBudget = Math.max(0, targetDurationSec - overhead);
+    const totalDone = counts[0]+counts[1];
+    const requiredAvg = totalDone>0 ? activationBudget/totalDone : null;
+
+    let summaryHtml, rowsHtml;
+
+    function typeRowsHtml(p, compareTo){
+      return [['Ship','ship'],['Squadron','squadron']].map(([label,key])=>{
+        const arr = byType[p][key];
+        if(!arr.length) return '';
+        const avg = avgOf(arr);
+        const flagged = compareTo!=null && avg > compareTo*PACE_TOLERANCE;
+        return `<div class="pace-type-row${flagged?' flagged':''}">
+          <span>${label} (${arr.length})</span><span class="mono">${fmt(avg)} avg${flagged?' — over pace':''}</span>
+        </div>`;
+      }).join('');
+    }
+
+    if(fullyCompleted && requiredAvg!==null){
+      summaryHtml = `This game finished all ${roundLimit} rounds but ran ${fmt(diff)} over the ${fmt(targetDurationSec,true)} target.
+        To fit inside that target, activations needed to average about <strong class="mono">${fmt(requiredAvg)}</strong> each
+        (Obstacles, Deployment, Command, and Status phases used ${fmt(overhead)} of the budget on their own).`;
+      isSlowActivation = (a)=> a.kind==='activation' && a.sec >= requiredAvg*OUTLIER_MULTIPLIER;
+      rowsHtml = [0,1].map(p=>{
+        const over = avgs[p] > requiredAvg*PACE_TOLERANCE;
+        return `<div class="pace-player">
+          <div class="pace-row">
+            <div>
+              <div class="pace-name"><span class="dot ${p===0?'amber':'cyan'}"></span>${players[p]}</div>
+              <div class="pace-detail">${counts[p]} activations, averaging ${fmt(avgs[p])} each.</div>
+            </div>
+            <span class="pace-status ${over?'over':'ontrack'}">${over?'Over pace':'On track'}</span>
+          </div>
+          ${typeRowsHtml(p, requiredAvg)}
+        </div>`;
+      }).join('');
+    } else if(!fullyCompleted){
+      summaryHtml = `This game ended after Round ${roundsCompleted} of ${roundLimit}, already ${fmt(diff)} over the
+        ${fmt(targetDurationSec,true)} target. Future rounds' activation counts can't be predicted (fleets shrink as
+        ships and squadrons are destroyed), so there's no exact pace target here — but each player's own slowest
+        activations, relative to their own average, are highlighted below.`;
+      isSlowActivation = (a)=>{
+        if(a.kind!=='activation') return false;
+        const ownAvg = avgOf(byType[a.player][a.phase] || []);
+        return ownAvg!==null && a.sec >= ownAvg*OUTLIER_MULTIPLIER;
+      };
+      rowsHtml = [0,1].map(p=>`
+        <div class="pace-player">
+          <div class="pace-name"><span class="dot ${p===0?'amber':'cyan'}"></span>${players[p]}</div>
+          <div class="pace-detail">${counts[p]} activations, averaging ${fmt(avgs[p])} each.</div>
+          ${typeRowsHtml(p, null)}
+        </div>`).join('');
+    } else {
+      summaryHtml = `This game finished all ${roundLimit} rounds but ran ${fmt(diff)} over the ${fmt(targetDurationSec,true)} target.`;
+      rowsHtml = '';
+    }
+
+    document.getElementById('paceSummary').innerHTML = summaryHtml;
+    document.getElementById('paceRows').innerHTML = rowsHtml;
+  }
+
+  document.getElementById('activityLog').innerHTML = Object.keys(activityByRound).map(Number).sort((a,b)=>a-b).map(r=>{
+    const rows = activityByRound[r].map(it=>{
+      if(it.kind==='phase-start') return `<div class="activity-phase-label">${PHASE_LABELS[it.phase]}</div>`;
+      if(it.kind==='shared') return `<div class="activity-shared-row"><span>${PHASE_LABELS[it.phase]} (shared)</span><span class="mono">${fmt(it.sec)}</span></div>`;
+      const slow = isSlowActivation(it);
+      return `<div class="activity-row${slow?' slow':''}">
+        <span class="dot ${it.player===0?'amber':'cyan'}"></span>
+        <span class="a-name">${players[it.player]}</span>
+        <span class="a-outcome">${it.outcome==='pass'?'Passed':'Done'}</span>
+        ${slow?'<span class="slow-tag">SLOW</span>':''}
+        <span class="mono">${fmt(it.sec)}</span>
+      </div>`;
+    }).join('');
+    return `<div class="activity-round"><h4>${r===0?'Game Setup':'Round '+r}</h4>${rows}</div>`;
+  }).join('') || '<div style="color:var(--text-dim); font-size:13px;">No activations recorded.</div>';
+}
+
+/* ---------------- single-device entry (from landing) ---------------- */
+function enterSingleDevice(){
+  isMultiDevice = false;
+  myPlayerSlot = null;
+  const data = loadPersistedState();
+  const resumePrompt = document.getElementById('resumePrompt');
+  const setupForm = document.getElementById('setupForm');
+  if(!data){
+    resumePrompt.classList.add('hidden');
+    setupForm.classList.remove('hidden');
+    show('screen-setup');
+    return;
+  }
+  const ended = data.events.some(e=>e.type==='game_end');
+  let summary;
+  if(ended){
+    summary = "Your last game finished — view the results, or start a new one.";
+  } else {
+    const roundEvt = data.events.slice().reverse().find(e=>e.type==='phase_start' || e.type==='round_end');
+    const round = roundEvt ? roundEvt.round : 1;
+    summary = `Round ${round} of ${data.roundLimit} was in progress when you left.`;
+  }
+  document.getElementById('resumeSummary').textContent = summary;
+  document.getElementById('resumeBtn').textContent = ended ? 'View Results' : 'Resume Game';
+  resumePrompt.classList.remove('hidden');
+  setupForm.classList.add('hidden');
+  show('screen-setup');
+}
+
+/* ---------------- multi-device (Supabase) ----------------
+   This talks to a real backend (see supabase/migrations/0001_init.sql), but
+   only for game creation, joining, and presence — NOT gameplay sync yet.
+   The URL and publishable key below are meant to be public: they're
+   protected by Row Level Security on the server, not by secrecy. */
+const SUPABASE_URL = 'https://muamgwoxkbghpkoeqshv.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_XtwsTiX8Sg9QOL3V6JX7Tw_MZP1gNKw';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+function generateId(){
+  if(window.crypto && typeof crypto.randomUUID==='function'){
+    try{ return crypto.randomUUID(); }catch(e){}
+  }
+  // crypto.randomUUID() requires a secure context and isn't universally
+  // available; this is just a device identifier, not a security boundary,
+  // so a Math.random()-based fallback is fine.
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c){
+    const r = Math.random()*16|0, v = c==='x' ? r : (r&0x3|0x8);
+    return v.toString(16);
+  });
+}
+function getDeviceId(){
+  try{
+    let id = localStorage.getItem('fleetChronoDeviceId');
+    if(!id){
+      id = generateId();
+      localStorage.setItem('fleetChronoDeviceId', id);
+    }
+    return id;
+  }catch(e){
+    return generateId(); // no persistence available; still usable for this tab's session
+  }
+}
+const deviceId = getDeviceId();
+
+let creatorSlot = 0;
+let currentGameCode = null;
+let lobbyChannel = null;
+let isMultiDevice = false;
+let myPlayerSlot = null;
+let eventsChannel = null;
+let eventsBySeq = new Map(); // seq -> event; rebuilt into `events` on every incoming row so out-of-order delivery (subscribe-then-fetch overlap) can never corrupt ordering
+let multiDeviceReady = false; // true once the initial event-log fetch has landed; suppresses render() during backfill
+let topEventSeq = null; // seq of the current last event, needed as the race guard passed to retract_last_event
+// Single-step lock for multi-device undo. Every session (fresh entry OR a
+// resume-from-reload) starts locked, the same conservative default
+// single-device resume already uses — and unlocks only when THIS session
+// observes a fresh push arrive live (not during backfill). Any observed
+// delete re-locks it. Because both devices process the identical realtime
+// stream, they converge to the same value independently — no shared/
+// server-side flag needed, and a reload never needs "syncing back up."
+let multiUndoUnlocked = false;
+let gameStartChannel = null;
+let joinStartHandled = false;
+// A phone locking its screen can freeze a backgrounded tab's network activity
+// without ever cleanly closing the realtime WebSocket -- no close/error event
+// fires, so makeReconnectHandler()'s "did we observe a drop" detection can
+// simply never trigger, leaving the app believing it's still live when it
+// isn't. Reacting to "the tab just became visible again" is the standard
+// fix: it doesn't wait for the connection to admit it's dead, it just always
+// double-checks on wake. Set to whichever resync fits the current screen
+// (waiting in the lobby, waiting to be let in, or already in a live game);
+// null when there's nothing to catch up on right now.
+let onVisibleResync = null;
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState==='visible' && onVisibleResync) onVisibleResync();
+});
+
+/* ---------------- multi-device session persistence ----------------
+   Lets a device that refreshes, loses connection, or closes its tab
+   mid-game find its way back to its own slot instead of losing the game.
+   Separate from the single-device STORAGE_KEY: multi-device state itself
+   lives server-side, all this remembers is "which game, which role" so we
+   know where to reconnect to. join_game() already returns the caller's
+   existing slot for a device_id it recognizes ('reconnected'), so resuming
+   reuses that same RPC rather than needing anything new server-side. */
+const MULTI_STORAGE_KEY = 'fleetChronoMultiSession';
+function saveMultiSession(gameCode, isCreator){
+  try{ localStorage.setItem(MULTI_STORAGE_KEY, JSON.stringify({gameCode, isCreator})); }catch(e){}
+}
+function loadMultiSession(){
+  try{
+    const raw = localStorage.getItem(MULTI_STORAGE_KEY);
+    if(!raw) return null;
+    const data = JSON.parse(raw);
+    return (data && data.gameCode) ? data : null;
+  }catch(e){ return null; }
+}
+function clearMultiSession(){
+  try{ localStorage.removeItem(MULTI_STORAGE_KEY); }catch(e){}
+}
+function checkLandingState(){
+  const session = loadMultiSession();
+  document.getElementById('multiResumePrompt').classList.toggle('hidden', !session);
+  document.getElementById('landingOptions').classList.toggle('hidden', !!session);
+  if(session){
+    document.getElementById('multiResumeSummary').textContent =
+      'You have a multi-device game in progress (code ' + session.gameCode + ').';
+  }
+}
+async function resumeMultiSession(){
+  const session = loadMultiSession();
+  if(!session) return;
+  const btn = document.getElementById('multiResumeBtn');
+  btn.disabled = true;
+  btn.textContent = 'Resuming…';
+
+  const { data, error } = await sb.rpc('join_game', { p_game_id: session.gameCode, p_device_id: deviceId });
+  const result = data && data[0];
+  if(error || !result || result.status==='not_found' || result.status==='full'){
+    // The game is gone, or somehow no longer has room for us — nothing to resume.
+    btn.disabled = false;
+    btn.textContent = 'Resume Game';
+    clearMultiSession();
+    checkLandingState();
+    return;
+  }
+
+  currentGameCode = session.gameCode;
+  const slot = result.slot;
+  const { data: gameRow } = await sb.from('games').select('started_at').eq('id', session.gameCode).single();
+
+  btn.disabled = false;
+  btn.textContent = 'Resume Game';
+
+  if(gameRow && gameRow.started_at){
+    await enterMultiDeviceGame(slot);
+  } else if(session.isCreator){
+    enterLobby(slot);
+  } else {
+    await enterJoinConfirm(session.gameCode, slot, 'reconnected');
+  }
+}
+function discardMultiSession(){
+  clearMultiSession();
+  checkLandingState();
+}
+
+// Realtime channels drop and silently reconnect on their own (a wifi blip,
+// a phone sleeping); Supabase's client re-subscribes automatically, but
+// whatever happened while disconnected isn't replayed. This wraps a
+// channel's status callback so any transition back to SUBSCRIBED *after*
+// having actually dropped triggers a resync — never on the initial connect.
+function makeReconnectHandler(onReconnected){
+  let sawDrop = false;
+  return function(status){
+    if(status==='CLOSED' || status==='CHANNEL_ERROR' || status==='TIMED_OUT'){
+      sawDrop = true;
+    } else if(status==='SUBSCRIBED' && sawDrop){
+      sawDrop = false;
+      onReconnected();
+    }
+  };
+}
+async function resyncEventLog(){
+  if(!currentGameCode) return;
+  const { data, error } = await sb.from('game_events').select('seq,event')
+    .eq('game_id', currentGameCode).order('seq', { ascending: true });
+  if(error || !data) return;
+  // Full reconciliation, not an incremental upsert: an incremental merge
+  // would never notice a row that was deleted (undone) while disconnected,
+  // since nothing tells it to remove a seq that's simply absent from the
+  // fresh fetch. Rebuilding from scratch handles missed inserts *and*
+  // missed deletes the same way the initial backfill already does.
+  eventsBySeq = new Map(data.map(row => [row.seq, row.event]));
+  rebuildEventsFromMap();
+  // Conservative: we may have missed an undo while disconnected — don't
+  // guess which case it was, just re-lock, same as any other resume.
+  multiUndoUnlocked = false;
+  if(multiDeviceReady) render();
+}
+async function checkGameStartedNow(code, slot){
+  const { data } = await sb.from('games').select('started_at').eq('id', code).single();
+  if(data && data.started_at) handleGameStarted(slot);
+}
+async function checkOtherPlayerJoined(code, onOtherJoined){
+  const { data } = await sb.from('game_players').select('device_id').eq('game_id', code);
+  if(data && data.some(r => r.device_id !== deviceId)) onOtherJoined();
+}
+
+function selectCreatorSlot(slot){
+  creatorSlot = slot;
+  document.getElementById('slotBtn0').classList.toggle('active', slot===0);
+  document.getElementById('slotBtn1').classList.toggle('active', slot===1);
+}
+
+function showFieldError(id, message){
+  const el = document.getElementById(id);
+  el.textContent = message;
+  el.classList.remove('hidden');
+}
+function hideFieldError(id){
+  document.getElementById(id).classList.add('hidden');
+}
+
+async function createMultiGame(){
+  hideFieldError('multiSetupError');
+  const roundLimitVal = parseInt(document.getElementById('multiRoundLimit').value) || 6;
+  const h = parseInt(document.getElementById('multiDurH').value) || 0;
+  const m = parseInt(document.getElementById('multiDurM').value) || 0;
+  const targetSec = h*3600 + m*60;
+
+  const btn = document.getElementById('createGameBtn');
+  btn.disabled = true;
+  btn.textContent = 'Creating…';
+  const { data, error } = await sb.rpc('create_game', {
+    p_round_limit: roundLimitVal,
+    p_target_duration_sec: targetSec,
+    p_creator_slot: creatorSlot,
+    p_device_id: deviceId
+  });
+  btn.disabled = false;
+  btn.textContent = 'Create game';
+
+  if(error || !data || !data[0]){
+    showFieldError('multiSetupError', 'Could not create the game. Check your connection and try again.');
+    return;
+  }
+  currentGameCode = data[0].game_id;
+  enterLobby(creatorSlot);
+}
+
+function enterLobby(mySlot){
+  creatorSlot = mySlot; // keep in sync with startFromLobby()'s read of it, including on a resumed session where mySlot may not match the create-flow default
+  const otherSlot = mySlot===0 ? 1 : 0;
+  const otherLabel = otherSlot===0 ? 'First Player' : 'Second Player';
+
+  document.getElementById('lobbyCode').textContent = currentGameCode;
+  const joinUrl = location.href.replace(/[?#].*$/, '') + '?join=' + currentGameCode;
+  document.getElementById('lobbyLink').textContent = joinUrl;
+
+  const qrEl = document.getElementById('lobbyQr');
+  qrEl.innerHTML = ''; // re-entering the lobby (new game, or a resume) must not stack QR codes
+  new QRCode(qrEl, {
+    text: joinUrl, width: 160, height: 160,
+    colorDark: '#170a24', colorLight: '#f3ebfd', correctLevel: QRCode.CorrectLevel.M
+  });
+
+  const statusEl = document.getElementById('lobbyStatus');
+  statusEl.className = 'lobby-status waiting';
+  statusEl.innerHTML = '<span class="spinner"></span> Waiting for ' + otherLabel + '…';
+  document.getElementById('lobbyStartBtn').disabled = true;
+
+  saveMultiSession(currentGameCode, true);
+  show('screen-lobby');
+
+  const onOtherJoined = function(){
+    statusEl.className = 'lobby-status ready';
+    statusEl.textContent = otherLabel + ' joined';
+    document.getElementById('lobbyStartBtn').disabled = false;
+  };
+  subscribeToPlayers(currentGameCode, onOtherJoined);
+  // Covers resuming into the lobby after the other player already joined
+  // while this device was away — there's no live INSERT to catch for that,
+  // since it already happened.
+  checkOtherPlayerJoined(currentGameCode, onOtherJoined);
+  onVisibleResync = function(){ checkOtherPlayerJoined(currentGameCode, onOtherJoined); };
+}
+
+async function copyLinkFrom(elId, btnId){
+  const btn = document.getElementById(btnId);
+  const text = document.getElementById(elId).textContent;
+  try{
+    await navigator.clipboard.writeText(text);
+  }catch(e){ return; } // no clipboard permission/API — the link is still selectable by hand
+  btn.classList.add('copied');
+  setTimeout(() => btn.classList.remove('copied'), 1500);
+}
+
+function showCodeOverlay(){
+  const joinUrl = location.href.replace(/[?#].*$/, '') + '?join=' + currentGameCode;
+  document.getElementById('overlayCode').textContent = currentGameCode;
+  document.getElementById('overlayLink').textContent = joinUrl;
+
+  const qrEl = document.getElementById('overlayQr');
+  qrEl.innerHTML = '';
+  new QRCode(qrEl, {
+    text: joinUrl, width: 160, height: 160,
+    colorDark: '#170a24', colorLight: '#f3ebfd', correctLevel: QRCode.CorrectLevel.M
+  });
+
+  document.getElementById('codeOverlay').classList.remove('hidden');
+}
+
+function hideCodeOverlay(){
+  document.getElementById('codeOverlay').classList.add('hidden');
+}
+
+function subscribeToPlayers(code, onOtherJoined){
+  if(lobbyChannel){ sb.removeChannel(lobbyChannel); lobbyChannel = null; }
+  lobbyChannel = sb.channel('game-players-' + code)
+    .on('postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'game_players', filter: 'game_id=eq.' + code },
+      function(payload){
+        if(payload.new.device_id !== deviceId) onOtherJoined();
+      })
+    .subscribe(makeReconnectHandler(function(){ checkOtherPlayerJoined(code, onOtherJoined); }));
+}
+
+// applyIncomingEvent() is the *only* thing that ever mutates `events` in
+// multi-device mode. Incoming rows are keyed by seq into a Map and `events`
+// is rebuilt sorted on every arrival, rather than pushed directly — the
+// subscribe-then-fetch pattern means a realtime row can legitimately arrive
+// before the backfill fetch resolves, and a naive append would corrupt
+// ordering (or a "seq <= lastSeq" skip would wrongly drop it).
+function rebuildEventsFromMap(){
+  const seqs = Array.from(eventsBySeq.keys()).sort((a,b)=>a-b);
+  events = seqs.map(s=>eventsBySeq.get(s));
+  topEventSeq = seqs.length ? seqs[seqs.length-1] : null;
+}
+function applyIncomingEvent(seq, event){
+  eventsBySeq.set(seq, event);
+  const wasNewTop = !multiDeviceReady ? false : (topEventSeq===null || seq > topEventSeq);
+  rebuildEventsFromMap();
+  if(!multiDeviceReady) return; // still backfilling; enterMultiDeviceGame() will render once ready
+  if(wasNewTop) multiUndoUnlocked = true; // a genuinely fresh push arrived live — arm undo for it
+  if(event.type==='game_end'){ endGame(); return; }
+  // Both players may have just become "all activated" as of this event --
+  // check every time one arrives (from either device), since the tie-break
+  // inside maybeAutoAdvanceSplitPhase() means only slot 0 actually acts on it.
+  if(event.type==='all_activated') maybeAutoAdvanceSplitPhase();
+  render();
+}
+function subscribeToGameEvents(code){
+  if(eventsChannel){ sb.removeChannel(eventsChannel); eventsChannel = null; }
+  eventsChannel = sb.channel('game-events-' + code)
+    .on('postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'game_events', filter: 'game_id=eq.' + code },
+      function(payload){ applyIncomingEvent(payload.new.seq, payload.new.event); })
+    .on('postgres_changes',
+      // Supabase Realtime's DELETE payload only ever forwards the primary
+      // key (`old: {id}`), never the other columns — true even with
+      // REPLICA IDENTITY FULL set at the Postgres level, confirmed by
+      // direct testing. So a DELETE notification here can't say *which*
+      // row went away, only *that* something did — treated as "resync the
+      // whole log," which is exactly what an undo needs anyway (full
+      // reconciliation, not a surgical single-row removal).
+      { event: 'DELETE', schema: 'public', table: 'game_events', filter: 'game_id=eq.' + code },
+      function(){ resyncEventLog(); })
+    .subscribe(makeReconnectHandler(resyncEventLog));
+}
+async function enterMultiDeviceGame(slot){
+  hideCodeOverlay();
+  isMultiDevice = true;
+  myPlayerSlot = slot;
+  eventsBySeq = new Map();
+  events = [];
+  topEventSeq = null;
+  multiUndoUnlocked = false; // every fresh entry/resume starts locked — see the multiUndoUnlocked declaration comment
+  multiDeviceReady = false;
+  lastActionWasUndo = false;
+  lastPushCount = 0;
+  warningSoundPlayed = false;
+  overtimeSoundPlayed = false;
+  try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ audioCtx = null; }
+
+  subscribeToGameEvents(currentGameCode); // subscribe first so nothing appended during the fetch below is missed
+
+  const { data, error } = await sb.from('game_events').select('seq,event')
+    .eq('game_id', currentGameCode).order('seq', { ascending: true });
+  if(!error && data){
+    data.forEach(row => eventsBySeq.set(row.seq, row.event));
+    rebuildEventsFromMap();
+  }
+
+  const startEvt = events.find(e=>e.type==='game_start');
+  gameStartTs = startEvt ? startEvt.ts : Date.now();
+  if(startEvt){
+    roundLimit = startEvt.roundLimit;
+    targetDurationSec = startEvt.targetDurationSec;
+  }
+
+  multiDeviceReady = true;
+  onVisibleResync = resyncEventLog;
+  show('screen-live');
+  tickHandle = setInterval(render, 250);
+  render();
+}
+
+async function startFromLobby(){
+  const btn = document.getElementById('lobbyStartBtn');
+  btn.disabled = true;
+  const { error } = await sb.rpc('start_game', { p_game_id: currentGameCode });
+  if(error){
+    btn.disabled = false;
+    alert('Could not start the game. Check your connection and try again.');
+    return;
+  }
+  if(lobbyChannel){ sb.removeChannel(lobbyChannel); lobbyChannel = null; }
+  await enterMultiDeviceGame(creatorSlot);
+}
+
+function leaveLobby(){
+  if(lobbyChannel){ sb.removeChannel(lobbyChannel); lobbyChannel = null; }
+  currentGameCode = null;
+  clearMultiSession();
+  onVisibleResync = null;
+  show('screen-landing');
+  checkLandingState();
+}
+
+async function attemptJoin(){
+  hideFieldError('joinError');
+  const raw = document.getElementById('joinCodeInput').value.trim().toUpperCase();
+  if(!raw){
+    showFieldError('joinError', 'Enter a code first.');
+    return;
+  }
+
+  const btn = document.getElementById('joinBtn');
+  btn.disabled = true;
+  btn.textContent = 'Joining…';
+  const { data, error } = await sb.rpc('join_game', { p_game_id: raw, p_device_id: deviceId });
+  btn.disabled = false;
+  btn.textContent = 'Join game';
+
+  if(error || !data || !data[0]){
+    showFieldError('joinError', 'Could not reach the game. Check your connection and try again.');
+    return;
+  }
+  const result = data[0];
+  if(result.status==='not_found'){
+    showFieldError('joinError', "That code doesn't match a game.");
+    return;
+  }
+  if(result.status==='full'){
+    showFieldError('joinError', 'This game already has two players.');
+    return;
+  }
+  currentGameCode = raw;
+  await enterJoinConfirm(raw, result.slot, result.status);
+}
+
+async function enterJoinConfirm(code, slot, status){
+  const { data } = await sb.from('game_events').select('event').eq('game_id', code).eq('seq', 0).single();
+  const meta = data ? data.event : {};
+  const myLabel = slot===0 ? 'First Player' : 'Second Player';
+
+  document.getElementById('joinConfirmTitle').textContent =
+    status==='reconnected' ? ('Reconnected to game ' + code) : ('Joining game ' + code);
+  document.getElementById('joinConfirmRole').textContent = 'You are ' + myLabel;
+  document.getElementById('joinConfirmDetails').textContent =
+    'Round limit: ' + (meta.roundLimit!=null ? meta.roundLimit : '?') +
+    ' · Target: ' + fmt(meta.targetDurationSec || 0, true);
+
+  saveMultiSession(code, false);
+  show('screen-join-confirm');
+
+  // Subscribe first, then check started_at directly — covers both "the
+  // creator taps Start while I'm waiting" (caught live) and "I refreshed
+  // after the game already started" (caught by the direct check).
+  joinStartHandled = false;
+  subscribeToGameStart(code, slot);
+  onVisibleResync = function(){ checkGameStartedNow(code, slot); };
+  await checkGameStartedNow(code, slot);
+}
+function subscribeToGameStart(code, slot){
+  if(gameStartChannel){ sb.removeChannel(gameStartChannel); gameStartChannel = null; }
+  gameStartChannel = sb.channel('game-start-' + code)
+    .on('postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'games', filter: 'id=eq.' + code },
+      function(payload){
+        if(payload.new.started_at) handleGameStarted(slot);
+      })
+    .subscribe(makeReconnectHandler(function(){ checkGameStartedNow(code, slot); }));
+}
+async function handleGameStarted(slot){
+  if(joinStartHandled) return;
+  joinStartHandled = true;
+  if(gameStartChannel){ sb.removeChannel(gameStartChannel); gameStartChannel = null; }
+  await enterMultiDeviceGame(slot);
+}
+function leaveJoinConfirm(){
+  if(gameStartChannel){ sb.removeChannel(gameStartChannel); gameStartChannel = null; }
+  currentGameCode = null;
+  clearMultiSession();
+  onVisibleResync = null;
+  show('screen-landing');
+  checkLandingState();
+}
+
+// A join link (from the lobby's QR code or shared URL) should actually land
+// the scanner in the join flow, not just sit unused in the address bar.
+// Shows the join screen with the code already filled in, then immediately
+// attempts it — enterJoinConfirm() takes over on success, or the normal
+// field-error path on screen-join handles a bad/full code. The query param
+// is stripped right away so a later refresh (e.g. mid-game) goes through
+// the ordinary resume flow instead of re-attempting this join.
+function tryAutoJoinFromUrl(){
+  const code = new URLSearchParams(location.search).get('join');
+  if(!code) return false;
+  history.replaceState(null, '', location.pathname);
+  document.getElementById('joinCodeInput').value = code.toUpperCase();
+  show('screen-join');
+  attemptJoin();
+  return true;
+}
+
+if(!tryAutoJoinFromUrl()){
+  show('screen-landing');
+  checkLandingState();
+}
+</script>
+</body>
+</html>
