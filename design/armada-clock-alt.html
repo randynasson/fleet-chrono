@@ -854,6 +854,13 @@ function lastActivationForPlayer(ps, player){
   for(let i=acts.length-1;i>=0;i--){ if(acts[i].player===player) return acts[i]; }
   return null;
 }
+// How many activations this player has actually completed (Done, not Pass)
+// so far this phase -- a Pass skips a turn without spending an activation,
+// so it doesn't advance the count. The Done button labels the one about to
+// happen as this count + 1.
+function donesSoFarForPlayer(ps, player){
+  return activationsInPhase(ps).filter(e => e.player===player && e.outcome==='done').length;
+}
 function canPass(ps, player){
   if(ps.phase!=='ship') return false; // passing only exists in Ship Phase
   const last = lastActivationForPlayer(ps, player);
@@ -1282,6 +1289,7 @@ function render(){
     document.getElementById('panelContext').classList.remove('hidden');
     document.getElementById('panelSecondary').classList.add('hidden');
     advanceBtn.onclick = advancePhase;
+    advanceBtn.textContent = 'Done';
   } else {
     // Ship/Squadron: whoever's turn it is, plus Pass/All Activated.
     panel.classList.toggle('active-cyan', activePlayer===1);
@@ -1298,6 +1306,7 @@ function render(){
     allBtn.disabled = paused;
 
     advanceBtn.onclick = tapDoneActive;
+    advanceBtn.textContent = 'Activation ' + (donesSoFarForPlayer(ps, activePlayer)+1) + ' Done';
   }
 
   // Undo ownership: in multi-device mode, a device may only undo its own
