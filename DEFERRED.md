@@ -104,3 +104,40 @@ strangers or scripted traffic.
   (rejoin their slot, undo their moves, etc.). Fine for two people who agreed to play together in
   the same room; worth revisiting (e.g. a per-game secret token instead of a reusable per-device ID)
   if the audience broadens past "people who trust each other enough to share a game code."
+
+## From beta-test feedback (raised 2026-09-06)
+
+- **Waiting-screen redesign.** While it's the other player's turn in a split (ship/squadron) phase,
+  the idle player's screen still shows the full live-game UI, just with their own controls hidden —
+  the shared "Begin Squadron Phase" button de-emphasis (built 2026-09-06, see below) helps but the
+  screen doesn't clearly read as "not your move." Idea floated: while idle, dim/overlay the screen
+  (semi-opaque) with "Waiting for First/Second Player" text, leaving only Pause/Resume and Exit Game
+  reachable. Deferred rather than built immediately — more visual/state work than the same-session
+  fixes, and worth confirming the smaller fixes (button de-emphasis, debounce, resync) are enough
+  before adding a bigger UI mode.
+- ~~Wake-from-sleep unresponsive buttons / multi-tap advancing the turn cycle~~ — **built
+  2026-09-06.** A single global `actionPending` guard now wraps every true onclick entry point
+  (`tapPass`, `handleDoneOrUndo`, `handleUndoIconTap`, `togglePause`, `advancePhase`,
+  `beginNextRound`, `endGameNow`) with `if(!beginAction()) return;` / `try{…}finally{endAction();}`,
+  so a rapid double-tap after waking a phone can't double-submit before the first tap's round-trip
+  (local update or, in multi-device mode, the realtime echo) completes. Internal functions those
+  entry points call (`tapDone`, `undo`, `pauseGame`, `resumeGame`) are deliberately left unguarded,
+  since they're only ever reached through an already-guarded caller — guarding them too would
+  deadlock the legitimate internal call.
+- ~~Shared "Begin Squadron Phase" button reads as this device's action even when it isn't~~ —
+  **built 2026-09-06.** In multi-device split-view phases, the shared advance button now gets a
+  `.secondary-shared` class (ghosted: transparent background, hairline border, no glow) whenever
+  the current active player isn't this device's own slot, so the bold/filled look is reserved for
+  whichever device the action actually belongs to. Single-device mode and non-split phases are
+  unaffected.
+- ~~Refresh/reconnect could strand a player out of a live multi-device game~~ — **first pass built
+  2026-09-06, not fully verified against real device screen-lock behavior.** Two changes: (1) a
+  `visibilitychange` listener triggers a resync (`onVisibleResync`, set per-screen — lobby/join-wait/
+  live-game — and cleared on leaving each) the moment a backgrounded tab becomes visible again, since
+  a phone's screen lock can freeze a WebSocket without ever firing the close/error event
+  `makeReconnectHandler` relies on, silently preventing that handler from ever detecting the drop;
+  (2) a small QR-icon button in the live-game header (`showCodeOverlay()`) re-displays the join code,
+  QR, and link from inside an already-live game, giving a manual fallback if a player does end up
+  disconnected and needs to rejoin. Not yet confirmed against genuine iOS screen-lock/backgrounding —
+  couldn't be reproduced in the dev/test environment — so treat as a strong first pass, not a
+  guaranteed fix, until it's been through another real beta session.

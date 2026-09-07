@@ -190,6 +190,7 @@
   .btn-primary{ background:var(--violet); color:var(--violet-cta-ink); box-shadow:0 0 28px rgba(192,140,245,.4); }
   .btn-primary:active{ box-shadow:0 0 10px rgba(192,140,245,.4); }
   .btn-primary:disabled{ background:rgba(192,140,245,.1); color:rgba(216,190,250,.5); box-shadow:none; cursor:not-allowed; }
+  .btn-primary.secondary-shared{ background:transparent; color:var(--violet-text); border:1px solid rgba(192,140,245,.32); box-shadow:none; }
   .btn-ghost{ background:transparent; border:1px solid rgba(192,140,245,.32); color:var(--violet-text); }
   .btn-ghost:active{ background:rgba(192,140,245,.12); }
   .btn-danger{ background:transparent; border:1px solid var(--red-line); color:var(--red); }
@@ -209,6 +210,15 @@
   .strip .round-label{ font-size:13px; letter-spacing:.20em; text-transform:uppercase; color:rgba(192,140,245,.75); margin-bottom:8px; }
   .strip .phase-label-row{ display:flex; align-items:center; gap:7px; justify-content:flex-end; }
   .strip .phase-label{ font-size:21px; font-weight:400; color:var(--violet-text); }
+  .show-code-btn{
+    width:30px; height:30px; margin-top:10px; margin-left:auto; display:flex; align-items:center; justify-content:center;
+    background:transparent; border:1px solid rgba(192,140,245,.32); color:var(--violet-text); cursor:pointer;
+  }
+  .code-overlay{
+    position:absolute; inset:0; z-index:20; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:16px; padding:30px; background:rgba(6,4,11,.94);
+  }
+  .code-overlay .code-card{ width:100%; margin-bottom:0; }
 
   .overtime-banner, .warning-banner, .paused-banner{
     padding:11px; text-align:center; font-size:14px; font-weight:600; letter-spacing:.22em; text-transform:uppercase;
@@ -558,7 +568,7 @@
       <div id="lobbyCode" class="join-code mono">------</div>
       <div class="join-link-row">
         <div id="lobbyLink" class="join-link"></div>
-        <button id="lobbyCopyBtn" class="copy-btn" onclick="copyJoinLink()" title="Copy link" aria-label="Copy link">
+        <button id="lobbyCopyBtn" class="copy-btn" onclick="copyLinkFrom('lobbyLink','lobbyCopyBtn')" title="Copy link" aria-label="Copy link">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12"/><path d="M6 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v2"/></svg>
         </button>
       </div>
@@ -616,7 +626,26 @@
           <span class="lamp violet"></span>
           <div id="phaseLabelTop" class="phase-label">Command Phase</div>
         </div>
+        <button id="showCodeBtn" class="show-code-btn hidden" onclick="showCodeOverlay()" title="Show join code">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><rect x="2" y="2" width="7" height="7"/><rect x="15" y="2" width="7" height="7"/><rect x="2" y="15" width="7" height="7"/><rect x="15" y="15" width="3" height="3"/><rect x="19" y="15" width="3" height="3"/><rect x="15" y="19" width="3" height="3"/><rect x="19" y="19" width="3" height="3"/></svg>
+        </button>
       </div>
+    </div>
+
+    <div id="codeOverlay" class="code-overlay hidden">
+      <div class="code-card">
+        <div class="bracket tl sm"></div><div class="bracket tr sm"></div><div class="bracket bl sm"></div><div class="bracket br sm"></div>
+        <div class="qr-wrap"><div id="overlayQr" class="qr-frame"></div></div>
+        <div class="micro-label">Game Code</div>
+        <div id="overlayCode" class="join-code mono">------</div>
+        <div class="join-link-row">
+          <div id="overlayLink" class="join-link"></div>
+          <button id="overlayCopyBtn" class="copy-btn" onclick="copyLinkFrom('overlayLink','overlayCopyBtn')" title="Copy link" aria-label="Copy link">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12"/><path d="M6 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v2"/></svg>
+          </button>
+        </div>
+      </div>
+      <button class="btn btn-ghost" onclick="hideCodeOverlay()">Close</button>
     </div>
 
     <div class="stage">
@@ -690,7 +719,7 @@
     </div>
 
     <div class="controls-bar">
-      <button id="undoBtn" class="icon-btn" onclick="undo()" title="Undo last action">
+      <button id="undoBtn" class="icon-btn" onclick="handleUndoIconTap()" title="Undo last action">
         <svg class="icon-undo" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 15 4 10l5-5"/><path d="M4 10h11a5.5 5.5 0 0 1 0 11H12"/></svg>
       </button>
       <button id="pauseBtn" class="icon-btn" onclick="togglePause()" title="Pause">
@@ -995,6 +1024,20 @@ function markAction(count){
   lastActionWasUndo = false;
   if(!isMultiDevice) persistState();
 }
+// A burst of queued taps (the classic case: a phone wakes from sleep with
+// several taps already buffered) must not fire more than one action, since
+// in multi-device mode a second tap would read the same stale local state
+// the first tap hasn't heard back about yet and push a redundant/incorrect
+// transition on top of it. Guards only the actual tap entry points below —
+// never the functions they call internally — so nesting (e.g.
+// handleDoneOrUndo calling tapDone) can't accidentally lock itself out.
+let actionPending = false;
+function beginAction(){
+  if(actionPending) return false;
+  actionPending = true;
+  return true;
+}
+function endAction(){ actionPending = false; }
 async function tapDone(playerIdx){
   if(isGameEnded() || isPaused() || isBetweenRounds()) return;
   if(isMultiDevice && playerIdx!==myPlayerSlot) return;
@@ -1005,25 +1048,35 @@ async function tapDone(playerIdx){
   if(!isMultiDevice) render();
 }
 async function tapPass(playerIdx){
-  if(isGameEnded() || isPaused() || isBetweenRounds()) return;
-  if(isMultiDevice && playerIdx!==myPlayerSlot) return;
-  const ps = currentPhaseEvent();
-  if(currentActivePlayer(ps)!==playerIdx || !canPass(ps, playerIdx)) return;
-  await pushEvent({type:'activation', phase:ps.phase, round:ps.round, player:playerIdx, outcome:'pass', ts:effectiveNow()}, generateId());
-  markAction(1);
-  if(!isMultiDevice) render();
+  if(!beginAction()) return;
+  try{
+    if(isGameEnded() || isPaused() || isBetweenRounds()) return;
+    if(isMultiDevice && playerIdx!==myPlayerSlot) return;
+    const ps = currentPhaseEvent();
+    if(currentActivePlayer(ps)!==playerIdx || !canPass(ps, playerIdx)) return;
+    await pushEvent({type:'activation', phase:ps.phase, round:ps.round, player:playerIdx, outcome:'pass', ts:effectiveNow()}, generateId());
+    markAction(1);
+    if(!isMultiDevice) render();
+  } finally{ endAction(); }
 }
 // The Pass/Done button becomes "Undo" immediately after it's tapped, and
 // reverts to Pass/Done the instant anything else happens (single-step only —
 // this is a quick mis-tap correction, not a history walkback).
-function handleDoneOrUndo(playerIdx){
-  if(isMultiDevice && playerIdx!==myPlayerSlot) return;
-  const last = events[events.length-1];
-  if(last && last.type==='activation' && last.player===playerIdx && canUndo()){
-    undo();
-  } else {
-    tapDone(playerIdx);
-  }
+async function handleDoneOrUndo(playerIdx){
+  if(!beginAction()) return;
+  try{
+    if(isMultiDevice && playerIdx!==myPlayerSlot) return;
+    const last = events[events.length-1];
+    if(last && last.type==='activation' && last.player===playerIdx && canUndo()){
+      await undo();
+    } else {
+      await tapDone(playerIdx);
+    }
+  } finally{ endAction(); }
+}
+async function handleUndoIconTap(){
+  if(!beginAction()) return;
+  try{ await undo(); } finally{ endAction(); }
 }
 async function undo(){
   if(!canUndo()) return;
@@ -1058,82 +1111,95 @@ async function resumeGame(){
   markAction(1);
   if(!isMultiDevice) render();
 }
-function togglePause(){
-  if(isGameEnded()) return;
-  isPaused() ? resumeGame() : pauseGame();
+async function togglePause(){
+  if(!beginAction()) return;
+  try{
+    if(isGameEnded()) return;
+    await (isPaused() ? resumeGame() : pauseGame());
+  } finally{ endAction(); }
 }
 async function advancePhase(){
-  if(isPaused() || isBetweenRounds()) return;
-  const t = effectiveNow();
-  const ps = currentPhaseEvent();
-  const actionId = generateId(); // shared across every event this call pushes, so undo reverts all of them together
-  let count = 0;
+  if(!beginAction()) return;
+  try{
+    if(isPaused() || isBetweenRounds()) return;
+    const t = effectiveNow();
+    const ps = currentPhaseEvent();
+    const actionId = generateId(); // shared across every event this call pushes, so undo reverts all of them together
+    let count = 0;
 
-  // Auto-close whichever activation is still in progress so its time is
-  // attributed correctly and never leaks across the phase boundary.
-  if(PLAYER_TIMED_PHASES.indexOf(ps.phase)!==-1){
-    const activePlayer = currentActivePlayer(ps);
-    await pushEvent({type:'activation', phase:ps.phase, round:ps.round, player:activePlayer, outcome:'done', ts:t}, actionId);
+    // Auto-close whichever activation is still in progress so its time is
+    // attributed correctly and never leaks across the phase boundary.
+    if(PLAYER_TIMED_PHASES.indexOf(ps.phase)!==-1){
+      const activePlayer = currentActivePlayer(ps);
+      await pushEvent({type:'activation', phase:ps.phase, round:ps.round, player:activePlayer, outcome:'done', ts:t}, actionId);
+      count++;
+    }
+    await pushEvent({type:'phase_end', phase:ps.phase, round:ps.round, ts:t}, actionId);
     count++;
-  }
-  await pushEvent({type:'phase_end', phase:ps.phase, round:ps.round, ts:t}, actionId);
-  count++;
 
-  const pregameIdx = PREGAME_SEQUENCE.indexOf(ps.phase);
-  if(pregameIdx!==-1){
-    // One-time setup: Place Obstacles -> Deploy Fleets -> Round 1 Command Phase.
-    const nextPhase = pregameIdx < PREGAME_SEQUENCE.length-1 ? PREGAME_SEQUENCE[pregameIdx+1] : 'command';
-    const nextRound = pregameIdx < PREGAME_SEQUENCE.length-1 ? 0 : 1;
-    await pushEvent({type:'phase_start', phase:nextPhase, round:nextRound, ts:t}, actionId);
-    count++;
-    markAction(count);
-    if(!isMultiDevice) render();
-    return;
-  }
+    const pregameIdx = PREGAME_SEQUENCE.indexOf(ps.phase);
+    if(pregameIdx!==-1){
+      // One-time setup: Place Obstacles -> Deploy Fleets -> Round 1 Command Phase.
+      const nextPhase = pregameIdx < PREGAME_SEQUENCE.length-1 ? PREGAME_SEQUENCE[pregameIdx+1] : 'command';
+      const nextRound = pregameIdx < PREGAME_SEQUENCE.length-1 ? 0 : 1;
+      await pushEvent({type:'phase_start', phase:nextPhase, round:nextRound, ts:t}, actionId);
+      count++;
+      markAction(count);
+      if(!isMultiDevice) render();
+      return;
+    }
 
-  const idx = PHASE_SEQUENCE.indexOf(ps.phase);
-  if(idx < PHASE_SEQUENCE.length-1){
-    const nextPhase = PHASE_SEQUENCE[idx+1];
-    await pushEvent({type:'phase_start', phase:nextPhase, round:ps.round, ts:t}, actionId);
-    count++;
-    markAction(count);
-    if(!isMultiDevice) render();
-  } else if(ps.round < roundLimit){
-    // Round over, but not the last one: stop at round_end and let the
-    // players choose to continue or end the game here — never auto-advance
-    // into a new round.
-    await pushEvent({type:'round_end', round:ps.round, ts:t}, actionId);
-    count++;
-    markAction(count);
-    if(!isMultiDevice) render();
-  } else {
-    await pushEvent({type:'round_end', round:ps.round, ts:t}, actionId);
-    count++;
-    await pushEvent({type:'game_end', ts:t}, actionId);
-    count++;
-    markAction(count);
-    if(!isMultiDevice) endGame();
-  }
+    const idx = PHASE_SEQUENCE.indexOf(ps.phase);
+    if(idx < PHASE_SEQUENCE.length-1){
+      const nextPhase = PHASE_SEQUENCE[idx+1];
+      await pushEvent({type:'phase_start', phase:nextPhase, round:ps.round, ts:t}, actionId);
+      count++;
+      markAction(count);
+      if(!isMultiDevice) render();
+    } else if(ps.round < roundLimit){
+      // Round over, but not the last one: stop at round_end and let the
+      // players choose to continue or end the game here — never auto-advance
+      // into a new round.
+      await pushEvent({type:'round_end', round:ps.round, ts:t}, actionId);
+      count++;
+      markAction(count);
+      if(!isMultiDevice) render();
+    } else {
+      await pushEvent({type:'round_end', round:ps.round, ts:t}, actionId);
+      count++;
+      await pushEvent({type:'game_end', ts:t}, actionId);
+      count++;
+      markAction(count);
+      if(!isMultiDevice) endGame();
+    }
+  } finally{ endAction(); }
 }
 // Only reachable between rounds (isBetweenRounds()) — the round-limit case
 // already ends the game automatically in advancePhase() above.
 async function beginNextRound(){
-  if(!isBetweenRounds()) return;
-  const finishedRound = events[events.length-1].round;
-  await pushEvent({type:'phase_start', phase:'command', round:finishedRound+1, ts:effectiveNow()}, generateId());
-  markAction(1);
-  if(!isMultiDevice) render();
+  if(!beginAction()) return;
+  try{
+    if(!isBetweenRounds()) return;
+    const finishedRound = events[events.length-1].round;
+    await pushEvent({type:'phase_start', phase:'command', round:finishedRound+1, ts:effectiveNow()}, generateId());
+    markAction(1);
+    if(!isMultiDevice) render();
+  } finally{ endAction(); }
 }
 async function endGameNow(){
-  if(!isBetweenRounds()) return;
-  await pushEvent({type:'game_end', ts:effectiveNow()}, generateId());
-  markAction(1);
-  if(!isMultiDevice) endGame();
+  if(!beginAction()) return;
+  try{
+    if(!isBetweenRounds()) return;
+    await pushEvent({type:'game_end', ts:effectiveNow()}, generateId());
+    markAction(1);
+    if(!isMultiDevice) endGame();
+  } finally{ endAction(); }
 }
 function endGame(){
   clearInterval(tickHandle);
   if(eventsChannel){ sb.removeChannel(eventsChannel); eventsChannel = null; }
   if(isMultiDevice) clearMultiSession();
+  onVisibleResync = null;
   renderStats();
   show('screen-stats');
 }
@@ -1141,6 +1207,7 @@ function newGame(){
   clearInterval(tickHandle);
   isMultiDevice = false;
   myPlayerSlot = null;
+  onVisibleResync = null;
   events = [];
   gameStartTs = null;
   lastActionWasUndo = false;
@@ -1293,6 +1360,17 @@ function render(){
 
   const advanceBtn = document.getElementById('advanceBtn');
   advanceBtn.disabled = paused;
+  // Begin-next-phase is a shared control (either device can use it, same as
+  // Pause) -- but during a split-view phase it was reading as "this is my
+  // turn to act" on the *inactive* player's own screen, since it shared the
+  // same bold filled look as their partner's actual pending action. Ghost it
+  // for whoever's device isn't the active one right now; single-device mode
+  // and the shared (non-split) phases are unaffected, since there's no
+  // competing "my action" button there to be confused with.
+  const isSplitPhase = PLAYER_TIMED_PHASES.indexOf(ps.phase)!==-1;
+  advanceBtn.classList.toggle('secondary-shared',
+    isMultiDevice && myPlayerSlot!=null && isSplitPhase && currentActivePlayer(ps)!==myPlayerSlot);
+  document.getElementById('showCodeBtn').classList.toggle('hidden', !isMultiDevice);
   const pregameIdx = PREGAME_SEQUENCE.indexOf(ps.phase);
   if(pregameIdx!==-1){
     const nextLabel = pregameIdx < PREGAME_SEQUENCE.length-1 ? PHASE_LABELS[PREGAME_SEQUENCE[pregameIdx+1]] : PHASE_LABELS.command;
@@ -1631,6 +1709,19 @@ let topEventSeq = null; // seq of the current last event, needed as the race gua
 let multiUndoUnlocked = false;
 let gameStartChannel = null;
 let joinStartHandled = false;
+// A phone locking its screen can freeze a backgrounded tab's network activity
+// without ever cleanly closing the realtime WebSocket -- no close/error event
+// fires, so makeReconnectHandler()'s "did we observe a drop" detection can
+// simply never trigger, leaving the app believing it's still live when it
+// isn't. Reacting to "the tab just became visible again" is the standard
+// fix: it doesn't wait for the connection to admit it's dead, it just always
+// double-checks on wake. Set to whichever resync fits the current screen
+// (waiting in the lobby, waiting to be let in, or already in a live game);
+// null when there's nothing to catch up on right now.
+let onVisibleResync = null;
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState==='visible' && onVisibleResync) onVisibleResync();
+});
 
 /* ---------------- multi-device session persistence ----------------
    Lets a device that refreshes, loses connection, or closes its tab
@@ -1820,16 +1911,36 @@ function enterLobby(mySlot){
   // while this device was away — there's no live INSERT to catch for that,
   // since it already happened.
   checkOtherPlayerJoined(currentGameCode, onOtherJoined);
+  onVisibleResync = function(){ checkOtherPlayerJoined(currentGameCode, onOtherJoined); };
 }
 
-async function copyJoinLink(){
-  const btn = document.getElementById('lobbyCopyBtn');
-  const text = document.getElementById('lobbyLink').textContent;
+async function copyLinkFrom(elId, btnId){
+  const btn = document.getElementById(btnId);
+  const text = document.getElementById(elId).textContent;
   try{
     await navigator.clipboard.writeText(text);
   }catch(e){ return; } // no clipboard permission/API — the link is still selectable by hand
   btn.classList.add('copied');
   setTimeout(() => btn.classList.remove('copied'), 1500);
+}
+
+function showCodeOverlay(){
+  const joinUrl = location.href.replace(/[?#].*$/, '') + '?join=' + currentGameCode;
+  document.getElementById('overlayCode').textContent = currentGameCode;
+  document.getElementById('overlayLink').textContent = joinUrl;
+
+  const qrEl = document.getElementById('overlayQr');
+  qrEl.innerHTML = '';
+  new QRCode(qrEl, {
+    text: joinUrl, width: 160, height: 160,
+    colorDark: '#170a24', colorLight: '#f3ebfd', correctLevel: QRCode.CorrectLevel.M
+  });
+
+  document.getElementById('codeOverlay').classList.remove('hidden');
+}
+
+function hideCodeOverlay(){
+  document.getElementById('codeOverlay').classList.add('hidden');
 }
 
 function subscribeToPlayers(code, onOtherJoined){
@@ -1882,6 +1993,7 @@ function subscribeToGameEvents(code){
     .subscribe(makeReconnectHandler(resyncEventLog));
 }
 async function enterMultiDeviceGame(slot){
+  hideCodeOverlay();
   isMultiDevice = true;
   myPlayerSlot = slot;
   eventsBySeq = new Map();
@@ -1912,6 +2024,7 @@ async function enterMultiDeviceGame(slot){
   }
 
   multiDeviceReady = true;
+  onVisibleResync = resyncEventLog;
   show('screen-live');
   tickHandle = setInterval(render, 250);
   render();
@@ -1934,6 +2047,7 @@ function leaveLobby(){
   if(lobbyChannel){ sb.removeChannel(lobbyChannel); lobbyChannel = null; }
   currentGameCode = null;
   clearMultiSession();
+  onVisibleResync = null;
   show('screen-landing');
   checkLandingState();
 }
@@ -1990,6 +2104,7 @@ async function enterJoinConfirm(code, slot, status){
   // after the game already started" (caught by the direct check).
   joinStartHandled = false;
   subscribeToGameStart(code, slot);
+  onVisibleResync = function(){ checkGameStartedNow(code, slot); };
   await checkGameStartedNow(code, slot);
 }
 function subscribeToGameStart(code, slot){
@@ -2012,6 +2127,7 @@ function leaveJoinConfirm(){
   if(gameStartChannel){ sb.removeChannel(gameStartChannel); gameStartChannel = null; }
   currentGameCode = null;
   clearMultiSession();
+  onVisibleResync = null;
   show('screen-landing');
   checkLandingState();
 }
