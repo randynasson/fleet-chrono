@@ -99,7 +99,7 @@ strangers or scripted traffic.
   they're not part of. Low risk today (small trusted beta), but worth closing — check
   `game_players` for a matching `(game_id, device_id)` row — before opening this to strangers.
 - **`device_id` still isn't an authentication boundary** (documented as a deliberate tradeoff when
-  it was introduced — see `getDeviceId()`'s comment in `armada-clock.html`): it's a client-generated
+  it was introduced — see `getDeviceId()`'s comment in `fleet-chrono.html`): it's a client-generated
   UUID passed as a plain parameter, so anyone who learns another device's ID can act as that device
   (rejoin their slot, undo their moves, etc.). Fine for two people who agreed to play together in
   the same room; worth revisiting (e.g. a per-game secret token instead of a reusable per-device ID)

@@ -23,10 +23,11 @@ From Randy, 2026-09-21:
 
 ## Constraints
 
-- **Build against `armada-clock.html`.** *(Updated 2026-09-22: the simplified design was promoted
+- **Build against `fleet-chrono.html`.** *(Updated 2026-09-22: the simplified design was promoted
   to canonical — it's no longer a separate fork at `design/armada-clock-alt.html`, that path no
-  longer exists. This plan now targets the one live file directly.)*
-- **Don't break the live app while building.** `armada-clock.html` is in active beta use at
+  longer exists. The file itself was also renamed from `armada-clock.html` around the same time.
+  This plan now targets the one live file directly.)*
+- **Don't break the live app while building.** `fleet-chrono.html` is in active beta use at
   `https://fleetchrono.app` right now, so every migration here must be strictly additive (new
   tables, new *nullable* columns) so existing queries and RPCs keep working throughout, not just at
   the end. The one genuinely risky piece is tightening RLS (see Security below); that gets tested
@@ -103,7 +104,7 @@ scoping happens as part of this work, not deferred further:
 
 - A user can read their own rows (`auth.uid() = user_id`).
 - Existing anonymous/device-based access patterns are preserved exactly as they work today —
-  verified against the live `armada-clock.html` before this is considered shippable.
+  verified against the live `fleet-chrono.html` before this is considered shippable.
 - Admin access goes through an allowlist check, not just "any authenticated user."
 
 ## Phased build order

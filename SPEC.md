@@ -70,7 +70,7 @@ Chosen deliberately to read as a fleet command console glanced at across a table
 
 ## Prototype delivered so far
 
-A working single-file HTML/CSS/JS prototype (`armada-clock.html`) implementing the full model above as a standalone page: setup screen, live game screen with dynamic phase-based layout, real ticking timers computed from timestamps (not intervals), undo, and a computed stats screen. No backend, no sync — this is the single-device mode only, meant as the reference implementation for the interaction model before porting into a real Next.js app and adding Supabase sync for dual-device mode.
+A working single-file HTML/CSS/JS prototype (`fleet-chrono.html`, originally `armada-clock.html`) implementing the full model above as a standalone page: setup screen, live game screen with dynamic phase-based layout, real ticking timers computed from timestamps (not intervals), undo, and a computed stats screen. No backend, no sync — this is the single-device mode only, meant as the reference implementation for the interaction model before porting into a real Next.js app and adding Supabase sync for dual-device mode.
 
 ## Open questions / not yet decided
 

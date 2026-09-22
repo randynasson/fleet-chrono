@@ -23,7 +23,7 @@ Open the **[live app](https://fleetchrono.app)** — no install, no account. Pic
 
 ## How it's built
 
-A single self-contained HTML file (`armada-clock.html`) — no build step, no framework. All game state is derived from a flat, append-only event log rather than stored as mutable state:
+A single self-contained HTML file (`fleet-chrono.html`) — no build step, no framework. All game state is derived from a flat, append-only event log rather than stored as mutable state:
 
 - **Undo** = delete the last event(s) and re-derive state from what's left.
 - **Multi-device sync** = both devices append to and read the same log via Supabase Postgres + Realtime; nothing is merged, since the log is append-only.
@@ -35,7 +35,8 @@ See [`SPEC.md`](SPEC.md) for the full design rationale and architecture notes.
 
 | Path | What it is |
 |---|---|
-| `armada-clock.html` | The app. Single file — open it directly, or serve it statically. |
+| `fleet-chrono.html` | The app. Single file — open it directly, or serve it statically. |
+| `armada-clock.html` | Redirect stub at the app's old filename, so any pre-rename link/QR code/bookmark still lands on the app. |
 | `supabase/migrations/` | The Postgres schema and RPC functions behind multi-device sync. |
 | `archive/armada-clock-utilitarian.html` | The original plain/utilitarian design, kept for reference. |
 | `archive/armada-clock-holo-tactical-violet.html` | The prior live design, kept for reference — same visual system as today's app, but with the denser dual-panel live-game screens before the information-density simplification. |
