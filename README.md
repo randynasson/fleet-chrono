@@ -2,7 +2,7 @@
 
 A tournament game timer for **Star Wars: Armada** — tracks the round clock, phase sequence, and each player's activation time, live at the table.
 
-**Live app:** https://randynasson.github.io/fleet-chrono/
+**Live app:** https://randynasson.github.io/fleet-chrono/design/armada-clock-alt.html
 
 ## What it does
 
@@ -19,7 +19,7 @@ Works in two modes:
 
 ## Try it
 
-Open the **[live app](https://randynasson.github.io/fleet-chrono/)** — no install, no account. Pick "Use on this device" for single-device, or "Start a multi-device game" / "Join a game" to sync across two phones.
+Open the **[live app](https://randynasson.github.io/fleet-chrono/design/armada-clock-alt.html)** — no install, no account. Pick "Use on this device" for single-device, or "Start a multi-device game" / "Join a game" to sync across two phones.
 
 ## How it's built
 
