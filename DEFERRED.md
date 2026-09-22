@@ -16,9 +16,9 @@ Ideas, needs, and open questions we've noted but decided not to pursue immediate
   it can stay a unilateral action today. If a real tournament-platform integration ever makes that
   state consequential (e.g. it needs to report results back), actions like this may need to become
   a negotiated/confirmed state between both players' devices instead of unilateral.
-- User accounts: associating a player's games/data with a persistent identity so they can see
-  their pace/performance trends over time, across games. Much later problem — no auth, no
-  accounts, no cross-game history exist yet.
+- ~~User accounts~~ — **planned in detail 2026-09-21, not yet built.** See
+  [`USER_ACCOUNTS_PLAN.md`](USER_ACCOUNTS_PLAN.md) for the full schema/auth/security plan
+  (Supabase Auth, personal history/trends, per-user soft-hide, admin analytics, hard delete).
 - ~~Reconnect handling for multi-device games, bundled with third-join rejection~~ — **built
   2026-09-02.** Third-join rejection was already in place (`join_game` returns `'full'`, shown as
   "This game already has two players"). Reconnect handling added: `{gameCode, isCreator}` persists

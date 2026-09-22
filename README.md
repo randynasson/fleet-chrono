@@ -41,6 +41,7 @@ See [`SPEC.md`](SPEC.md) for the full design rationale and architecture notes.
 | `design_handoff_fleet_chrono_holo_tactical/` | The design handoff for the current "Holo Tactical Violet" visual style. |
 | `SPEC.md` | Product concept, decisions made, and architecture notes. |
 | `DEFERRED.md` | Ideas and known gaps intentionally not built yet. |
+| `USER_ACCOUNTS_PLAN.md` | Planned schema/auth/security design for user accounts and personal game history — not yet built. |
 
 ## Status
 
