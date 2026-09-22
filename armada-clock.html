@@ -94,10 +94,6 @@
 
   .micro-label{ font-size:13px; letter-spacing:.24em; text-transform:uppercase; color:rgba(192,140,245,.75); margin-bottom:10px; }
 
-  /* Status lamps */
-  .lamp{ width:7px; height:7px; border-radius:50%; flex:none; }
-  .lamp.violet{ background:var(--violet); box-shadow:0 0 8px var(--violet); animation:fc-breathe 2s ease-in-out infinite; }
-
   @keyframes fc-blink   { 0%,100%{opacity:1} 50%{opacity:.25} }
   @keyframes fc-breathe { 0%,100%{opacity:.55} 50%{opacity:1} }
   @keyframes fc-sweep   { 0%{transform:translateX(-100%)} 100%{transform:translateX(220%)} }
@@ -190,7 +186,6 @@
   .btn-primary{ background:var(--violet); color:var(--violet-cta-ink); box-shadow:0 0 28px rgba(192,140,245,.4); }
   .btn-primary:active{ box-shadow:0 0 10px rgba(192,140,245,.4); }
   .btn-primary:disabled{ background:rgba(192,140,245,.1); color:rgba(216,190,250,.5); box-shadow:none; cursor:not-allowed; }
-  .btn-primary.secondary-shared{ background:transparent; color:var(--violet-text); border:1px solid rgba(192,140,245,.32); box-shadow:none; }
   .btn-ghost{ background:transparent; border:1px solid rgba(192,140,245,.32); color:var(--violet-text); }
   .btn-ghost:active{ background:rgba(192,140,245,.12); }
   .btn-danger{ background:transparent; border:1px solid var(--red-line); color:var(--red); }
@@ -199,19 +194,16 @@
   /* ---------- LIVE GAME SCREEN ---------- */
   .live{ position:relative; display:flex; flex-direction:column; height:100%; z-index:1; }
   .strip{
-    padding:22px 24px 18px; border-bottom:1px solid rgba(192,140,245,.24);
-    display:flex; align-items:flex-start; justify-content:space-between;
+    position:relative; padding:22px 24px 18px; border-bottom:1px solid rgba(192,140,245,.24);
+    display:flex; flex-direction:column; align-items:center; text-align:center;
   }
   .strip .clock-label{ font-size:13px; letter-spacing:.20em; text-transform:uppercase; color:rgba(192,140,245,.75); margin-bottom:6px; }
-  .strip .game-clock{ font-size:38px; font-weight:400; color:var(--violet-hi); text-shadow:0 0 22px rgba(192,140,245,.6); }
+  .strip .game-clock{ font-size:46px; font-weight:400; color:var(--violet-hi); text-shadow:0 0 22px rgba(192,140,245,.6); }
   .strip .game-clock.overtime{ color:var(--red); text-shadow:none; }
   .strip .game-clock.warning{ color:var(--amber-hi); text-shadow:0 0 22px rgba(232,163,61,.6); }
-  .strip .meta{ text-align:right; }
-  .strip .round-label{ font-size:13px; letter-spacing:.20em; text-transform:uppercase; color:rgba(192,140,245,.75); margin-bottom:8px; }
-  .strip .phase-label-row{ display:flex; align-items:center; gap:7px; justify-content:flex-end; }
-  .strip .phase-label{ font-size:21px; font-weight:400; color:var(--violet-text); }
   .show-code-btn{
-    width:30px; height:30px; margin-top:10px; margin-left:auto; display:flex; align-items:center; justify-content:center;
+    position:absolute; top:16px; right:16px;
+    width:30px; height:30px; display:flex; align-items:center; justify-content:center;
     background:transparent; border:1px solid rgba(192,140,245,.32); color:var(--violet-text); cursor:pointer;
   }
   .code-overlay{
@@ -219,6 +211,11 @@
     gap:16px; padding:30px; background:rgba(6,4,11,.94);
   }
   .code-overlay .code-card{ width:100%; margin-bottom:0; }
+  .confirm-card{ padding:34px 26px; }
+  .confirm-title{ font-size:20px; font-weight:500; color:var(--violet-hi); margin-bottom:10px; }
+  .confirm-sub{ font-size:14px; color:var(--violet-body); line-height:1.5; }
+  .confirm-actions{ display:flex; gap:12px; width:100%; margin-top:22px; }
+  .confirm-actions .btn{ flex:1; }
 
   .overtime-banner, .warning-banner, .paused-banner{
     padding:11px; text-align:center; font-size:14px; font-weight:600; letter-spacing:.22em; text-transform:uppercase;
@@ -229,125 +226,72 @@
 
   .stage{ position:relative; flex:1; padding:22px 20px; display:flex; flex-direction:column; z-index:1; }
 
-  /* shared phase (obstacles/deploy/command/status) */
-  .shared-phase{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
-  .shared-phase .pe-label{ font-size:14px; letter-spacing:.30em; text-transform:uppercase; color:var(--violet-muted); margin-bottom:14px; }
-  .shared-phase .pe-context{ font-size:15px; color:var(--violet-muted); margin-top:16px; }
-  .shared-phase .phase-clock-wrap{ position:relative; padding:8px 34px; }
-  .shared-phase .phase-clock{
-    font-size:82px; font-weight:400; color:var(--violet-hi); line-height:1;
-    text-shadow:0 0 40px rgba(192,140,245,.7), 0 0 80px rgba(192,140,245,.35);
-  }
+  /* The phase name now lives here, big and prominent, instead of tucked into
+     the header strip -- it's the one thing that changes moment to moment,
+     so it gets the most prominent line on the screen. Round # sits above it,
+     small, same spot the header strip used to show it. */
+  .round-heading{ font-size:13px; letter-spacing:.20em; text-transform:uppercase; color:rgba(192,140,245,.75); text-align:center; margin-bottom:8px; }
+  .phase-heading{ font-size:26px; font-weight:500; color:var(--violet-hi); text-align:center; margin-bottom:18px; }
 
-  /* between rounds: continue or end the game here */
-  .between-rounds{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:0 12px; }
-  .between-rounds .br-rule{ width:100%; height:1px; margin:0 auto 20px; background:linear-gradient(90deg, transparent, rgba(192,140,245,.5), transparent); }
-  .between-rounds .br-title{
-    font-family:'Share Tech Mono',monospace; font-size:30px; font-weight:400; letter-spacing:.06em; color:var(--violet-hi);
-    text-shadow:0 0 22px rgba(192,140,245,.6); margin-bottom:20px; text-transform:uppercase;
-  }
-  .between-rounds .br-sub{ font-size:16px; color:var(--violet-body); max-width:280px; line-height:1.5; }
+  /* Holds the one bracketed panel (or the waiting view) and centers it in
+     whatever vertical space the stage has -- the panel sizes to its own
+     content rather than stretching to fill the screen. */
+  .stage-body{ flex:1; display:flex; flex-direction:column; justify-content:center; min-height:0; }
 
-  /* ship/squadron split */
-  .split{ flex:1; display:flex; flex-direction:column; gap:16px; }
-  .player-panel{ position:relative; padding:20px 22px; display:flex; flex-direction:column; justify-content:center; gap:8px; }
-  .player-panel.active-amber, .player-panel.active-cyan{ flex:1; padding:24px; justify-content:space-between; overflow:hidden; }
-  .player-panel.active-amber{ background:linear-gradient(180deg, rgba(232,163,61,.1), rgba(232,163,61,.02)); }
+  /* One bracketed panel for every phase. Shared/setup phases show "Both
+     Players" plus a context line; Ship/Squadron shows whoever's turn it is
+     plus Pass/All Activated. Done always lives inside it, at the bottom,
+     styled bigger/bolder than the secondary actions above it. Amber by
+     default (First Player's turn); .active-cyan covers both Second Player's
+     turn and the shared/setup phases, which aren't tied to one player. */
+  .player-panel{
+    position:relative; padding:26px 24px; display:flex; flex-direction:column; gap:18px;
+    overflow:hidden; background:linear-gradient(180deg, rgba(232,163,61,.1), rgba(232,163,61,.02));
+  }
   .player-panel.active-cyan{ background:linear-gradient(180deg, rgba(192,140,245,.1), rgba(192,140,245,.02)); }
-  /* true idle: not active, controls hidden -> compact horizontal row */
-  .player-panel:not(.active-amber):not(.active-cyan):has(.p-controls.hidden){
-    flex:.6; border:1px solid rgba(192,140,245,.2); flex-direction:row; align-items:center; justify-content:space-between;
+  .player-panel .bracket{ border-color:var(--amber); }
+  .player-panel.active-cyan .bracket{ border-color:var(--violet); }
+  .player-panel .sweep{
+    position:absolute; top:0; left:0; height:1px; width:45%;
+    background:linear-gradient(90deg, transparent, var(--amber), transparent); animation:fc-sweep 3.4s linear infinite;
   }
-  /* just-acted (Undo showing): not active, controls visible -> compact column, neutral border */
-  .player-panel:not(.active-amber):not(.active-cyan):has(.p-controls:not(.hidden)){
-    border:1px solid rgba(192,140,245,.2);
-  }
-  .player-panel .bracket{ display:none; }
-  .player-panel.active-amber .bracket{ display:block; border-color:var(--amber); }
-  .player-panel.active-cyan .bracket{ display:block; border-color:var(--violet); }
-  .player-panel .sweep{ position:absolute; top:0; left:0; height:1px; width:45%; display:none; }
-  .player-panel.active-amber .sweep{ display:block; background:linear-gradient(90deg, transparent, var(--amber), transparent); animation:fc-sweep 3.4s linear infinite; }
-  .player-panel.active-cyan .sweep{ display:block; background:linear-gradient(90deg, transparent, var(--violet), transparent); animation:fc-sweep 3.4s linear infinite; }
+  .player-panel.active-cyan .sweep{ background:linear-gradient(90deg, transparent, var(--violet), transparent); }
 
-  .player-panel .header-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
-  .player-panel .p-name{ font-size:20px; font-weight:500; }
-  .player-panel.active-amber .p-name{ color:var(--amber-label); }
+  .player-panel .p-name{ font-size:24px; font-weight:500; color:var(--amber-label); }
   .player-panel.active-cyan .p-name{ color:var(--violet-mid); }
-  .player-panel:not(.active-amber):not(.active-cyan) .p-name{ font-size:19px; font-weight:400; color:var(--violet-idle); }
+  .player-panel .pe-context{ font-size:16px; color:var(--violet-body); line-height:1.5; }
 
-  .active-badge{
-    display:none; font-size:13px; font-family:'Share Tech Mono',monospace; letter-spacing:.14em; padding:4px 10px;
-    text-transform:uppercase; flex:none;
-  }
-  .player-panel.active-amber .active-badge{ display:inline-block; color:var(--amber-badge); border:1px solid rgba(232,163,61,.55); }
-  .player-panel.active-cyan .active-badge{ display:inline-block; color:var(--violet-text); border:1px solid rgba(192,140,245,.55); }
-
-  /* the JS-set status text ("Active -- activation in progress" / "Idle" /
-     "Done" / "Passed") is hidden for the active state (brackets/badge/sweep
-     already carry that meaning) and for genuine idle (replaced by the
-     static "Standing By" below) -- but stays visible verbatim for the
-     just-acted "Done"/"Passed" case, where it's still the only source of
-     that text. */
-  .player-panel .p-status{ font-size:13px; color:var(--violet-muted); }
-  .player-panel.active-amber .p-status, .player-panel.active-cyan .p-status{ display:none; }
-  .player-panel:not(.active-amber):not(.active-cyan):has(.p-controls.hidden) .p-status{ display:none; }
-  .standing-by{ display:none; font-size:13px; letter-spacing:.20em; text-transform:uppercase; color:var(--violet-idle); }
-  .player-panel:not(.active-amber):not(.active-cyan):has(.p-controls.hidden) .standing-by{ display:block; }
-
-  .panel-idle-right{ display:none; text-align:right; flex:none; }
-  .player-panel:not(.active-amber):not(.active-cyan):has(.p-controls.hidden) .panel-idle-right{ display:block; }
-  .idle-total-num{ font-size:26px; color:var(--violet-idle-num); }
-  .idle-total-label{ font-size:13px; letter-spacing:.18em; text-transform:uppercase; color:var(--violet-idle); margin-top:2px; }
-
-  .player-panel .p-clock{ font-size:68px; font-weight:400; margin:6px 0; line-height:1; }
-  .player-panel.active-amber .p-clock{ color:var(--amber-hi); text-shadow:0 0 34px rgba(232,163,61,.65), 0 0 70px rgba(232,163,61,.3); }
-  .player-panel.active-cyan .p-clock{ color:var(--violet-hi); text-shadow:0 0 22px rgba(192,140,245,.6); }
-
-  .player-panel .p-controls{ display:flex; gap:10px; }
-  .player-panel .p-controls .btn{ flex:1; padding:17px; font-size:16px; letter-spacing:.14em; }
-  .player-panel .p-controls .btn-turn-amber, .player-panel .p-controls .btn-turn-cyan{ flex:1.4; }
-  .btn-turn-amber{ background:var(--amber); color:var(--amber-ink); border:1px solid var(--amber-hi); box-shadow:0 0 24px rgba(232,163,61,.5); font-weight:600; }
-  .btn-turn-cyan{ background:var(--violet); color:var(--violet-cta-ink); border:1px solid var(--violet-bright); box-shadow:0 0 24px rgba(192,140,245,.5); font-weight:600; }
-  /* The Done->Undo swap is a correction action, not the primary CTA -- the
-     "just acted" state (not active, controls still showing) is the only time
-     this button ever reads "Undo", so that's what this keys off. */
-  .player-panel:not(.active-amber):not(.active-cyan):has(.p-controls:not(.hidden)) .btn-turn-amber{
-    background:transparent; color:var(--amber-ghost-text); border:1px solid rgba(232,163,61,.5); box-shadow:none; font-weight:500;
-  }
-  .player-panel:not(.active-amber):not(.active-cyan):has(.p-controls:not(.hidden)) .btn-turn-cyan{
-    background:transparent; color:var(--violet-text); border:1px solid rgba(192,140,245,.5); box-shadow:none; font-weight:500;
-  }
+  .p-controls-secondary{ display:flex; gap:10px; }
+  .p-controls-secondary .btn{ flex:1; padding:15px; font-size:13px; letter-spacing:.08em; }
   .btn-pass{ background:transparent; border:1px solid rgba(232,163,61,.35); color:var(--amber-ghost-text); font-weight:500; }
   .player-panel.active-cyan .btn-pass{ border-color:rgba(192,140,245,.35); color:var(--violet-text); }
+  .btn-all-activated{ background:transparent; border:1px solid rgba(232,163,61,.35); color:var(--amber-ghost-text); font-weight:500; }
+  .player-panel.active-cyan .btn-all-activated{ border-color:rgba(192,140,245,.35); color:var(--violet-text); }
 
+  .btn-done{
+    padding:19px; font-size:17px; letter-spacing:.14em; font-weight:600;
+    background:var(--amber); color:var(--amber-ink); border:1px solid var(--amber-hi); box-shadow:0 0 24px rgba(232,163,61,.5);
+  }
+  .player-panel.active-cyan .btn-done{
+    background:var(--violet); color:var(--violet-cta-ink); border:1px solid var(--violet-bright); box-shadow:0 0 24px rgba(192,140,245,.5);
+  }
+
+  /* ship/squadron, multi-device, not my turn: no controls, nothing ticking --
+     just a plain statement of whose turn it is. Pause/Undo/End Game stay
+     reachable via the always-on controls-bar below. */
+  .waiting-view{
+    flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
+    background:rgba(46,31,66,.35);
+  }
+  .waiting-text{ font-size:22px; font-weight:500; color:var(--violet-idle); margin-bottom:10px; }
+  .waiting-sub{ font-size:14px; color:var(--violet-muted); }
+
+  /* Utility row -- Undo / Pause / End Game. Now that the primary action
+     lives up in the stage, these are the only things down here, so they can
+     be full text buttons instead of a cramped icon row. */
   .controls-bar{ position:relative; padding:18px 20px 24px; border-top:1px solid rgba(192,140,245,.24); display:flex; gap:12px; z-index:1; }
-  .controls-bar .btn{ flex:1; }
-  /* Round-complete: only Begin Round / End Game show, per the design reference --
-     Undo/Pause aren't hidden by the app's own JS in this state (they're always-on
-     controls elsewhere), so this hides them purely visually, keyed off the same
-     roundEndControls visibility the script already toggles. */
-  .controls-bar:has(#roundEndControls:not(.hidden)) #undoBtn,
-  .controls-bar:has(#roundEndControls:not(.hidden)) #pauseBtn{ display:none; }
-  .round-end-controls{ display:flex; gap:10px; flex:1; }
-  .round-end-controls .btn{ flex:1; }
-  .round-end-controls .btn:first-child{ flex:1.5; }
-  .round-end-controls .btn:last-child{ background:transparent; border:1px solid var(--red-line); color:var(--red); box-shadow:none; }
-  .icon-btn{
-    width:54px; height:54px; flex:none; display:flex; align-items:center; justify-content:center;
-    background:transparent; border:1px solid rgba(192,140,245,.32); border-radius:0; color:var(--violet-text); font-size:22px;
-  }
-  .icon-btn .icon-undo{ display:block; }
-  /* Play/pause drawn in CSS -- Unicode ⏸/▶ render as colorful emoji glyphs on
-     iOS regardless of font, which clashes badly with this monochrome style. */
-  .icon-btn .icon-play{
-    display:none; width:0; height:0; margin-left:3px;
-    border-top:9px solid transparent; border-bottom:9px solid transparent; border-left:15px solid currentColor;
-  }
-  .icon-btn .icon-pause{ display:flex; gap:4px; }
-  .icon-btn .icon-pause span{ width:5px; height:17px; background:currentColor; }
-  #pauseBtn.is-paused .icon-play{ display:block; }
-  #pauseBtn.is-paused .icon-pause{ display:none; }
-  .btn:disabled, .icon-btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .controls-bar .btn{ flex:1; padding:18px 12px; font-size:14px; }
+  .btn:disabled{ opacity:.4; cursor:not-allowed; }
 
   /* ---------- STATS SCREEN ---------- */
   .stats{ position:relative; padding:28px 22px 22px; overflow-y:auto; height:100%; z-index:1; }
@@ -473,9 +417,9 @@
       <div class="spacer"></div>
       <p class="sub">How are you tracking this game?</p>
       <div class="landing-options">
-        <button class="btn btn-primary" onclick="enterSingleDevice()">Use on this device</button>
-        <button class="btn btn-ghost" onclick="show('screen-multi-setup')">Start a multi-device game</button>
-        <button class="btn btn-ghost" onclick="show('screen-join')">Join a game</button>
+        <button class="btn btn-primary" onclick="enterSingleDevice()">Just me, on this device</button>
+        <button class="btn btn-ghost" onclick="show('screen-multi-setup')">Tandem, on two devices</button>
+        <button class="btn btn-ghost" onclick="show('screen-join')">I'm joining a game</button>
       </div>
     </div>
   </div>
@@ -616,19 +560,12 @@
     <div id="warningBanner" class="warning-banner hidden">15 MINUTES REMAINING</div>
     <div id="pausedBanner" class="paused-banner hidden">GAME PAUSED</div>
     <div class="strip">
+      <button id="showCodeBtn" class="show-code-btn hidden" onclick="showCodeOverlay()" title="Show join code">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><rect x="2" y="2" width="7" height="7"/><rect x="15" y="2" width="7" height="7"/><rect x="2" y="15" width="7" height="7"/><rect x="15" y="15" width="3" height="3"/><rect x="19" y="15" width="3" height="3"/><rect x="15" y="19" width="3" height="3"/><rect x="19" y="19" width="3" height="3"/></svg>
+      </button>
       <div class="clock-block">
         <div class="clock-label">Game Clock</div>
         <div id="gameClock" class="game-clock mono">2:15:00</div>
-      </div>
-      <div class="meta">
-        <div id="roundLabelTop" class="round-label">Round 1 of 6</div>
-        <div class="phase-label-row">
-          <span class="lamp violet"></span>
-          <div id="phaseLabelTop" class="phase-label">Command Phase</div>
-        </div>
-        <button id="showCodeBtn" class="show-code-btn hidden" onclick="showCodeOverlay()" title="Show join code">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><rect x="2" y="2" width="7" height="7"/><rect x="15" y="2" width="7" height="7"/><rect x="2" y="15" width="7" height="7"/><rect x="15" y="15" width="3" height="3"/><rect x="19" y="15" width="3" height="3"/><rect x="15" y="19" width="3" height="3"/><rect x="19" y="19" width="3" height="3"/></svg>
-        </button>
       </div>
     </div>
 
@@ -648,89 +585,54 @@
       <button class="btn btn-ghost" onclick="hideCodeOverlay()">Close</button>
     </div>
 
+    <!-- Custom confirm, not the browser's native confirm() -- some embedded/
+         webview browser contexts silently block or auto-dismiss blocking
+         dialogs, which made End Game appear to do nothing. -->
+    <div id="endGameConfirm" class="code-overlay hidden">
+      <div class="code-card confirm-card">
+        <div class="bracket tl sm"></div><div class="bracket tr sm"></div><div class="bracket bl sm"></div><div class="bracket br sm"></div>
+        <div class="confirm-title">End the game now?</div>
+        <div class="confirm-sub">This stops tracking for both players and can't be undone.</div>
+        <div class="confirm-actions">
+          <button class="btn btn-ghost" onclick="hideEndGameConfirm()">Cancel</button>
+          <button class="btn btn-danger" onclick="confirmEndGame()">End Game</button>
+        </div>
+      </div>
+    </div>
+
     <div class="stage">
-      <!-- shared phase view -->
-      <div id="sharedPhaseView" class="shared-phase hidden">
-        <div class="pe-label">Phase Elapsed</div>
-        <div class="phase-clock-wrap">
-          <div class="bracket tl"></div><div class="bracket tr"></div><div class="bracket bl"></div><div class="bracket br"></div>
-          <div id="sharedPhaseClock" class="phase-clock mono">00:00</div>
-        </div>
-        <div id="phaseContext" class="pe-context"></div>
-      </div>
+      <div id="roundLabelTop" class="round-heading">Round 1 of 6</div>
+      <div id="phaseLabelTop" class="phase-heading">Command Phase</div>
 
-      <!-- between-rounds: continue or end the game here (never mid-round) -->
-      <div id="betweenRoundsView" class="between-rounds hidden">
-        <div class="br-rule"></div>
-        <div id="betweenRoundsTitle" class="br-title">Round 1 Complete</div>
-        <div class="br-rule"></div>
-        <div class="br-sub">Continue to the next round, or end the game here.</div>
-      </div>
-
-      <!-- ship/squadron split view -->
-      <div id="splitView" class="split hidden">
-        <div id="panel1" class="player-panel">
+      <div class="stage-body">
+        <!-- One bracketed panel for every phase -- shared phases show "Both
+             Players" plus the phase context; Ship/Squadron shows whoever's
+             turn it is plus Pass/All Activated. Done always lives inside it,
+             right below whatever else is there. -->
+        <div id="mainPanel" class="player-panel">
           <div class="bracket tl"></div><div class="bracket tr"></div><div class="bracket bl"></div><div class="bracket br"></div>
           <div class="sweep"></div>
-          <div class="panel-idle-left">
-            <div class="header-row">
-              <div id="p1nameLive" class="p-name">First Player</div>
-              <div class="active-badge">Active</div>
-            </div>
-            <div id="p1status" class="p-status">Idle</div>
-            <div class="standing-by">Standing By</div>
+          <div id="panelName" class="p-name">Both Players</div>
+          <div id="panelContext" class="pe-context"></div>
+          <div id="panelSecondary" class="p-controls-secondary hidden">
+            <button id="turnPassBtn" class="btn btn-pass" onclick="tapPassActive()">Pass</button>
+            <button id="turnAllBtn" class="btn btn-all-activated" onclick="tapAllActivatedActive()">All Activated</button>
           </div>
-          <div id="p1clockWrap" class="hidden">
-            <div id="p1clock" class="p-clock mono">00:00</div>
-          </div>
-          <div class="panel-idle-right">
-            <div id="p1idleTotal" class="idle-total-num mono">00:00</div>
-            <div class="idle-total-label">On Clock</div>
-          </div>
-          <div id="p1controls" class="p-controls hidden">
-            <button id="p1passBtn" class="btn btn-pass" onclick="tapPass(0)">Pass</button>
-            <button id="p1doneBtn" class="btn btn-turn-amber" onclick="handleDoneOrUndo(0)">Done</button>
-          </div>
+          <button id="advanceBtn" class="btn btn-done" onclick="advancePhase()">Done</button>
         </div>
-        <div id="panel2" class="player-panel">
-          <div class="bracket tl"></div><div class="bracket tr"></div><div class="bracket bl"></div><div class="bracket br"></div>
-          <div class="sweep"></div>
-          <div class="panel-idle-left">
-            <div class="header-row">
-              <div id="p2nameLive" class="p-name">Second Player</div>
-              <div class="active-badge">Active</div>
-            </div>
-            <div id="p2status" class="p-status">Idle</div>
-            <div class="standing-by">Standing By</div>
-          </div>
-          <div id="p2clockWrap" class="hidden">
-            <div id="p2clock" class="p-clock mono">00:00</div>
-          </div>
-          <div class="panel-idle-right">
-            <div id="p2idleTotal" class="idle-total-num mono">00:00</div>
-            <div class="idle-total-label">On Clock</div>
-          </div>
-          <div id="p2controls" class="p-controls hidden">
-            <button id="p2passBtn" class="btn btn-pass" onclick="tapPass(1)">Pass</button>
-            <button id="p2doneBtn" class="btn btn-turn-cyan" onclick="handleDoneOrUndo(1)">Done</button>
-          </div>
+
+        <!-- ship/squadron, multi-device, not my turn: nothing to act on here -->
+        <div id="waitingView" class="waiting-view hidden">
+          <div id="waitingText" class="waiting-text">Waiting for First Player</div>
+          <div class="waiting-sub">Nothing to do until it's your turn</div>
         </div>
       </div>
     </div>
 
     <div class="controls-bar">
-      <button id="undoBtn" class="icon-btn" onclick="handleUndoIconTap()" title="Undo last action">
-        <svg class="icon-undo" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 15 4 10l5-5"/><path d="M4 10h11a5.5 5.5 0 0 1 0 11H12"/></svg>
-      </button>
-      <button id="pauseBtn" class="icon-btn" onclick="togglePause()" title="Pause">
-        <span class="icon-play"></span>
-        <span class="icon-pause"><span></span><span></span></span>
-      </button>
-      <button id="advanceBtn" class="btn btn-primary" onclick="advancePhase()">Begin Ship Phase</button>
-      <div id="roundEndControls" class="round-end-controls hidden">
-        <button id="beginRoundBtn" class="btn btn-primary" onclick="beginNextRound()">Begin Round 2</button>
-        <button class="btn btn-ghost" onclick="endGameNow()">End Game</button>
-      </div>
+      <button id="undoBtn" class="btn btn-ghost" onclick="handleUndoIconTap()" title="Undo last action">Undo</button>
+      <button id="pauseBtn" class="btn btn-ghost" onclick="togglePause()" title="Pause">Pause</button>
+      <button id="endGameBtn" class="btn btn-danger" onclick="handleEndGameTap()" title="End Game">End Game</button>
     </div>
   </div>
 
@@ -822,13 +724,14 @@ const PHASE_LABELS = {
 // for "command"; the others are placeholders in the same voice pending the
 // matching reference screens.
 const PHASE_CONTEXT = {
-  obstacles:"Both players — position obstacles",
-  deploy:"Both players — deploy ships and squadrons",
-  command:"Both players — dials assigned simultaneously",
-  status:"Both players — resolve end-of-round effects"
+  obstacles:"Position obstacles",
+  deploy:"Deploy ships and squadrons",
+  command:"Dials assigned simultaneously",
+  status:"Resolve end-of-round effects"
 };
 const ALL_PHASES_FOR_STATS = PREGAME_SEQUENCE.concat(PHASE_SEQUENCE);
 const PLAYER_TIMED_PHASES = ["ship","squadron"];
+const ALL_ACTIVATED_LABELS = { ship:"All Ships Activated", squadron:"All Squadrons Activated" };
 const FIRST_PLAYER = 0;
 
 function fmt(sec, forceHours){
@@ -916,13 +819,6 @@ function currentPhaseEvent(){
   return null;
 }
 function isGameEnded(){ return events.some(e=>e.type==='game_end'); }
-// A round ends with round_end but no phase_start for the next round is pushed
-// until the players choose to continue — this is the deliberate pause point
-// where "end the game now" is offered (never mid-round, only here).
-function isBetweenRounds(){
-  const last = events[events.length-1];
-  return !!last && last.type==='round_end';
-}
 
 // Activations are not stored as separate start/end events — each completed
 // activation (Done or Pass) is a single log entry, and the active player /
@@ -932,7 +828,19 @@ function isBetweenRounds(){
 function activationsInPhase(ps){
   return events.slice(events.indexOf(ps)+1).filter(e=>e.type==='activation');
 }
+// Once a player declares "All Activated" for this phase, they never become
+// active again this phase -- every remaining turn just stays with whoever
+// hasn't declared yet, instead of the old strict alternation. Both declared
+// is a transient state: it's always immediately followed by an auto phase
+// advance (see maybeAutoAdvanceSplitPhase()), so which value this returns in
+// that instant doesn't matter for real interaction.
+function playerDeclaredAllActivated(ps, player){
+  return events.slice(events.indexOf(ps)+1).some(e=>e.type==='all_activated' && e.player===player);
+}
 function currentActivePlayer(ps){
+  const p0Done = playerDeclaredAllActivated(ps, 0), p1Done = playerDeclaredAllActivated(ps, 1);
+  if(p0Done && !p1Done) return 1;
+  if(p1Done && !p0Done) return 0;
   const acts = activationsInPhase(ps);
   if(acts.length===0) return FIRST_PLAYER; // First Player's activation auto-starts
   return acts[acts.length-1].player===0 ? 1 : 0;
@@ -941,27 +849,17 @@ function currentActivationStartTs(ps){
   const acts = activationsInPhase(ps);
   return acts.length ? acts[acts.length-1].ts : ps.ts;
 }
-// Holo Tactical Violet restyle only: the idle panel's live "time on clock"
-// figure. Mirrors renderStats()'s boundary-walking exactly (including
-// counting only 'done' activations, matching how that screen already
-// defines a player's total) but computed live, mid-game, for one player.
-function liveTotalOnClock(player){
-  let boundaryTs = null, total = 0;
-  for(const e of events){
-    if(e.type==='phase_start' || e.type==='phase_end'){
-      boundaryTs = e.ts;
-    } else if(e.type==='activation'){
-      const d = (e.ts - boundaryTs)/1000;
-      boundaryTs = e.ts;
-      if(e.player===player && e.outcome==='done') total += d;
-    }
-  }
-  return total;
-}
 function lastActivationForPlayer(ps, player){
   const acts = activationsInPhase(ps);
   for(let i=acts.length-1;i>=0;i--){ if(acts[i].player===player) return acts[i]; }
   return null;
+}
+// How many activations this player has actually completed (Done, not Pass)
+// so far this phase -- a Pass skips a turn without spending an activation,
+// so it doesn't advance the count. The Done button labels the one about to
+// happen as this count + 1.
+function donesSoFarForPlayer(ps, player){
+  return activationsInPhase(ps).filter(e => e.player===player && e.outcome==='done').length;
 }
 function canPass(ps, player){
   if(ps.phase!=='ship') return false; // passing only exists in Ship Phase
@@ -1029,8 +927,8 @@ function markAction(count){
 // in multi-device mode a second tap would read the same stale local state
 // the first tap hasn't heard back about yet and push a redundant/incorrect
 // transition on top of it. Guards only the actual tap entry points below —
-// never the functions they call internally — so nesting (e.g.
-// handleDoneOrUndo calling tapDone) can't accidentally lock itself out.
+// never the functions they call internally — so nesting (e.g. tapDoneActive
+// calling tapDone) can't accidentally lock itself out.
 let actionPending = false;
 function beginAction(){
   if(actionPending) return false;
@@ -1039,7 +937,7 @@ function beginAction(){
 }
 function endAction(){ actionPending = false; }
 async function tapDone(playerIdx){
-  if(isGameEnded() || isPaused() || isBetweenRounds()) return;
+  if(isGameEnded() || isPaused()) return;
   if(isMultiDevice && playerIdx!==myPlayerSlot) return;
   const ps = currentPhaseEvent();
   if(currentActivePlayer(ps)!==playerIdx) return;
@@ -1047,10 +945,17 @@ async function tapDone(playerIdx){
   markAction(1);
   if(!isMultiDevice) render();
 }
+// The single active-turn panel's Done button -- always guarded here, since
+// (unlike tapDone) this is now a direct onclick entry point rather than
+// something only ever reached through an already-guarded caller.
+async function tapDoneActive(){
+  if(!beginAction()) return;
+  try{ await tapDone(currentActivePlayer(currentPhaseEvent())); } finally{ endAction(); }
+}
 async function tapPass(playerIdx){
   if(!beginAction()) return;
   try{
-    if(isGameEnded() || isPaused() || isBetweenRounds()) return;
+    if(isGameEnded() || isPaused()) return;
     if(isMultiDevice && playerIdx!==myPlayerSlot) return;
     const ps = currentPhaseEvent();
     if(currentActivePlayer(ps)!==playerIdx || !canPass(ps, playerIdx)) return;
@@ -1059,21 +964,32 @@ async function tapPass(playerIdx){
     if(!isMultiDevice) render();
   } finally{ endAction(); }
 }
-// The Pass/Done button becomes "Undo" immediately after it's tapped, and
-// reverts to Pass/Done the instant anything else happens (single-step only —
-// this is a quick mis-tap correction, not a history walkback).
-async function handleDoneOrUndo(playerIdx){
+function tapPassActive(){ tapPass(currentActivePlayer(currentPhaseEvent())); }
+// "All Ships/Squadrons Activated": a permanent opt-out of the rest of this
+// phase for the declaring player -- once logged, currentActivePlayer() never
+// returns them again this phase (see its declaration comment), so turns just
+// stay with whoever hasn't declared instead of bouncing back. It's a normal
+// logged event like any other, so the standard single-step undo already
+// reverts it with no special-casing.
+async function tapAllActivated(playerIdx){
   if(!beginAction()) return;
   try{
+    if(isGameEnded() || isPaused()) return;
     if(isMultiDevice && playerIdx!==myPlayerSlot) return;
-    const last = events[events.length-1];
-    if(last && last.type==='activation' && last.player===playerIdx && canUndo()){
-      await undo();
-    } else {
-      await tapDone(playerIdx);
+    const ps = currentPhaseEvent();
+    if(PLAYER_TIMED_PHASES.indexOf(ps.phase)===-1) return;
+    if(currentActivePlayer(ps)!==playerIdx) return;
+    await pushEvent({type:'all_activated', phase:ps.phase, round:ps.round, player:playerIdx, ts:effectiveNow()}, generateId());
+    markAction(1);
+    if(!isMultiDevice){
+      render();
+      maybeAutoAdvanceSplitPhase();
     }
+    // multi-device: the auto-advance check runs once this event's own
+    // realtime echo lands, in applyIncomingEvent() -- see its comment.
   } finally{ endAction(); }
 }
+function tapAllActivatedActive(){ tapAllActivated(currentActivePlayer(currentPhaseEvent())); }
 async function handleUndoIconTap(){
   if(!beginAction()) return;
   try{ await undo(); } finally{ endAction(); }
@@ -1118,22 +1034,21 @@ async function togglePause(){
     await (isPaused() ? resumeGame() : pauseGame());
   } finally{ endAction(); }
 }
+// Manual "Done" -- only ever reachable for the shared/setup phases now
+// (obstacles, deploy, command, status). Ship/Squadron no longer have a
+// manual advance at all: they end automatically once both players declare
+// All Activated (see maybeAutoAdvanceSplitPhase() below), so this bails
+// defensively if somehow called during one of those.
 async function advancePhase(){
   if(!beginAction()) return;
   try{
-    if(isPaused() || isBetweenRounds()) return;
-    const t = effectiveNow();
+    if(isPaused()) return;
     const ps = currentPhaseEvent();
+    if(PLAYER_TIMED_PHASES.indexOf(ps.phase)!==-1) return;
+    const t = effectiveNow();
     const actionId = generateId(); // shared across every event this call pushes, so undo reverts all of them together
     let count = 0;
 
-    // Auto-close whichever activation is still in progress so its time is
-    // attributed correctly and never leaks across the phase boundary.
-    if(PLAYER_TIMED_PHASES.indexOf(ps.phase)!==-1){
-      const activePlayer = currentActivePlayer(ps);
-      await pushEvent({type:'activation', phase:ps.phase, round:ps.round, player:activePlayer, outcome:'done', ts:t}, actionId);
-      count++;
-    }
     await pushEvent({type:'phase_end', phase:ps.phase, round:ps.round, ts:t}, actionId);
     count++;
 
@@ -1151,20 +1066,23 @@ async function advancePhase(){
 
     const idx = PHASE_SEQUENCE.indexOf(ps.phase);
     if(idx < PHASE_SEQUENCE.length-1){
+      // command -> ship
       const nextPhase = PHASE_SEQUENCE[idx+1];
       await pushEvent({type:'phase_start', phase:nextPhase, round:ps.round, ts:t}, actionId);
       count++;
       markAction(count);
       if(!isMultiDevice) render();
     } else if(ps.round < roundLimit){
-      // Round over, but not the last one: stop at round_end and let the
-      // players choose to continue or end the game here — never auto-advance
-      // into a new round.
+      // status phase, not the final round: no between-rounds stop -- go
+      // straight into the next round's Command Phase in the same action.
       await pushEvent({type:'round_end', round:ps.round, ts:t}, actionId);
+      count++;
+      await pushEvent({type:'phase_start', phase:'command', round:ps.round+1, ts:t}, actionId);
       count++;
       markAction(count);
       if(!isMultiDevice) render();
     } else {
+      // status phase, final round: game over.
       await pushEvent({type:'round_end', round:ps.round, ts:t}, actionId);
       count++;
       await pushEvent({type:'game_end', ts:t}, actionId);
@@ -1174,26 +1092,53 @@ async function advancePhase(){
     }
   } finally{ endAction(); }
 }
-// Only reachable between rounds (isBetweenRounds()) — the round-limit case
-// already ends the game automatically in advancePhase() above.
-async function beginNextRound(){
-  if(!beginAction()) return;
-  try{
-    if(!isBetweenRounds()) return;
-    const finishedRound = events[events.length-1].round;
-    await pushEvent({type:'phase_start', phase:'command', round:finishedRound+1, ts:effectiveNow()}, generateId());
-    markAction(1);
-    if(!isMultiDevice) render();
-  } finally{ endAction(); }
+// Ship/Squadron auto-advance: fires once both players have declared All
+// Activated. Only one device may ever actually push the transition, or two
+// devices racing on the same realtime notification would both try to close
+// the phase and double up the log -- slot 0 is the arbitrary, deterministic
+// tie-break (irrelevant in single-device mode, where there's only one
+// "device" anyway). Ship and Squadron are never the last phase in
+// PHASE_SEQUENCE, so this never needs the round/game-end branches
+// advancePhase() above still handles for the shared phases.
+function maybeAutoAdvanceSplitPhase(){
+  const ps = currentPhaseEvent();
+  if(!ps || PLAYER_TIMED_PHASES.indexOf(ps.phase)===-1 || isGameEnded()) return;
+  if(!(playerDeclaredAllActivated(ps,0) && playerDeclaredAllActivated(ps,1))) return;
+  if(isMultiDevice && myPlayerSlot!==FIRST_PLAYER) return;
+  advanceSplitPhase(ps);
 }
+async function advanceSplitPhase(ps){
+  const t = effectiveNow();
+  const actionId = generateId();
+  const nextPhase = PHASE_SEQUENCE[PHASE_SEQUENCE.indexOf(ps.phase)+1];
+  await pushEvent({type:'phase_end', phase:ps.phase, round:ps.round, ts:t}, actionId);
+  await pushEvent({type:'phase_start', phase:nextPhase, round:ps.round, ts:t}, actionId);
+  markAction(2);
+  if(!isMultiDevice) render();
+}
+// Persistent "end the game early" control -- reachable during any phase
+// (not just between rounds, since there's no longer a between-rounds screen
+// to host it) via the header's icon row. handleEndGameTap() owns the
+// confirmation prompt; this is the actual guarded action.
 async function endGameNow(){
   if(!beginAction()) return;
   try{
-    if(!isBetweenRounds()) return;
+    if(isGameEnded()) return;
     await pushEvent({type:'game_end', ts:effectiveNow()}, generateId());
     markAction(1);
     if(!isMultiDevice) endGame();
   } finally{ endAction(); }
+}
+function handleEndGameTap(){
+  if(isGameEnded()) return;
+  document.getElementById('endGameConfirm').classList.remove('hidden');
+}
+function hideEndGameConfirm(){
+  document.getElementById('endGameConfirm').classList.add('hidden');
+}
+async function confirmEndGame(){
+  hideEndGameConfirm();
+  await endGameNow();
 }
 function endGame(){
   clearInterval(tickHandle);
@@ -1314,123 +1259,68 @@ function render(){
 
   document.getElementById('pausedBanner').classList.toggle('hidden', !paused);
   const pauseBtn = document.getElementById('pauseBtn');
-  pauseBtn.classList.toggle('is-paused', paused);
-  pauseBtn.title = paused ? 'Resume' : 'Pause';
-  // In multi-device mode, undoing a player-owned activation is exclusively
-  // the acting player's own job (via their panel's Done→Undo toggle, with
-  // its own ownership gate) — the shared icon only ever handles undoing a
-  // *shared* action (phase advance, pause), so it hides itself whenever the
-  // last event is someone's activation, rather than letting either device
-  // reach across and undo the other player's move.
-  const topEvt = events[events.length-1];
-  const topIsActivation = !!topEvt && topEvt.type==='activation';
-  document.getElementById('undoBtn').classList.toggle('hidden', isMultiDevice && topIsActivation);
-  document.getElementById('undoBtn').disabled = !canUndo();
-
-  const betweenRounds = isBetweenRounds();
-  document.getElementById('advanceBtn').classList.toggle('hidden', betweenRounds);
-  document.getElementById('roundEndControls').classList.toggle('hidden', !betweenRounds);
-  document.getElementById('betweenRoundsView').classList.toggle('hidden', !betweenRounds);
-
-  if(betweenRounds){
-    const finishedRound = events[events.length-1].round;
-    document.getElementById('sharedPhaseView').classList.add('hidden');
-    document.getElementById('splitView').classList.add('hidden');
-    document.getElementById('roundLabelTop').textContent = "Round "+finishedRound+" / "+roundLimit;
-    document.getElementById('phaseLabelTop').textContent = "Round Complete";
-    document.getElementById('betweenRoundsTitle').textContent = "Round "+finishedRound+" Complete";
-    document.getElementById('beginRoundBtn').textContent = "Begin Round "+(finishedRound+1);
-    return;
-  }
+  pauseBtn.textContent = paused ? 'Resume' : 'Pause';
 
   const ps = currentPhaseEvent();
   document.getElementById('roundLabelTop').textContent = ps.round===0 ? "Game Setup" : "Round "+ps.round+" / "+roundLimit;
   document.getElementById('phaseLabelTop').textContent = PHASE_LABELS[ps.phase];
 
-  const shared = PLAYER_TIMED_PHASES.indexOf(ps.phase)===-1;
-  document.getElementById('sharedPhaseView').classList.toggle('hidden', !shared);
-  document.getElementById('splitView').classList.toggle('hidden', shared);
-
-  if(shared){
-    document.getElementById('sharedPhaseClock').textContent = fmt((t-ps.ts)/1000);
-    document.getElementById('phaseContext').textContent = PHASE_CONTEXT[ps.phase] || '';
-  } else {
-    renderSplitView(ps, t, paused);
-  }
-
-  const advanceBtn = document.getElementById('advanceBtn');
-  advanceBtn.disabled = paused;
-  // Begin-next-phase is a shared control (either device can use it, same as
-  // Pause) -- but during a split-view phase it was reading as "this is my
-  // turn to act" on the *inactive* player's own screen, since it shared the
-  // same bold filled look as their partner's actual pending action. Ghost it
-  // for whoever's device isn't the active one right now; single-device mode
-  // and the shared (non-split) phases are unaffected, since there's no
-  // competing "my action" button there to be confused with.
   const isSplitPhase = PLAYER_TIMED_PHASES.indexOf(ps.phase)!==-1;
-  advanceBtn.classList.toggle('secondary-shared',
-    isMultiDevice && myPlayerSlot!=null && isSplitPhase && currentActivePlayer(ps)!==myPlayerSlot);
-  document.getElementById('showCodeBtn').classList.toggle('hidden', !isMultiDevice);
-  const pregameIdx = PREGAME_SEQUENCE.indexOf(ps.phase);
-  if(pregameIdx!==-1){
-    const nextLabel = pregameIdx < PREGAME_SEQUENCE.length-1 ? PHASE_LABELS[PREGAME_SEQUENCE[pregameIdx+1]] : PHASE_LABELS.command;
-    advanceBtn.textContent = "Begin "+nextLabel;
+  const activePlayer = isSplitPhase ? currentActivePlayer(ps) : null;
+  // In multi-device mode, only the active player's own device shows the
+  // panel -- the other device shows the waiting view instead, since there's
+  // nothing for it to do right now. Single-device mode always shows the
+  // panel directly (both players share the one screen).
+  const iAmWaiting = isSplitPhase && isMultiDevice && myPlayerSlot!=null && activePlayer!==myPlayerSlot;
+
+  document.getElementById('mainPanel').classList.toggle('hidden', iAmWaiting);
+  document.getElementById('waitingView').classList.toggle('hidden', !iAmWaiting);
+
+  const panel = document.getElementById('mainPanel');
+  const advanceBtn = document.getElementById('advanceBtn');
+  if(iAmWaiting){
+    document.getElementById('waitingText').textContent = "Waiting for " + players[activePlayer];
+  } else if(!isSplitPhase){
+    // Shared/setup phases: "Both Players" plus the phase's context line,
+    // no Pass/All Activated -- just the one Done action.
+    panel.classList.add('active-cyan'); // neutral violet, not tied to a player
+    document.getElementById('panelName').textContent = 'Both Players';
+    document.getElementById('panelContext').textContent = PHASE_CONTEXT[ps.phase] || '';
+    document.getElementById('panelContext').classList.remove('hidden');
+    document.getElementById('panelSecondary').classList.add('hidden');
+    advanceBtn.onclick = advancePhase;
+    advanceBtn.textContent = 'Done';
   } else {
-    const idx = PHASE_SEQUENCE.indexOf(ps.phase);
-    const isLast = idx===PHASE_SEQUENCE.length-1 && ps.round===roundLimit;
-    if(isLast){
-      advanceBtn.textContent = "End Game";
-    } else {
-      const nextPhase = PHASE_SEQUENCE[(idx+1) % PHASE_SEQUENCE.length];
-      advanceBtn.textContent = "Begin "+PHASE_LABELS[nextPhase];
-    }
+    // Ship/Squadron: whoever's turn it is, plus Pass/All Activated.
+    panel.classList.toggle('active-cyan', activePlayer===1);
+    document.getElementById('panelName').textContent = players[activePlayer];
+    document.getElementById('panelContext').classList.add('hidden');
+    document.getElementById('panelSecondary').classList.remove('hidden');
+
+    const passBtn = document.getElementById('turnPassBtn');
+    passBtn.classList.toggle('hidden', ps.phase!=='ship');
+    passBtn.disabled = paused || !canPass(ps, activePlayer);
+
+    const allBtn = document.getElementById('turnAllBtn');
+    allBtn.textContent = ALL_ACTIVATED_LABELS[ps.phase];
+    allBtn.disabled = paused;
+
+    advanceBtn.onclick = tapDoneActive;
+    advanceBtn.textContent = 'Activation ' + (donesSoFarForPlayer(ps, activePlayer)+1) + ' Done';
   }
-}
 
-function renderSplitView(ps, t, paused){
-  const activePlayer = currentActivePlayer(ps);
-  const startTs = currentActivationStartTs(ps);
-  const lastEvent = events[events.length-1];
-  const justActedPlayer = (lastEvent && lastEvent.type==='activation' && canUndo()) ? lastEvent.player : null;
-
-  [0,1].forEach(pi=>{
-    const panel = document.getElementById('panel'+(pi+1));
-    const statusEl = document.getElementById('p'+(pi+1)+'status');
-    const clockEl = document.getElementById('p'+(pi+1)+'clock');
-    const clockWrap = document.getElementById('p'+(pi+1)+'clockWrap');
-    const controls = document.getElementById('p'+(pi+1)+'controls');
-    const passBtn = document.getElementById('p'+(pi+1)+'passBtn');
-    const doneBtn = document.getElementById('p'+(pi+1)+'doneBtn');
-
-    const isActive = pi===activePlayer;
-    const isJustActed = pi===justActedPlayer;
-    const isMine = !isMultiDevice || pi===myPlayerSlot;
-
-    panel.classList.toggle('active-amber', isActive && pi===0);
-    panel.classList.toggle('active-cyan', isActive && pi===1);
-    clockWrap.classList.toggle('hidden', !isActive);
-    controls.classList.toggle('hidden', !(isMine && (isActive || isJustActed)));
-
-    if(isActive){
-      statusEl.textContent = paused ? "Paused" : "Active — activation in progress";
-      clockEl.textContent = fmt((t-startTs)/1000);
-      passBtn.classList.toggle('hidden', ps.phase!=='ship');
-      passBtn.disabled = paused || !canPass(ps, pi);
-      passBtn.textContent = "Pass";
-      doneBtn.disabled = paused;
-      doneBtn.textContent = "Done";
-    } else if(isJustActed){
-      statusEl.textContent = lastEvent.outcome==='pass' ? "Passed" : "Done";
-      passBtn.classList.add('hidden');
-      doneBtn.classList.remove('hidden');
-      doneBtn.disabled = false;
-      doneBtn.textContent = "Undo";
-    } else {
-      statusEl.textContent = "Idle";
-      const idleTotalEl = document.getElementById('p'+(pi+1)+'idleTotal');
-      if(idleTotalEl) idleTotalEl.textContent = fmt(liveTotalOnClock(pi));
-    }
-  });
+  // Undo ownership: in multi-device mode, a device may only undo its own
+  // last activation or All-Activated declaration -- never reach across and
+  // undo the other player's. Events with no owning player (phase/pause
+  // transitions) stay undoable from either device, same as always.
+  const topEvt = events[events.length-1];
+  const topHasOwner = !!topEvt && (topEvt.type==='activation' || topEvt.type==='all_activated');
+  const topIsOthersOwned = topHasOwner && isMultiDevice && topEvt.player!==myPlayerSlot;
+  document.getElementById('undoBtn').classList.toggle('hidden', topIsOthersOwned);
+  document.getElementById('undoBtn').disabled = !canUndo();
+  document.getElementById('endGameBtn').disabled = isGameEnded();
+  advanceBtn.disabled = paused;
+  document.getElementById('showCodeBtn').classList.toggle('hidden', !isMultiDevice);
 }
 
 /* ---------------- stats derivation ---------------- */
@@ -1972,6 +1862,10 @@ function applyIncomingEvent(seq, event){
   if(!multiDeviceReady) return; // still backfilling; enterMultiDeviceGame() will render once ready
   if(wasNewTop) multiUndoUnlocked = true; // a genuinely fresh push arrived live — arm undo for it
   if(event.type==='game_end'){ endGame(); return; }
+  // Both players may have just become "all activated" as of this event --
+  // check every time one arrives (from either device), since the tie-break
+  // inside maybeAutoAdvanceSplitPhase() means only slot 0 actually acts on it.
+  if(event.type==='all_activated') maybeAutoAdvanceSplitPhase();
   render();
 }
 function subscribeToGameEvents(code){

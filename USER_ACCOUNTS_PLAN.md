@@ -23,14 +23,14 @@ From Randy, 2026-09-21:
 
 ## Constraints
 
-- **Build only against the new design** (`design/armada-clock-alt.html`). Nothing in this plan
-  touches `armada-clock.html` — no point updating a design that's on its way out.
-- **Don't break the live app.** `armada-clock.html` is in active beta use right now. Frontend
-  changes are naturally isolated (different file). Backend changes are not — both files point at
-  the same Supabase project, so every migration here must be strictly additive (new tables, new
-  *nullable* columns) so the old app's existing queries and RPCs keep working unaware any of this
-  exists. The one genuinely risky piece is tightening RLS (see Security below); that gets tested
-  against the old app's existing anonymous access patterns before it's considered done.
+- **Build against `armada-clock.html`.** *(Updated 2026-09-22: the simplified design was promoted
+  to canonical — it's no longer a separate fork at `design/armada-clock-alt.html`, that path no
+  longer exists. This plan now targets the one live file directly.)*
+- **Don't break the live app while building.** `armada-clock.html` is in active beta use at
+  `https://fleetchrono.app` right now, so every migration here must be strictly additive (new
+  tables, new *nullable* columns) so existing queries and RPCs keep working throughout, not just at
+  the end. The one genuinely risky piece is tightening RLS (see Security below); that gets tested
+  against the app's existing anonymous access patterns before it's considered done.
 - **Custom domain** has no required ordering relative to this work — it's an independent DNS/Pages
   config change. The only wrinkle: Google OAuth's authorized redirect URLs are tied to whatever
   domain is live when it's configured. Deciding the domain before finishing Google OAuth setup

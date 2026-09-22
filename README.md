@@ -2,7 +2,7 @@
 
 A tournament game timer for **Star Wars: Armada** — tracks the round clock, phase sequence, and each player's activation time, live at the table.
 
-**Live app:** https://randynasson.github.io/fleet-chrono/
+**Live app:** https://fleetchrono.app
 
 ## What it does
 
@@ -19,7 +19,7 @@ Works in two modes:
 
 ## Try it
 
-Open the **[live app](https://randynasson.github.io/fleet-chrono/)** — no install, no account. Pick "Use on this device" for single-device, or "Start a multi-device game" / "Join a game" to sync across two phones.
+Open the **[live app](https://fleetchrono.app)** — no install, no account. Pick "Just me, on this device" for single-device, or "Tandem, on two devices" / "I'm joining a game" to sync across two phones.
 
 ## How it's built
 
@@ -38,7 +38,8 @@ See [`SPEC.md`](SPEC.md) for the full design rationale and architecture notes.
 | `armada-clock.html` | The app. Single file — open it directly, or serve it statically. |
 | `supabase/migrations/` | The Postgres schema and RPC functions behind multi-device sync. |
 | `archive/armada-clock-utilitarian.html` | The original plain/utilitarian design, kept for reference. |
-| `design_handoff_fleet_chrono_holo_tactical/` | The design handoff for the current "Holo Tactical Violet" visual style. |
+| `archive/armada-clock-holo-tactical-violet.html` | The prior live design, kept for reference — same visual system as today's app, but with the denser dual-panel live-game screens before the information-density simplification. |
+| `design_handoff_fleet_chrono_holo_tactical/` | The design handoff for the "Holo Tactical Violet" visual style the app still uses. |
 | `SPEC.md` | Product concept, decisions made, and architecture notes. |
 | `DEFERRED.md` | Ideas and known gaps intentionally not built yet. |
 | `USER_ACCOUNTS_PLAN.md` | Planned schema/auth/security design for user accounts and personal game history — not yet built. |
