@@ -1019,7 +1019,7 @@ function startGame(){
   targetDurationSec = h*3600 + m*60;
 
   gameStartTs = Date.now();
-  events = [{type:'game_start', ts:gameStartTs, round:0, phase:'obstacles'}];
+  events = [{type:'game_start', ts:gameStartTs, round:0, phase:'obstacles', roundLimit, targetDurationSec}];
   events.push({type:'phase_start', phase:'obstacles', round:0, ts:gameStartTs});
   lastActionWasUndo = false;
   lastPushCount = 0;
@@ -1879,7 +1879,7 @@ function renderHistory(){
     const dateLabel = new Date(row.created_at).toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'});
     const modeLabel = row.source==='multi_device' ? 'Multi-device' : 'Single-device';
     return `
-      <div class="history-row" onclick="viewHistoricalGame('${row.game_id}')">
+      <div class="history-row" onclick="viewHistoricalGame('${row.game_id}', ${row.round_limit}, ${row.target_duration_sec})">
         <div class="hr-main"><span>${dateLabel}</span><span class="hr-mode">${modeLabel}</span></div>
         <div class="hr-sub">${row.rounds_played} rounds &middot; ${fmt(row.my_total_activation_sec)} on clock &middot; ${row.my_activation_count} activations</div>
       </div>`;
@@ -1905,7 +1905,7 @@ function renderHistory(){
 // the same globals renderStats() reads. Works for single-device history too,
 // since record_single_device_game() (see migration 0009) gives signed-in
 // single-device games a real game_events row set, not just the summary.
-async function viewHistoricalGame(gameId){
+async function viewHistoricalGame(gameId, fallbackRoundLimit, fallbackTargetDurationSec){
   const { data, error } = await sb.from('game_events').select('seq,event')
     .eq('game_id', gameId).order('seq', { ascending: true });
   const loadedEvents = (!error && data) ? data.map(row=>row.event) : [];
@@ -1914,8 +1914,10 @@ async function viewHistoricalGame(gameId){
 
   events = loadedEvents;
   gameStartTs = startEvt.ts;
-  roundLimit = startEvt.roundLimit;
-  targetDurationSec = startEvt.targetDurationSec;
+  // Older single-device recordings may predate embedding these on the
+  // event itself -- game_summaries kept its own copy for exactly this.
+  roundLimit = startEvt.roundLimit!=null ? startEvt.roundLimit : fallbackRoundLimit;
+  targetDurationSec = startEvt.targetDurationSec!=null ? startEvt.targetDurationSec : fallbackTargetDurationSec;
   players = ["First Player","Second Player"];
 
   viewingHistoricalGame = true;
