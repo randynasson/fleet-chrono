@@ -1,7 +1,8 @@
 # User Accounts & Data Plan
 
-**Status: planned, not started.** Documented 2026-09-21 from a planning conversation; nothing in
-this file has been built yet. Update the phase list below as work actually begins.
+**Status: Phases 1-3 built** (2026-09-22) — Supabase Auth, RLS scoping, and personal game history
+& trends are all live in `fleet-chrono.html`. Phases 4-5 (remove-from-history UI, admin analytics)
+remain as documented below.
 
 ## Goals
 
@@ -81,28 +82,56 @@ from at all — asking is the only option, not deriving one from the address.
   lives in a protected schema that's awkward to query or join against later (a leaderboard, an
   admin view showing names), while a plain `profiles` table is the conventional, RLS-friendly way
   to make a name referenceable without exposing the rest of the auth record.
-- `game_players.user_id uuid null references auth.users(id)`
-- `game_players.hidden_at timestamptz null` — set when a player removes a game from their own
-  history. Lives on `game_players` (per participant), not `games`, so hiding your own row never
-  affects your opponent's.
-- `game_summaries` — one row per `game_players` row (i.e., per participant per game), written once
-  at game end:
-  - `game_id`, `user_id` (nullable), `device_id`
-  - `total_time_sec`, `ship_activation_count`, `ship_avg_sec`, `squadron_activation_count`,
-    `squadron_avg_sec`
-  - `round_breakdown jsonb` — per round, `{round, my_sec, opponent_sec}`. This is exactly what
-    `renderStats()` already computes as `roundPlayerTotals` for the two-color bar on the stats
-    screen — the plan is to persist that same derivation instead of only rendering it, so personal
-    trends ("my average share of round time") are a query over already-correct data, not a new
-    metric to design.
-  - `total_duration_sec`, `round_limit`, `is_multi_device`, `created_at`
+- `game_players.user_id uuid null references auth.users(id)`, set via `claim_device()`.
+- **Single-device games now get real `games`/`game_players`/`game_events` rows too, when signed
+  in** — the gap noted below under "single-device attribution" is closed by
+  `record_single_device_game()` (migration `0009_game_summaries.sql`), not by scoping history to
+  multi-device only as first proposed. `games.mode` (`'multi_device' | 'single_device'`)
+  distinguishes the two. Anonymous single-device play is completely unaffected — nothing is written
+  unless the device holder is signed in, and only for the game just finished.
+- `game_summaries` — one row per **participant** per finished game (not one row per game), written
+  at game end by `writeGameSummary()`:
+  - `game_id` (real FK to `games(id)`, now always satisfiable — see above), `source`
+    (`'single_device' | 'multi_device'`), `slot`, `user_id`, `device_id`
+  - `round_limit`, `target_duration_sec`, `rounds_played`, `total_game_duration_sec`
+  - `my_total_activation_sec`, `my_activation_count` — "done" activations only, mirrors
+    `renderStats()`'s `totals`/`counts`
+  - `my_time_by_round jsonb` — array, one entry per round, sums every activation (done *and* pass,
+    since a pass still spends turn time) — mirrors `renderStats()`'s `roundPlayerTotals`
+  - `my_activation_by_phase jsonb` — `{"ship":{"count","totalSec"},"squadron":{...}}`, kept as two
+    independent sub-objects (ship and squadron averages never merge) — mirrors `renderStats()`'s
+    `byType`
+  - `created_at`, `deleted_at` (soft "remove from history," per participant — not built yet, see
+    Phase 4)
+  - `unique(game_id, slot)` — makes the write idempotent (`upsert`), safe to retry from
+    `resumeSavedGame()`'s reload-into-already-ended-game path without double-writing.
 - Every new table references `games(id) on delete cascade`, so a single `delete from games where
   id = ...` cleanly removes a game everywhere — this is what makes the hard-delete RPC below cheap.
 
+## Single-device attribution
+
+Single-device mode originally had zero Supabase interaction at all, which made "whose stats are
+these" ambiguous for a signed-in device holder. Resolved 2026-09-22 (per Randy): reuse the existing
+multi-device "You Are" slot-picker UI in single-device setup too (shown only when signed in — an
+anonymous device sees no extra step). `startGame()` sets `myPlayerSlot` from that selection instead
+of always nulling it; every other read of `myPlayerSlot` elsewhere in the app is already
+`isMultiDevice &&`-guarded, so this doesn't touch any existing single-device gameplay behavior.
+
 ## Personal history & trends
 
-- History list = the signed-in user's own `game_summaries` rows where `hidden_at is null`.
-- Trends = aggregates (averages, etc.) over those same rows.
+- Built as the "My Games & Trends" screen (account menu → `openHistory()`): list of the signed-in
+  user's own `game_summaries` rows (`deleted_at is null`), newest-first by default with a toggle to
+  reverse, plus an all-time averages block (games tracked, avg time on clock, avg ship activation,
+  avg squadron activation — computed client-side over the fetched rows).
+- Tapping a list entry (`viewHistoricalGame()`) fetches that game's full `game_events` row set and
+  feeds it into the *existing* `renderStats()`/`screen-activity` views — the exact same detail
+  screen a live game ends on, both players, phase breakdown, activity log — rather than a
+  summary-only view. This is what full single-device parity (see above) actually buys: without it,
+  a single-device game would only ever be able to show the signed-in player's own aggregates, not
+  the true dual-player breakdown. The screen's "New" button doubles as "Back" while browsing history
+  (`viewingHistoricalGame` flag), and reverts on every real game-end path
+  (`resetStatsHeaderButton()`) so a stale "Back to history" state can never leak into a genuine
+  finished game.
 - All-time rollup is enough for v1 (per Randy). Storing one row per game — not a single running
   aggregate — means filtering later (by opponent, date range, round/duration config) is a `WHERE`
   clause away, not a schema change.
@@ -148,11 +177,15 @@ but it now completes before Phase 3 starts, so `user_id`-linked data is never le
 readable (via the anon key, regardless of whether any UI points at it yet) while the history/hide/
 admin features are being built on top of it.
 
-1. Supabase Auth (magic link + Google + Discord) + `game_players.user_id` + `profiles.display_name`
-   (default from provider, or the set-name step for email) + device-claiming flow
-2. RLS scoping, tested against the live app's existing anonymous flows — see Security above
-3. `game_summaries` table + summary-writing at game end + a personal history/trends screen
-4. "Remove from my history" (`hidden_at`) + the UI affordance for it
+1. ~~Supabase Auth (magic link + Google + Discord) + `game_players.user_id` +
+   `profiles.display_name` (default from provider, or the set-name step for email) +
+   device-claiming flow~~ — done (`0008_user_accounts.sql`).
+2. ~~RLS scoping, tested against the live app's existing anonymous flows~~ — done, see Security
+   above.
+3. ~~`game_summaries` table + summary-writing at game end + a personal history/trends screen~~ —
+   done (`0009_game_summaries.sql`), including single-device parity via
+   `record_single_device_game()`.
+4. "Remove from my history" (`game_summaries.deleted_at` already exists; no UI affordance yet)
 5. Admin analytics (SQL only, no UI) — including `admin_delete_game` if a real need has come up by
    then
 

@@ -192,6 +192,74 @@
   .btn-danger{ background:transparent; border:1px solid var(--red-line); color:var(--red); }
   .btn-danger:active{ background:var(--red-wash); }
 
+  /* ---------- ACCOUNT / SIGN IN (landing screen only) ---------- */
+  .account-corner{ position:absolute; top:22px; right:22px; z-index:2; }
+  /* Same ghost-button chrome as everything else on this screen (transparent
+     fill, thin colored border+text) -- recolored amber, matching the app's
+     existing amber-ghost treatment (e.g. the Pass button in Ship Phase), so
+     Sign In stands out by hue alone, not by becoming a different kind of
+     button. Pulses twice on load to draw the eye there once. */
+  .signin-pill{
+    display:flex; align-items:center; gap:7px; padding:8px 14px;
+    background:transparent; border:1px solid rgba(232,163,61,.5); color:var(--amber-ghost-text);
+    font-family:'Saira',sans-serif; font-size:12px; font-weight:600; letter-spacing:.10em; text-transform:uppercase;
+    cursor:pointer;
+    animation:signin-pulse .7s ease-in-out 2;
+  }
+  .signin-pill:active{ background:rgba(232,163,61,.14); }
+  @keyframes signin-pulse{
+    0%, 100%{ box-shadow:0 0 0 rgba(232,163,61,0); transform:scale(1); }
+    50%{ box-shadow:0 0 18px rgba(232,163,61,.65); transform:scale(1.04); }
+  }
+  @media (prefers-reduced-motion: reduce){ .signin-pill{ animation:none; } }
+  .account-pill{
+    display:flex; align-items:center; gap:9px; padding:7px 8px 7px 14px;
+    background:rgba(192,140,245,.08); border:1px solid rgba(192,140,245,.32); color:var(--violet-hi);
+    font-family:'Saira',sans-serif; font-size:13px; font-weight:500; cursor:pointer;
+  }
+  .account-avatar{
+    width:22px; height:22px; flex:none; display:flex; align-items:center; justify-content:center;
+    background:var(--violet); color:var(--violet-cta-ink); font-family:'Share Tech Mono',monospace;
+    font-size:12px; font-weight:400;
+  }
+  .account-caret{ width:8px; height:8px; border-right:1.5px solid var(--violet-muted); border-bottom:1.5px solid var(--violet-muted); transform:rotate(45deg) translate(-1px,-1px); margin-left:2px; }
+  .account-menu{
+    position:absolute; top:60px; right:22px; z-index:21; width:200px;
+    background:var(--void); border:1px solid rgba(192,140,245,.32); box-shadow:0 16px 40px rgba(0,0,0,.6);
+  }
+  .account-menu .who{ padding:14px 16px; border-bottom:1px solid rgba(192,140,245,.18); }
+  .account-menu .who .name{ font-size:14px; color:var(--violet-hi); font-weight:500; }
+  .account-menu .who .method{ font-size:12px; color:var(--violet-muted); margin-top:3px; }
+  .account-menu button{
+    display:block; width:100%; text-align:left; padding:13px 16px; background:none; border:none; cursor:pointer;
+    font-family:'Saira',sans-serif; font-size:13px; letter-spacing:.05em; color:var(--violet-text); text-transform:uppercase;
+  }
+  .account-menu button:active{ background:rgba(192,140,245,.1); }
+  .account-menu button.danger{ color:var(--red); }
+
+  .auth-options{ display:flex; flex-direction:column; gap:10px; width:100%; }
+  .auth-btn{
+    display:flex; align-items:center; gap:14px; width:100%; padding:15px 18px;
+    background:transparent; border:1px solid rgba(192,140,245,.32); color:var(--violet-hi);
+    font-family:'Saira',sans-serif; font-size:14px; font-weight:500; letter-spacing:.02em; cursor:pointer;
+    text-align:left;
+  }
+  .auth-btn:active{ background:rgba(192,140,245,.1); }
+  .auth-btn svg{ flex:none; color:var(--violet-text); }
+  .auth-btn:disabled{ opacity:.5; cursor:not-allowed; }
+  .auth-divider{ display:flex; align-items:center; gap:12px; margin:6px 0 2px; color:var(--violet-muted); font-size:12px; letter-spacing:.16em; text-transform:uppercase; }
+  .auth-divider::before, .auth-divider::after{ content:''; flex:1; height:1px; background:rgba(192,140,245,.2); }
+
+  .signin-back{
+    position:absolute; top:16px; left:16px; width:30px; height:30px; display:flex; align-items:center; justify-content:center;
+    background:transparent; border:1px solid rgba(192,140,245,.32); color:var(--violet-text); cursor:pointer;
+  }
+  .envelope-badge{
+    width:52px; height:52px; margin:0 auto 20px; display:flex; align-items:center; justify-content:center;
+    border:1px solid rgba(192,140,245,.35); background:rgba(192,140,245,.06); color:var(--violet);
+  }
+  .sent-to{ color:var(--violet-hi); font-weight:500; }
+
   /* ---------- LIVE GAME SCREEN ---------- */
   .live{ position:relative; display:flex; flex-direction:column; height:100%; z-index:1; }
   .strip{
@@ -391,6 +459,23 @@
   }
   .activity-shared-row .mono{ font-size:17px; color:var(--violet-hi); }
 
+  .avg-row{
+    display:flex; justify-content:space-between; align-items:center; padding:9px 0;
+    border-bottom:1px solid rgba(192,140,245,.14); font-size:14px; color:var(--violet-hi);
+  }
+  .avg-row:last-child{ border-bottom:none; }
+  .avg-row .num{ color:var(--violet-hi); font-size:15px; }
+  .history-row{
+    display:flex; flex-direction:column; gap:3px; padding:13px 0;
+    border-bottom:1px solid rgba(192,140,245,.14); cursor:pointer;
+  }
+  .history-row:last-child{ border-bottom:none; }
+  .history-row:active{ opacity:.65; }
+  .hr-main{ display:flex; justify-content:space-between; font-size:15px; color:var(--violet-hi); }
+  .hr-mode{ font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--text-dim); }
+  .hr-sub{ font-size:13px; color:var(--violet-muted); }
+  .history-empty{ color:var(--text-dim); font-size:14px; padding:24px 0; text-align:center; }
+
   .hidden{ display:none !important; }
 </style>
 </head>
@@ -400,6 +485,27 @@
 
   <!-- LANDING -->
   <div id="screen-landing" class="setup">
+    <div class="account-corner">
+      <button id="signinPillBtn" class="signin-pill hidden" onclick="openSignIn()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/><path d="M13 5V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h5a2 2 0 0 0 2-2v-1"/></svg>
+        Sign In
+      </button>
+      <button id="accountPillBtn" class="account-pill hidden" onclick="toggleAccountMenu()">
+        <span class="account-avatar" id="acctAvatar">?</span>
+        <span id="acctPillName">&nbsp;</span>
+        <span class="account-caret"></span>
+      </button>
+      <div id="accountMenu" class="account-menu hidden">
+        <div class="who">
+          <div class="name" id="acctMenuName"></div>
+          <div class="method" id="acctMenuMethod"></div>
+        </div>
+        <button onclick="openHistory()">My Games &amp; Trends</button>
+        <button onclick="showDisplayNameStep('edit')">Edit Name</button>
+        <button class="danger" onclick="handleSignOut()">Sign Out</button>
+      </div>
+    </div>
+
     <div class="wordmark">
       <div class="bracket tl"></div>
       <h1>Fleet<br>Chrono</h1>
@@ -423,6 +529,87 @@
         <button class="btn btn-ghost" onclick="show('screen-join')">I'm joining a game</button>
       </div>
     </div>
+
+    <!-- SIGN IN: choose method -->
+    <div id="overlaySignIn" class="code-overlay hidden">
+      <button class="signin-back" onclick="closeSignIn()" title="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>
+      </button>
+      <div class="code-card confirm-card">
+        <div class="bracket tl sm"></div><div class="bracket tr sm"></div><div class="bracket bl sm"></div><div class="bracket br sm"></div>
+        <div class="confirm-title">Sign In</div>
+        <div class="confirm-sub">Save your game history and see your pace trends over time. Never required to play.</div>
+        <div id="signinError" class="field-error hidden"></div>
+        <div class="auth-options">
+          <button class="auth-btn" onclick="signInWithProvider('google')">
+            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 10.2v3.96h5.52c-.24 1.38-1.68 4.04-5.52 4.04-3.32 0-6.03-2.75-6.03-6.15S8.68 5.9 12 5.9c1.89 0 3.16.8 3.88 1.49l2.65-2.55C16.93 3.24 14.7 2.3 12 2.3 6.9 2.3 2.75 6.5 2.75 11.6S6.9 20.9 12 20.9c5.34 0 8.98-3.75 8.98-9.03 0-.6-.07-1.07-.15-1.53H12z"/></svg>
+            Continue with Google
+          </button>
+          <button class="auth-btn" onclick="signInWithProvider('discord')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#5865F2"><path d="M20.3 5.3A17.7 17.7 0 0 0 15.8 4c-.2.4-.5.9-.6 1.3a16.4 16.4 0 0 0-4.9 0A9 9 0 0 0 9.6 4a17.6 17.6 0 0 0-4.5 1.4C2.4 9 1.7 12.6 2 16.2A17.8 17.8 0 0 0 7.4 19c.4-.6.8-1.2 1.1-1.9-.6-.2-1.2-.5-1.8-.9l.4-.3c3.4 1.6 7.1 1.6 10.5 0l.4.3c-.6.4-1.2.7-1.8.9.3.7.7 1.3 1.1 1.9a17.8 17.8 0 0 0 5.4-2.8c.4-4.2-.6-7.7-2.4-10.9ZM9.7 14.3c-1 0-1.8-.9-1.8-2.1s.8-2.1 1.8-2.1 1.9.9 1.8 2.1c0 1.2-.8 2.1-1.8 2.1Zm5.6 0c-1 0-1.8-.9-1.8-2.1s.8-2.1 1.8-2.1 1.9.9 1.8 2.1c0 1.2-.8 2.1-1.8 2.1Z"/></svg>
+            Continue with Discord
+          </button>
+        </div>
+        <div class="auth-divider">or</div>
+        <div class="auth-options">
+          <button class="auth-btn" onclick="showEmailStep()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="1"/><path d="m2 7 10 6 10-6"/></svg>
+            Continue with Email
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIGN IN: email -->
+    <div id="overlayEmail" class="code-overlay hidden">
+      <button class="signin-back" onclick="backToMethods()" title="Back">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="code-card confirm-card">
+        <div class="bracket tl sm"></div><div class="bracket tr sm"></div><div class="bracket bl sm"></div><div class="bracket br sm"></div>
+        <div class="confirm-title">Sign In with Email</div>
+        <div class="confirm-sub">We'll send a one-time link — no password to remember.</div>
+        <div class="field">
+          <label for="signinEmail">Email address</label>
+          <input id="signinEmail" type="email" placeholder="you@example.com">
+        </div>
+        <div id="emailError" class="field-error hidden"></div>
+        <button class="btn btn-primary" style="width:100%; margin-top:22px;" id="sendMagicLinkBtn" onclick="sendMagicLink()">Send Magic Link</button>
+      </div>
+    </div>
+
+    <!-- SIGN IN: check email -->
+    <div id="overlayEmailSent" class="code-overlay hidden">
+      <button class="signin-back" onclick="closeSignIn()" title="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>
+      </button>
+      <div class="code-card confirm-card">
+        <div class="bracket tl sm"></div><div class="bracket tr sm"></div><div class="bracket bl sm"></div><div class="bracket br sm"></div>
+        <div class="envelope-badge">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="1"/><path d="m2 7 10 6 10-6"/></svg>
+        </div>
+        <div class="confirm-title">Check Your Email</div>
+        <div class="confirm-sub">We sent a sign-in link to<br><span class="sent-to" id="sentToEmail"></span>. Open it on this device to finish signing in.</div>
+        <button class="btn btn-ghost" style="width:100%" onclick="backToMethods()">Use a different method</button>
+      </div>
+    </div>
+
+    <!-- SIGN IN: set/edit display name -->
+    <div id="overlayDisplayName" class="code-overlay hidden">
+      <button class="signin-back" id="displayNameBack" onclick="closeSignIn()" title="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>
+      </button>
+      <div class="code-card confirm-card">
+        <div class="bracket tl sm"></div><div class="bracket tr sm"></div><div class="bracket bl sm"></div><div class="bracket br sm"></div>
+        <div class="confirm-title" id="displayNameTitle">Set Your Display Name</div>
+        <div class="confirm-sub" id="displayNameSub"></div>
+        <div class="field">
+          <label for="displayNameInput">Display name</label>
+          <input id="displayNameInput" type="text" placeholder="e.g. Randy">
+        </div>
+        <button class="btn btn-primary" style="width:100%; margin-top:22px;" id="displayNameSaveBtn" onclick="saveDisplayName()">Continue</button>
+      </div>
+    </div>
   </div>
 
   <!-- SETUP (single device) -->
@@ -439,6 +626,13 @@
     <div id="setupForm" class="setup-form">
       <p class="sub">Tournament game timer for Star Wars: Armada. Tracks the round clock, phases, and each player's turn time.</p>
 
+      <div id="soloSlotField" class="field hidden">
+        <label>You are</label>
+        <div class="slot-picker">
+          <button id="soloSlotBtn0" class="slot-btn active" onclick="selectSoloSlot(0)">First Player</button>
+          <button id="soloSlotBtn1" class="slot-btn" onclick="selectSoloSlot(1)">Second Player</button>
+        </div>
+      </div>
       <div class="field">
         <label>Round limit</label>
         <input id="roundLimit" type="text" inputmode="numeric" value="6">
@@ -646,7 +840,7 @@
         <h2>Game complete</h2>
         <div id="finalTime" class="final-time"></div>
       </div>
-      <button class="btn btn-ghost btn-small" onclick="newGame()">New</button>
+      <button id="statsHeaderBtn" class="btn btn-ghost btn-small" onclick="newGame()">New</button>
     </div>
 
     <div id="paceBlock" class="stat-block hidden">
@@ -686,6 +880,31 @@
       <button class="btn btn-ghost btn-small" onclick="show('screen-stats')">Back</button>
     </div>
     <div id="activityLog"></div>
+  </div>
+
+  <!-- MY GAMES & TRENDS -->
+  <div id="screen-history" class="stats hidden">
+    <div class="stats-header">
+      <h2>My Games &amp; Trends</h2>
+      <button class="btn btn-ghost btn-small" onclick="show('screen-landing')">Back</button>
+    </div>
+
+    <div id="historyEmpty" class="history-empty hidden">No games in your history yet.</div>
+
+    <div id="historyContent" class="hidden">
+      <div class="stat-block">
+        <h3>YOUR AVERAGES</h3>
+        <div id="historyAverages"></div>
+      </div>
+
+      <div class="stat-block">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h3 style="margin:0;">GAMES</h3>
+          <button class="link-btn" id="historySortBtn" onclick="toggleHistorySort()" style="margin:0;">Newest first</button>
+        </div>
+        <div id="historyList"></div>
+      </div>
+    </div>
   </div>
 
 </div>
@@ -751,7 +970,7 @@ function fmt(sec, forceHours){
 const STORAGE_KEY = 'fleetChronoGame';
 function persistState(){
   try{
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({players, roundLimit, targetDurationSec, gameStartTs, events}));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({players, roundLimit, targetDurationSec, gameStartTs, events, myPlayerSlot}));
   }catch(e){}
 }
 function clearPersistedState(){
@@ -793,7 +1012,7 @@ function effectiveNow(){
 /* ---------------- SETUP ---------------- */
 function startGame(){
   isMultiDevice = false;
-  myPlayerSlot = null;
+  myPlayerSlot = currentUser ? soloTrackSlot : null;
   roundLimit = parseInt(document.getElementById('roundLimit').value) || 6;
   const h = parseInt(document.getElementById('durH').value) || 0;
   const m = parseInt(document.getElementById('durM').value) || 0;
@@ -1146,6 +1365,8 @@ function endGame(){
   if(eventsChannel){ sb.removeChannel(eventsChannel); eventsChannel = null; }
   if(isMultiDevice) clearMultiSession();
   onVisibleResync = null;
+  resetStatsHeaderButton();
+  writeGameSummary();
   renderStats();
   show('screen-stats');
 }
@@ -1171,6 +1392,7 @@ function resumeSavedGame(){
   targetDurationSec = data.targetDurationSec;
   gameStartTs = data.gameStartTs;
   events = data.events;
+  myPlayerSlot = data.myPlayerSlot!=null ? data.myPlayerSlot : null;
   // Conservative on resume: never allow undoing something from before the
   // reload — the precise boundary of "the last action" is gone with the
   // page state, so undo simply starts disarmed until a new action happens.
@@ -1179,6 +1401,8 @@ function resumeSavedGame(){
   try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ audioCtx = null; }
 
   if(isGameEnded(events)){
+    resetStatsHeaderButton();
+    writeGameSummary();
     renderStats();
     show('screen-stats');
   } else {
@@ -1200,9 +1424,19 @@ function discardSavedGame(){
 /* ---------------- render loop ---------------- */
 function show(id){
   ['screen-landing','screen-setup','screen-multi-setup','screen-lobby','screen-join','screen-join-confirm',
-   'screen-live','screen-stats','screen-activity'].forEach(s=>{
+   'screen-live','screen-stats','screen-activity','screen-history'].forEach(s=>{
     document.getElementById(s).classList.toggle('hidden', s!==id);
   });
+  if(id==='screen-setup') updateSoloSlotPickerVisibility();
+}
+function updateSoloSlotPickerVisibility(){
+  document.getElementById('soloSlotField').classList.toggle('hidden', !currentUser);
+}
+let soloTrackSlot = 0;
+function selectSoloSlot(slot){
+  soloTrackSlot = slot;
+  document.getElementById('soloSlotBtn0').classList.toggle('active', slot===0);
+  document.getElementById('soloSlotBtn1').classList.toggle('active', slot===1);
 }
 
 const WARNING_THRESHOLD_SEC = 15*60;
@@ -1517,6 +1751,194 @@ function renderStats(){
   }).join('') || '<div style="color:var(--text-dim); font-size:13px;">No activations recorded.</div>';
 }
 
+/* ---------------- personal history: compute + write a summary row ----------------
+   A lean, single-slot walk of the current event log -- deliberately separate
+   from renderStats()'s walk (which needs both players' full detail for the
+   on-screen breakdown) rather than refactored to share it, so this can't
+   regress the existing stats screen. "Total time on clock" / "average per
+   activation" count 'done' activations only, matching renderStats(); "time
+   by round" sums every activation (done and pass alike), since a pass still
+   spends turn time -- also matching renderStats()' roundPlayerTotals. */
+function computeGameSummary(mySlot){
+  const totalElapsed = (events[events.length-1].ts - gameStartTs)/1000;
+  let myTotalSec = 0, myCount = 0;
+  const timeByRound = {};
+  const byPhase = {ship:{count:0,totalSec:0}, squadron:{count:0,totalSec:0}};
+  let boundaryTs = null;
+  events.forEach(e=>{
+    if(e.type==='phase_start' || e.type==='phase_end'){
+      boundaryTs = e.ts;
+    } else if(e.type==='activation'){
+      const d = (e.ts-boundaryTs)/1000;
+      boundaryTs = e.ts;
+      if(e.player===mySlot){
+        timeByRound[e.round] = (timeByRound[e.round]||0) + d;
+        if(e.outcome==='done'){
+          myTotalSec += d; myCount++;
+          if(byPhase[e.phase]){ byPhase[e.phase].count++; byPhase[e.phase].totalSec += d; }
+        }
+      }
+    }
+  });
+  const rounds = Object.keys(timeByRound).map(Number).sort((a,b)=>a-b);
+  const lastRoundEnd = events.slice().reverse().find(e=>e.type==='round_end');
+  return {
+    totalGameDurationSec: Math.round(totalElapsed),
+    roundsPlayed: lastRoundEnd ? lastRoundEnd.round : 0,
+    myTotalActivationSec: Math.round(myTotalSec),
+    myActivationCount: myCount,
+    myTimeByRound: rounds.map(r=>Math.round(timeByRound[r])),
+    myActivationByPhase: {
+      ship: {count: byPhase.ship.count, totalSec: Math.round(byPhase.ship.totalSec)},
+      squadron: {count: byPhase.squadron.count, totalSec: Math.round(byPhase.squadron.totalSec)}
+    }
+  };
+}
+
+// Best-effort, fire-and-forget: called from endGame() on every device that
+// finishes a game while signed in. Never blocks or alerts on failure --
+// personal history is an add-on, not something that should get in the way
+// of finishing a game. Multi-device: game_id/games/game_events already
+// exist (append_event() wrote them turn by turn), so this is a plain
+// insert. Single-device: nothing exists server-side yet, so
+// record_single_device_game() creates the games/game_players/game_events
+// rows first, in one shot, before the summary row references them.
+async function writeGameSummary(){
+  if(!currentUser || myPlayerSlot==null) return;
+  try{
+    let gameId;
+    if(isMultiDevice){
+      gameId = currentGameCode;
+    } else {
+      const { data, error } = await sb.rpc('record_single_device_game', {
+        p_device_id: deviceId,
+        p_round_limit: roundLimit,
+        p_target_duration_sec: targetDurationSec,
+        p_my_slot: myPlayerSlot,
+        p_events: events
+      });
+      if(error) return;
+      gameId = data;
+    }
+    const s = computeGameSummary(myPlayerSlot);
+    await sb.from('game_summaries').upsert({
+      game_id: gameId,
+      source: isMultiDevice ? 'multi_device' : 'single_device',
+      slot: myPlayerSlot,
+      user_id: currentUser.id,
+      device_id: deviceId,
+      round_limit: roundLimit,
+      target_duration_sec: targetDurationSec,
+      rounds_played: s.roundsPlayed,
+      total_game_duration_sec: s.totalGameDurationSec,
+      my_total_activation_sec: s.myTotalActivationSec,
+      my_activation_count: s.myActivationCount,
+      my_time_by_round: s.myTimeByRound,
+      my_activation_by_phase: s.myActivationByPhase
+    }, { onConflict: 'game_id,slot' });
+  }catch(e){}
+}
+
+/* ---------------- My Games & Trends ---------------- */
+let historyRows = [];
+let historySortAsc = false;
+let viewingHistoricalGame = false;
+
+async function openHistory(){
+  document.getElementById('accountMenu').classList.add('hidden');
+  show('screen-history');
+  document.getElementById('historyEmpty').classList.add('hidden');
+  document.getElementById('historyContent').classList.add('hidden');
+  const { data, error } = await sb.from('game_summaries')
+    .select('*')
+    .eq('user_id', currentUser.id)
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false });
+  historyRows = (!error && data) ? data : [];
+  renderHistory();
+}
+function toggleHistorySort(){
+  historySortAsc = !historySortAsc;
+  renderHistory();
+}
+function renderHistory(){
+  if(!historyRows.length){
+    document.getElementById('historyEmpty').classList.remove('hidden');
+    document.getElementById('historyContent').classList.add('hidden');
+    return;
+  }
+  document.getElementById('historyEmpty').classList.add('hidden');
+  document.getElementById('historyContent').classList.remove('hidden');
+  document.getElementById('historySortBtn').textContent = historySortAsc ? 'Oldest first' : 'Newest first';
+
+  const sorted = historyRows.slice().sort((a,b)=> historySortAsc
+    ? new Date(a.created_at) - new Date(b.created_at)
+    : new Date(b.created_at) - new Date(a.created_at));
+
+  document.getElementById('historyList').innerHTML = sorted.map(row=>{
+    const dateLabel = new Date(row.created_at).toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'});
+    const modeLabel = row.source==='multi_device' ? 'Multi-device' : 'Single-device';
+    return `
+      <div class="history-row" onclick="viewHistoricalGame('${row.game_id}')">
+        <div class="hr-main"><span>${dateLabel}</span><span class="hr-mode">${modeLabel}</span></div>
+        <div class="hr-sub">${row.rounds_played} rounds &middot; ${fmt(row.my_total_activation_sec)} on clock &middot; ${row.my_activation_count} activations</div>
+      </div>`;
+  }).join('');
+
+  const n = historyRows.length;
+  const avgTotal = historyRows.reduce((a,r)=>a+r.my_total_activation_sec,0)/n;
+  const shipCount = historyRows.reduce((a,r)=>a+(r.my_activation_by_phase.ship ? r.my_activation_by_phase.ship.count : 0),0);
+  const shipSec = historyRows.reduce((a,r)=>a+(r.my_activation_by_phase.ship ? r.my_activation_by_phase.ship.totalSec : 0),0);
+  const squadronCount = historyRows.reduce((a,r)=>a+(r.my_activation_by_phase.squadron ? r.my_activation_by_phase.squadron.count : 0),0);
+  const squadronSec = historyRows.reduce((a,r)=>a+(r.my_activation_by_phase.squadron ? r.my_activation_by_phase.squadron.totalSec : 0),0);
+
+  document.getElementById('historyAverages').innerHTML = `
+    <div class="avg-row"><span>Games tracked</span><span class="num mono">${n}</span></div>
+    <div class="avg-row"><span>Avg time on clock</span><span class="num mono">${fmt(avgTotal)}</span></div>
+    <div class="avg-row"><span>Avg ship activation</span><span class="num mono">${shipCount ? fmt(shipSec/shipCount) : '—'}</span></div>
+    <div class="avg-row"><span>Avg squadron activation</span><span class="num mono">${squadronCount ? fmt(squadronSec/squadronCount) : '—'}</span></div>
+  `;
+}
+
+// Reuses the existing screen-stats/screen-activity views exactly as multi-device
+// already does for a live game -- fetch that game's full event log and populate
+// the same globals renderStats() reads. Works for single-device history too,
+// since record_single_device_game() (see migration 0009) gives signed-in
+// single-device games a real game_events row set, not just the summary.
+async function viewHistoricalGame(gameId){
+  const { data, error } = await sb.from('game_events').select('seq,event')
+    .eq('game_id', gameId).order('seq', { ascending: true });
+  const loadedEvents = (!error && data) ? data.map(row=>row.event) : [];
+  const startEvt = loadedEvents.find(e=>e.type==='game_start');
+  if(!startEvt){ alert('Could not load that game.'); return; }
+
+  events = loadedEvents;
+  gameStartTs = startEvt.ts;
+  roundLimit = startEvt.roundLimit;
+  targetDurationSec = startEvt.targetDurationSec;
+  players = ["First Player","Second Player"];
+
+  viewingHistoricalGame = true;
+  const btn = document.getElementById('statsHeaderBtn');
+  btn.textContent = 'Back';
+  btn.onclick = exitHistoricalView;
+
+  renderStats();
+  show('screen-stats');
+}
+function exitHistoricalView(){
+  resetStatsHeaderButton();
+  show('screen-history');
+}
+// Guards the real end-of-game path against a stale "Back to history" button
+// left over from browsing an old game earlier in the session.
+function resetStatsHeaderButton(){
+  viewingHistoricalGame = false;
+  const btn = document.getElementById('statsHeaderBtn');
+  btn.textContent = 'New';
+  btn.onclick = newGame;
+}
+
 /* ---------------- single-device entry (from landing) ---------------- */
 function enterSingleDevice(){
   isMultiDevice = false;
@@ -1554,6 +1976,161 @@ function enterSingleDevice(){
 const SUPABASE_URL = 'https://muamgwoxkbghpkoeqshv.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_XtwsTiX8Sg9QOL3V6JX7Tw_MZP1gNKw';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+/* ---------------- accounts / sign-in ----------------
+   Optional, landing-screen-only identity layered on top of the anonymous
+   device_id model above — see USER_ACCOUNTS_PLAN.md. Google/Discord return
+   a real name as part of the OAuth response, so no prompt is needed; magic-
+   link email has nothing to default from, so it's the one path that asks,
+   once, right after the link resolves. Same profiles row either way, and
+   the same set-name step is reused for "Edit Name" later, just pre-filled. */
+let currentUser = null;      // Supabase auth user, or null when signed out
+let currentProfile = null;   // {display_name}, once loaded/created
+let displayNameMode = 'new'; // 'new' | 'edit' -- which flow saveDisplayName() completes
+
+sb.auth.onAuthStateChange(function(event, session){ handleAuthChange(session); });
+
+// Fires once immediately with whatever session already exists (a page
+// load, or an OAuth/magic-link redirect landing back here) and again on any
+// later sign-in/sign-out — same handler either way, so there's no separate
+// "first time" state to track across a full-page OAuth redirect.
+async function handleAuthChange(session){
+  currentUser = session ? session.user : null;
+  if(!currentUser){
+    currentProfile = null;
+    renderAccountUI();
+    return;
+  }
+
+  // Idempotent: only ever claims rows that are this device's and not
+  // already claimed, so running it again on every page load is harmless.
+  try{ await sb.rpc('claim_device', { p_device_id: deviceId }); }catch(e){}
+
+  const { data } = await sb.from('profiles').select('display_name').eq('user_id', currentUser.id).maybeSingle();
+  if(data){
+    currentProfile = data;
+    renderAccountUI();
+    return;
+  }
+
+  const meta = currentUser.user_metadata || {};
+  const providerName = meta.full_name || meta.name || meta.user_name || meta.global_name;
+  if(providerName){
+    const { data: created } = await sb.from('profiles')
+      .insert({ user_id: currentUser.id, display_name: providerName })
+      .select('display_name').single();
+    currentProfile = created || { display_name: providerName };
+    renderAccountUI();
+  } else {
+    // Email sign-in: nothing to default from -- ask once, before landing
+    // in the signed-in state at all.
+    showDisplayNameStep('new');
+  }
+}
+
+function renderAccountUI(){
+  const signedIn = !!currentUser;
+  document.getElementById('signinPillBtn').classList.toggle('hidden', signedIn);
+  document.getElementById('accountPillBtn').classList.toggle('hidden', !signedIn);
+  if(!signedIn) return;
+  const name = (currentProfile && currentProfile.display_name) || currentUser.email || 'Player';
+  document.getElementById('acctPillName').textContent = name.split(' ')[0];
+  document.getElementById('acctAvatar').textContent = name.charAt(0).toUpperCase();
+  document.getElementById('acctMenuName').textContent = name;
+  document.getElementById('acctMenuMethod').textContent = 'Signed in with ' + providerLabel();
+}
+function providerLabel(){
+  const p = currentUser && currentUser.app_metadata && currentUser.app_metadata.provider;
+  if(p==='google') return 'Google';
+  if(p==='discord') return 'Discord';
+  return 'Email';
+}
+
+function hideAuthOverlays(){
+  ['overlaySignIn','overlayEmail','overlayEmailSent','overlayDisplayName'].forEach(function(id){
+    document.getElementById(id).classList.add('hidden');
+  });
+}
+function showAuthOverlay(id){ hideAuthOverlays(); document.getElementById(id).classList.remove('hidden'); }
+function openSignIn(){ hideFieldError('signinError'); showAuthOverlay('overlaySignIn'); }
+function closeSignIn(){ hideAuthOverlays(); }
+function showEmailStep(){ hideFieldError('emailError'); showAuthOverlay('overlayEmail'); }
+function backToMethods(){ showAuthOverlay('overlaySignIn'); }
+
+async function signInWithProvider(provider){
+  hideFieldError('signinError');
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: provider,
+    options: { redirectTo: location.origin + location.pathname }
+  });
+  // On success this navigates away immediately; the app picks back up via
+  // handleAuthChange() once the browser returns. Only the failure-to-even-
+  // start case needs handling here.
+  if(error) showFieldError('signinError', 'Could not start sign-in. Check your connection and try again.');
+}
+
+async function sendMagicLink(){
+  hideFieldError('emailError');
+  const email = document.getElementById('signinEmail').value.trim();
+  if(!email){ showFieldError('emailError', 'Enter your email first.'); return; }
+  const btn = document.getElementById('sendMagicLinkBtn');
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+  const { error } = await sb.auth.signInWithOtp({
+    email: email,
+    options: { emailRedirectTo: location.origin + location.pathname }
+  });
+  btn.disabled = false;
+  btn.textContent = 'Send Magic Link';
+  if(error){ showFieldError('emailError', 'Could not send the link. Check the address and try again.'); return; }
+  document.getElementById('sentToEmail').textContent = email;
+  showAuthOverlay('overlayEmailSent');
+}
+
+function showDisplayNameStep(mode){
+  displayNameMode = mode;
+  const input = document.getElementById('displayNameInput');
+  const title = document.getElementById('displayNameTitle');
+  const sub = document.getElementById('displayNameSub');
+  const saveBtn = document.getElementById('displayNameSaveBtn');
+  const backBtn = document.getElementById('displayNameBack');
+  if(mode==='new'){
+    const guess = ((currentUser && currentUser.email) || '').split('@')[0].replace(/[._-]+/g, ' ')
+      .replace(/\w\S*/g, function(w){ return w.charAt(0).toUpperCase() + w.slice(1); });
+    input.value = guess;
+    title.textContent = 'Set Your Display Name';
+    sub.textContent = "This is what shows on your saved games and trends. Email sign-in doesn't come with a name attached, so we ask once, up front.";
+    saveBtn.textContent = 'Continue';
+    backBtn.onclick = closeSignIn;
+  } else {
+    input.value = (currentProfile && currentProfile.display_name) || '';
+    title.textContent = 'Edit Display Name';
+    sub.textContent = 'Change what shows on your saved games and trends.';
+    saveBtn.textContent = 'Save';
+    backBtn.onclick = function(){ document.getElementById('accountMenu').classList.add('hidden'); hideAuthOverlays(); };
+  }
+  showAuthOverlay('overlayDisplayName');
+}
+async function saveDisplayName(){
+  const name = document.getElementById('displayNameInput').value.trim();
+  if(!name) return;
+  const btn = document.getElementById('displayNameSaveBtn');
+  btn.disabled = true;
+  const { data, error } = await sb.from('profiles')
+    .upsert({ user_id: currentUser.id, display_name: name }, { onConflict: 'user_id' })
+    .select('display_name').single();
+  btn.disabled = false;
+  if(error) return; // write failed -- leave the field open so it's retryable
+  currentProfile = data;
+  hideAuthOverlays();
+  renderAccountUI();
+}
+
+function toggleAccountMenu(){ document.getElementById('accountMenu').classList.toggle('hidden'); }
+async function handleSignOut(){
+  document.getElementById('accountMenu').classList.add('hidden');
+  await sb.auth.signOut();
+}
 
 function generateId(){
   if(window.crypto && typeof crypto.randomUUID==='function'){
