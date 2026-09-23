@@ -32,26 +32,55 @@ From Randy, 2026-09-21:
   tables, new *nullable* columns) so existing queries and RPCs keep working throughout, not just at
   the end. The one genuinely risky piece is tightening RLS (see Security below); that gets tested
   against the app's existing anonymous access patterns before it's considered done.
-- **Custom domain** has no required ordering relative to this work — it's an independent DNS/Pages
-  config change. The only wrinkle: Google OAuth's authorized redirect URLs are tied to whatever
-  domain is live when it's configured. Deciding the domain before finishing Google OAuth setup
-  avoids a small bit of later rework; deciding after just means updating the redirect URIs in
-  Supabase + Google Cloud Console once. Either order is fine.
+- **Custom domain** — settled as of 2026-09-22: `fleetchrono.app` is live (GitHub Pages, HTTPS
+  enforced). The Google/Discord OAuth redirect URIs and Supabase's Auth Site URL get configured
+  against it directly in Phase 1, with no need to revisit them for a domain change later.
 
 ## Identity model
 
-- Supabase Auth, since the app is already on Supabase. Magic link + Google OAuth — passwordless,
-  per Randy's preference.
+- Supabase Auth, since the app is already on Supabase. Magic link + Google OAuth + Discord OAuth —
+  passwordless, per Randy's preference.
 - **Login stays optional.** Anonymous single- and multi-device play keeps working exactly as it
   does today; signing in is purely additive for anyone who wants history.
+- **Sign-in lives on the landing screen only, never mid-game** (per Randy, 2026-09-22) — a small
+  "Sign In" pill in the corner of the landing screen, before any mode is picked. Once a game has
+  started there's no sign-in affordance; identity is settled before the event log for that game
+  ever starts.
 - `game_players` gets a nullable `user_id` (references `auth.users`). Set only when that seat's
   player is signed in.
 - **Device-claiming**: on sign-in, link this device's existing `game_players` rows (matched by the
   existing `device_id`) to the new `user_id`, retroactively. This is also how "anonymous vs.
   signed-in" gets answered later — it's just whether `user_id` is null.
 
+### Display name
+
+Google and Discord both return a real name (and an avatar) as part of their OAuth response, so
+Supabase Auth has it automatically — no extra step. Magic-link email sign-in has no name to default
+from at all — asking is the only option, not deriving one from the address.
+
+- One `display_name`, independent of sign-in method, so identity reads consistently regardless of
+  *how* someone signed in:
+  - Google/Discord: default it from the provider's name automatically, no prompt.
+  - Email: prompt for it once, right after the magic link resolves, pre-filled with a
+    best-effort guess from the address (e.g. `randy.nasson@…` → "Randy Nasson") that's just as easy
+    to accept as to change.
+  - Editable anytime after, from the same account menu used for sign-out ("Edit Name") — reuses the
+    exact same set-name step, just pre-filled with the current name and framed as editing.
+- **No provider avatar photos** (per Randy, 2026-09-22) — deliberately kept to a colored
+  initial-letter badge in the app's own geometric icon style, derived from `display_name`, the same
+  treatment regardless of sign-in method. Nothing else in the app uses photography, and a Google/
+  Discord photo next to an otherwise monochrome-violet UI would clash rather than help.
+- Interactive mockup of the whole flow (corner pill → method picker → email/OAuth paths → set/edit
+  display name → signed-in state):
+  **https://claude.ai/artifact/7GqgnuLy3FUjojabzd7qzk**
+
 ## Schema additions (all additive — nothing here removes or renames anything existing)
 
+- `profiles` — `user_id` (PK, references `auth.users`), `display_name`, `created_at`. A small
+  dedicated table rather than relying on Supabase's built-in `auth.users` metadata: `auth.users`
+  lives in a protected schema that's awkward to query or join against later (a leaderboard, an
+  admin view showing names), while a plain `profiles` table is the conventional, RLS-friendly way
+  to make a name referenceable without exposing the rest of the auth record.
 - `game_players.user_id uuid null references auth.users(id)`
 - `game_players.hidden_at timestamptz null` — set when a player removes a game from their own
   history. Lives on `game_players` (per participant), not `games`, so hiding your own row never
@@ -103,6 +132,9 @@ already list every row; now those rows say which authenticated user played which
 scoping happens as part of this work, not deferred further:
 
 - A user can read their own rows (`auth.uid() = user_id`).
+- A user can read and update only their own `profiles` row (`auth.uid() = user_id`) — nobody else's
+  display name is writable, and only what's needed (the name) is exposed, not the rest of the auth
+  record.
 - Existing anonymous/device-based access patterns are preserved exactly as they work today —
   verified against the live `fleet-chrono.html` before this is considered shippable.
 - Admin access goes through an allowlist check, not just "any authenticated user."
@@ -116,7 +148,8 @@ but it now completes before Phase 3 starts, so `user_id`-linked data is never le
 readable (via the anon key, regardless of whether any UI points at it yet) while the history/hide/
 admin features are being built on top of it.
 
-1. Supabase Auth (magic link + Google) + `game_players.user_id` + device-claiming flow
+1. Supabase Auth (magic link + Google + Discord) + `game_players.user_id` + `profiles.display_name`
+   (default from provider, or the set-name step for email) + device-claiming flow
 2. RLS scoping, tested against the live app's existing anonymous flows — see Security above
 3. `game_summaries` table + summary-writing at game end + a personal history/trends screen
 4. "Remove from my history" (`hidden_at`) + the UI affordance for it
@@ -129,5 +162,7 @@ admin features are being built on top of it.
   already supports it, it's just not built.
 - Whether "my history" needs pagination/sorting once game counts grow.
 - Whether the eventual admin screen is fully separate from the main app or a gated section of it.
-- Whether the custom domain lands before or after Google OAuth setup (Randy's call, see
-  Constraints above).
+- ~~Whether the custom domain lands before or after Google OAuth setup~~ — moot now: the custom
+  domain (`fleetchrono.app`) is already live as of 2026-09-22, so the Google/Discord OAuth redirect
+  URIs and Supabase's Auth Site URL just get set to it directly during Phase 1, no ordering decision
+  left to make.
