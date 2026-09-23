@@ -84,14 +84,45 @@ strangers or scripted traffic.
 - **No cleanup job for old games.** `games`/`game_players`/`game_events` rows are never deleted —
   a finished (or abandoned) game just sits in the database forever. Not urgent at dozens/hundreds
   of games, but worth a periodic job (e.g. delete games older than 30 days) before this has been
-  running for months.
+  running for months. **Extends to `game_summaries`** (added 2026-09-22) — same "never deleted"
+  gap, though a summary row is the one place someone can already act unilaterally (soft-delete via
+  `deleted_at`, once that UI exists — see `USER_ACCOUNTS_PLAN.md` Phase 4), so the pressure to
+  auto-clean it is lower than the raw game tables.
 - **`games`/`game_players`/`game_events` are fully publicly *listable*, not just readable if you
   know the code.** Migration `0001_init.sql`'s RLS policies are `for select using (true)` on all
   three tables — i.e. `select * from games` returns every game ever created, not just the one
   matching a code someone was given. A stranger doesn't need to guess a 6-character code; they can
-  just list the table directly. Worth scoping reads (e.g. through a lookup RPC keyed by code,
-  instead of direct table SELECT) before wide release, even though the data itself is low-stakes
-  (no names beyond "First/Second Player", no PII).
+  just list the table directly. **Raised in severity 2026-09-22**, once user accounts landed:
+  `game_players.user_id` (migration 0008) now links rows to real signed-in accounts, so this is no
+  longer just "low-stakes gameplay data" — anyone with the anon key can correlate which
+  authenticated user played which game, with no login or code needed. Still judged acceptable for
+  now (per Randy, 2026-09-22): audience is ~30 people he knows personally, not strangers or
+  scripted traffic — matches this section's original framing exactly. Revisit once the audience
+  broadens past people individually vouched for (a public share, an open invite, etc.), not at any
+  particular headcount among known people.
+  - **Why this isn't a quick RLS fix**: the same `using (true)` policy that causes the leak is also
+    what lets both devices sync a live multi-device game without ever signing in — Supabase
+    Realtime's `postgres_changes` decides whether to push a change to an anon-key client by
+    evaluating that same SELECT policy, and there's currently no per-device identity (`device_id` is
+    a plain client-supplied value, not something RLS can see) for a narrower policy to check against.
+    Two real paths, not a patch:
+    - **Anonymous Auth** — every device gets a real `auth.uid()` on load (no email/password), RLS
+      scopes to game-membership via that uid, Realtime respects it automatically. Idiomatic fix, but
+      touches the client's init flow and all six RPCs that currently trust a bare `device_id`
+      parameter (`create_game`, `join_game`, `append_event`, `retract_last_event`, `claim_device`,
+      `record_single_device_game`), plus a full multi-device re-test.
+    - **RPC-only reads + Realtime Broadcast** instead of table-change subscriptions — narrower
+      guarantee (stops full-table enumeration, not "read any game you can guess the id of"), requires
+      rewriting all three `subscribeTo*` functions and adding per-game channel tokens.
+- **`game_summaries` INSERT has no game-membership check** (raised 2026-09-22, alongside the
+  personal-history build) — the RLS policy only checks `auth.uid() = user_id`, not that the caller
+  actually played that `game_id`. A signed-in user could insert a fabricated summary row against any
+  real, enumerable (per the point above) game they never played. Low impact — pollutes only their
+  own stats, no cross-user leakage, since the same self-only check still blocks touching anyone
+  else's row — but same class of gap as the point below.
+- **`record_single_device_game` has no cap on event-array size** (raised 2026-09-22) — a signed-in
+  user calling it directly (not through the UI) could pass a huge `p_events` array to bloat the DB.
+  Minor cost/DoS vector; authenticated-only, so lower urgency than the anon-key items above.
 - **No game-membership check on the write RPCs.** `append_event` and `retract_last_event` only
   check that the game exists (and, for retract, that the race guard matches) — neither checks that
   the caller's `device_id` actually has a slot in that game via `game_players`. Combined with the

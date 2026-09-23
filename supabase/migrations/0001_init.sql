@@ -51,6 +51,14 @@ create policy "game_players are publicly readable" on game_players for select us
 drop policy if exists "game_events are publicly readable" on game_events;
 create policy "game_events are publicly readable" on game_events for select using (true);
 
+-- Explicit Data API grants: Supabase stops auto-granting these on new
+-- public-schema tables as of 2026-10-30, so a fresh project / db reset built
+-- from these migrations would otherwise leave the tables unreachable. Read
+-- only for the API roles -- every write goes through the SECURITY DEFINER
+-- functions below (which run as the function owner, not as these roles).
+grant select on games, game_players, game_events to anon, authenticated;
+grant select, insert, update, delete on games, game_players, game_events to service_role;
+
 -- create_game: generates a short join code, claims the creator's chosen
 -- slot, and seeds the event log with game_start + the first phase_start —
 -- mirroring exactly what startGame() does locally today. round_limit and

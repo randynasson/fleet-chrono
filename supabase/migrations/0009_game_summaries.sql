@@ -114,5 +114,10 @@ drop policy if exists "game_summaries are self-updatable" on game_summaries;
 create policy "game_summaries are self-updatable" on game_summaries for update
   using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+-- Explicit Data API grants (see 0001 for why). authenticated only; the
+-- client upserts (insert + update) and reads its own rows, never deletes.
+grant select, insert, update on game_summaries to authenticated;
+grant select, insert, update, delete on game_summaries to service_role;
+
 create index if not exists game_summaries_user_id_created_at_idx
   on game_summaries (user_id, created_at desc);

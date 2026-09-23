@@ -38,6 +38,11 @@ drop policy if exists "profiles are self-updatable" on profiles;
 create policy "profiles are self-updatable" on profiles for update
   using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+-- Explicit Data API grants (see 0001 for why). Signed-in users only -- anon
+-- has no business touching profiles, and RLS above is self-only anyway.
+grant select, insert, update on profiles to authenticated;
+grant select, insert, update, delete on profiles to service_role;
+
 -- Nullable: set only once a seat's player signs in. game_players' existing
 -- "publicly readable" policy (migration 0001) is left exactly as it is --
 -- see the note at the top of this file for why.
