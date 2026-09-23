@@ -77,9 +77,12 @@
 
   /* Ambient floor glow -- one per screen. A single consistent position
      (bottom-ish) rather than the README's per-screen-tuned variants, to
-     keep this pass bounded; every screen family gets it via ::before so no
-     extra markup is needed anywhere. */
-  .setup::before, .live::before, .stats::before{
+     keep this pass bounded. Lives on .device (not each screen div) so it
+     stays anchored to the outer frame regardless of a screen's own
+     internal scroll -- .stats scrolls internally (overflow-y:auto), and a
+     ::before placed on it directly scrolls away with the content instead
+     of staying put at the bottom of the visible frame. */
+  .device::before{
     content:''; position:absolute; inset:0; pointer-events:none; z-index:0;
     background:radial-gradient(90% 55% at 50% 105%, rgba(192,140,245,.18), transparent 70%);
   }
